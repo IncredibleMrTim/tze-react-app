@@ -1,10 +1,11 @@
-'use client'
+"use client";
 
 import type { IJob, IJigAssignment, ISettings } from "@/types/interfaces";
 import { isReady, calcPrice } from "@/lib/helpers";
 import { genFPN, genCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
+import { Button } from "./ui/button";
 
 interface DispatchViewProps {
   jobs: IJob[];
@@ -21,17 +22,18 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
   settings,
   invSeq,
   onDispatch,
-  onShowToast
+  onShowToast,
 }) => {
-  const readyJobs = jobs.filter(j => isReady(j, jigA) && !j.dispatchedAt);
-  const dispatchedJobs = jobs.filter(j => j.dispatchedAt && !j.fpnHidden).sort((a, b) =>
-    (b.dispatchedAt || 0) - (a.dispatchedAt || 0)
-  );
+  const readyJobs = jobs.filter((j) => isReady(j, jigA) && !j.dispatchedAt);
+  const dispatchedJobs = jobs
+    .filter((j) => j.dispatchedAt && !j.fpnHidden)
+    .sort((a, b) => (b.dispatchedAt || 0) - (a.dispatchedAt || 0));
 
   const handleDispatch = (job: IJob) => {
-    const invoiceNumber = job.isInternal || job.isRework
-      ? 'INTERNAL'
-      : `${INV_PREFIX}-${new Date().getFullYear()}-${String(invSeq).padStart(4, '0')}`;
+    const invoiceNumber =
+      job.isInternal || job.isRework
+        ? "INTERNAL"
+        : `${INV_PREFIX}-${new Date().getFullYear()}-${String(invSeq).padStart(4, "0")}`;
 
     const dispatchedJob = {
       ...job,
@@ -56,16 +58,16 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
 
   const handleDownloadFPN = (job: IJob) => {
     genFPN(job);
-    onShowToast('FPN downloaded');
+    onShowToast("FPN downloaded");
   };
 
   const handleDownloadCSV = (job: IJob) => {
     if (job.isInternal || job.isRework) {
-      onShowToast('Internal jobs do not generate CSV');
+      onShowToast("Internal jobs do not generate CSV");
       return;
     }
     genCSV(job, settings);
-    onShowToast('CSV downloaded');
+    onShowToast("CSV downloaded");
   };
 
   return (
@@ -77,7 +79,7 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
           <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Ready to Dispatch ({readyJobs.length})
           </h3>
-          {readyJobs.map(j => (
+          {readyJobs.map((j) => (
             <div
               key={j.id}
               className="bg-white border-2 border-primary rounded-xl p-3.5 mb-2.5 active:bg-primary-bg"
@@ -85,7 +87,9 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="font-bold text-base">{j.po_number}</div>
-                  <div className="text-[13px] text-gray-600">{j.customer_name}</div>
+                  <div className="text-[13px] text-gray-600">
+                    {j.customer_name}
+                  </div>
                 </div>
                 <div className="text-sm text-gray-500">
                   ${calcPrice(j, settings).toFixed(2)}
@@ -93,7 +97,7 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
               </div>
 
               <div className="flex gap-1.5 flex-wrap mb-2">
-                {j.plating === 'gold' && (
+                {j.plating === "gold" && (
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-800">
                     Gold
                   </span>
@@ -110,12 +114,13 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
                 )}
               </div>
 
-              <button
+              <Button
                 onClick={() => handleDispatch(j)}
                 className="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold"
+                variant="outline"
               >
                 🚚 Dispatch & Generate Invoice
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -126,7 +131,7 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
           <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Recently Dispatched ({dispatchedJobs.length})
           </h3>
-          {dispatchedJobs.map(j => (
+          {dispatchedJobs.map((j) => (
             <div
               key={j.id}
               className="bg-white border border-gray-200 rounded-xl p-3.5 mb-2.5"
@@ -142,7 +147,7 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
               </div>
 
               <div className="text-xs text-gray-500 mb-2">
-                {new Date(j.dispatchedAt!).toLocaleDateString('en-NZ')}
+                {new Date(j.dispatchedAt!).toLocaleDateString("en-NZ")}
               </div>
 
               <div className="flex gap-2">

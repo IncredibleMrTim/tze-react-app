@@ -14,6 +14,9 @@ import { CONTACTS, fixOrientation } from "@/lib/helpers";
 import { scanPODocument } from "@/actions/scan-po";
 import ITEMS from "@/data/items.json";
 import { FiPlus } from "react-icons/fi";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Switch } from "./ui/switch";
 
 interface IntakeViewProps {
   jobs: IJob[];
@@ -83,13 +86,16 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+      console.log("T1");
+      // Save the image to state
+      setPoPic(dataUrl);
 
       // Extract base64 data (remove data:image/jpeg;base64, prefix)
       const base64Data = dataUrl.split(",")[1];
 
       // Call server action
       const result = await scanPODocument(base64Data);
-
+      console.log("T1", result);
       // Set PO number
       if (result.po_number) {
         setPoNumber(result.po_number);
@@ -183,8 +189,10 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
       onShowToast("Job updated: " + po_number);
     } else {
       // Create new job
+
+      const now = Date.now();
       const job: IJob = {
-        id: Date.now().toString(),
+        id: now.toString(),
         po_number,
         customer_name: customer?.name || "Internal",
         customer_account: customer?.account || "",
@@ -207,7 +215,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         isInternal,
         isRework: false,
         partDescription: partsDescription,
-        createdAt: Date.now(),
+        createdAt: now,
         priceOverride: null,
         freightCost: 0,
         dispatchedAt: null,
@@ -343,13 +351,14 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             {jobs.length} jobs
           </span>
         </div>
-        <button
+        <Button
           onClick={() => setShowSheet(true)}
-          className="w-10 h-10 bg-primary text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-700 active:scale-95 transition-all"
+          size="icon-lg"
+          className="w-10 h-10 rounded-full"
           aria-label="Add new job"
         >
           <FiPlus size="20" />
-        </button>
+        </Button>
       </div>
 
       {/* Empty state */}
@@ -647,7 +656,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   Claude auto-fills the form
                 </span>
               </label>
-              <input
+              <Input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
@@ -658,19 +667,36 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   if (file) handleScanPO(file);
                 }}
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={scanning}
-                className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-8 text-gray-500 text-sm disabled:opacity-50 flex flex-col items-center gap-2"
-              >
-                <div className="text-3xl">📷</div>
-                <div className="font-medium text-gray-700">
-                  {scanning ? "Scanning..." : "Tap to photograph PO"}
+              {poPic ? (
+                <div className="relative w-full">
+                  <img
+                    src={poPic}
+                    alt="PO Document"
+                    className="w-full rounded-lg border-2 border-gray-300"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={scanning}
+                    className="absolute bottom-2 right-2 bg-white border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 shadow-md hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {scanning ? "Scanning..." : "Change Photo"}
+                  </button>
                 </div>
-                <div className="text-xs text-gray-500">
-                  Claude reads customer, PO number & parts
-                </div>
-              </button>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={scanning}
+                  className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-8 text-gray-500 text-sm disabled:opacity-50 flex flex-col items-center gap-2"
+                >
+                  <div className="text-3xl">📷</div>
+                  <div className="font-medium text-gray-700">
+                    {scanning ? "Scanning..." : "Tap to photograph PO"}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Claude reads customer, PO number & parts
+                  </div>
+                </button>
+              )}
               {scanResult && (
                 <div
                   className={`text-sm mt-2 px-3 py-2 rounded ${
@@ -690,7 +716,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 CUSTOMER
               </label>
               <div className="relative">
-                <input
+                <Input
                   type="text"
                   value={customerInput}
                   onChange={(e) => {
@@ -737,7 +763,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   (leave blank to auto-assign)
                 </span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={po_number}
                 onChange={(e) => setPoNumber(e.target.value)}
@@ -754,7 +780,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   (optional)
                 </span>
               </label>
-              <input
+              <Input
                 type="tel"
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
@@ -771,7 +797,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   (optional — shows on job card)
                 </span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={partsDescription}
                 onChange={(e) => setPartsDescription(e.target.value)}
@@ -786,7 +812,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 PLATING
               </label>
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={() => setPlating("silver")}
                   className={`flex-1 py-2.5 border rounded-lg text-sm font-medium ${
                     plating === "silver"
@@ -795,8 +821,8 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   }`}
                 >
                   Silver (zinc bright)
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setPlating("gold")}
                   className={`flex-1 py-2.5 border rounded-lg text-sm font-medium ${
                     plating === "gold"
@@ -805,7 +831,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   }`}
                 >
                   Gold (zinc yellow)
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -821,23 +847,23 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
+                    <label
+                      className="text-sm font-medium text-gray-900"
+                      htmlFor="string-required"
+                    >
                       Strings required
-                    </div>
+                    </label>
                     <div className="text-xs text-gray-500">
                       JIG cannot complete until string count is entered
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={stringsRequired}
-                      onChange={(e) => setStringsRequired(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-primary transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+
+                  <Switch
+                    id="string-required"
+                    checked={stringsRequired}
+                    onCheckedChange={setStringsRequired}
+                    aria-label="Toggle strings required"
+                  />
                 </div>
 
                 <div className="flex items-start justify-between">
@@ -849,16 +875,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       Dispatch blocked until weight is entered
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={requiresWeighing}
-                      onChange={(e) => setRequiresWeighing(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-primary transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={requiresWeighing}
+                    onCheckedChange={setRequiresWeighing}
+                    className="ml-3"
+                    aria-label="Toggle requires weighing"
+                  />
                 </div>
               </div>
             </div>
@@ -898,7 +920,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                         <label className="text-xs text-gray-600 mb-1 block">
                           Part code
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={part.code}
                           onChange={(e) =>
@@ -939,7 +961,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                           )}
                       </div>
 
-                      <input
+                      <Input
                         type="text"
                         value={part.desc}
                         onChange={(e) => updatePart(i, "desc", e.target.value)}
@@ -952,7 +974,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                           <label className="text-xs text-gray-600 mb-1 block">
                             Price per part ($)
                           </label>
-                          <input
+                          <Input
                             type="number"
                             value={part.price}
                             onChange={(e) =>
@@ -971,7 +993,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                           <label className="text-xs text-gray-600 mb-1 block">
                             Quantity
                           </label>
-                          <input
+                          <Input
                             type="number"
                             value={part.qty}
                             onChange={(e) =>
@@ -1009,7 +1031,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   (optional)
                 </span>
               </label>
-              <input
+              <Input
                 ref={partsPhotoInputRef}
                 type="file"
                 accept="image/*"
@@ -1077,16 +1099,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       Highlighted red — jumps the queue
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={urgent}
-                      onChange={(e) => setUrgent(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-red-600 transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={urgent}
+                    onCheckedChange={setUrgent}
+                    className="ml-3"
+                    aria-label="Toggle urgent"
+                  />
                 </div>
               </div>
 
@@ -1101,16 +1119,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       Internal job — no invoice at dispatch
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={isInternal}
-                      onChange={(e) => setIsInternal(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-primary transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={isInternal}
+                    onCheckedChange={setIsInternal}
+                    className="ml-3"
+                    aria-label="Toggle internal TGAEP"
+                  />
                 </div>
               </div>
 
@@ -1125,16 +1139,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       Customer requested freight — cost added at dispatch
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={freightRequested}
-                      onChange={(e) => setFreightRequested(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-primary transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={freightRequested}
+                    onCheckedChange={setFreightRequested}
+                    className="ml-3"
+                    aria-label="Toggle freight requested"
+                  />
                 </div>
               </div>
 
@@ -1149,16 +1159,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       Apply $60.00 minimum (Silver)
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={minCharge}
-                      onChange={(e) => setMinCharge(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-primary transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={minCharge}
+                    onCheckedChange={setMinCharge}
+                    className="ml-3"
+                    aria-label="Toggle minimum charge"
+                  />
                 </div>
               </div>
 
@@ -1174,16 +1180,12 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                       etc
                     </div>
                   </div>
-                  <label className="relative inline-block w-12 h-6 ml-3">
-                    <input
-                      type="checkbox"
-                      checked={flagged}
-                      onChange={(e) => setFlagged(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-full h-full bg-gray-300 rounded-full peer-checked:bg-orange-600 transition-colors cursor-pointer"></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></div>
-                  </label>
+                  <Switch
+                    checked={flagged}
+                    onCheckedChange={setFlagged}
+                    className="ml-3"
+                    aria-label="Toggle flag job"
+                  />
                 </div>
               </div>
             </div>
