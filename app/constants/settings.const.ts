@@ -21,7 +21,7 @@ export const generateJigsList = (count: number): string[] => {
   return list;
 };
 
-export const calculateRates = (settings: ISettings) => {
+export const calculateRates = (settings: ISettings): Record<'silver' | 'gold', { kg: number; jig: number }> => {
   return {
     silver: {
       kg: settings.silverKg || 2.60,
@@ -34,7 +34,7 @@ export const calculateRates = (settings: ISettings) => {
   };
 };
 
-export const calculateMinCharges = (settings: ISettings) => {
+export const calculateMinCharges = (settings: ISettings): Record<'silver' | 'gold', number> => {
   const rates = calculateRates(settings);
   return {
     silver: Math.round(rates.silver.jig / 6),

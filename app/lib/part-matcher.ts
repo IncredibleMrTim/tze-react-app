@@ -1,4 +1,4 @@
-import type { IContact, IPart } from "@/types/interfaces";
+import type { IContact, IPart, IItem } from "@/types/interfaces";
 import { ITEMS } from "@/lib/helpers";
 
 export interface ScannedPart {
@@ -64,7 +64,7 @@ function findWithTicker(code: string, customer: IContact): ReturnType<typeof ITE
 function findBySubstring(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
   if (customer.account === 'PATI' || code.length < 4) return undefined;
 
-  let bestMatch = null;
+  let bestMatch: IItem | undefined = undefined;
   let bestLength = 0;
 
   for (const item of ITEMS) {
@@ -83,7 +83,7 @@ function findBySubstring(code: string, customer: IContact): ReturnType<typeof IT
     }
   }
 
-  return bestLength >= 4 ? bestMatch : null;
+  return bestLength >= 4 ? bestMatch : undefined;
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { TPlating } from "@/types";
+import type { TPlating } from "@/types/types";
 
 export interface IContact {
   name: string;
