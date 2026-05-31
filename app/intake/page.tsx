@@ -7,7 +7,6 @@ export default function IntakePage() {
   const {
     jobs,
     jigA,
-    settings,
     handleSaveJob,
     handleUpdateJob,
     handleDeleteJob,
@@ -16,7 +15,6 @@ export default function IntakePage() {
 
   return (
     <IntakeView
-      settings={settings}
       jobs={jobs}
       jigA={jigA}
       onSave={handleSaveJob}
