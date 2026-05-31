@@ -5,18 +5,17 @@ import type {
   IJob,
   IContact,
   IPart,
-  ISettings,
   IItem,
   IJigAssignment,
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
 import { CONTACTS, fixOrientation } from "@/lib/helpers";
-import { scanPODocument } from "@/app/actions/scan-po";
+import { scanPODocument } from "@/actions/scan-po";
 import ITEMS from "@/data/items.json";
+import { FiPlus } from "react-icons/fi";
 
 interface IntakeViewProps {
-  settings: ISettings;
   jobs: IJob[];
   jigA: IJigAssignment[];
   onSave: (job: IJob) => void;
@@ -26,7 +25,6 @@ interface IntakeViewProps {
 }
 
 export const IntakeView: React.FC<IntakeViewProps> = ({
-  settings,
   jobs,
   jigA,
   onSave,
@@ -347,10 +345,10 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         </div>
         <button
           onClick={() => setShowSheet(true)}
-          className="w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-700 active:scale-95 transition-all"
+          className="w-10 h-10 bg-primary text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-700 active:scale-95 transition-all"
           aria-label="Add new job"
         >
-          +
+          <FiPlus size="20" />
         </button>
       </div>
 

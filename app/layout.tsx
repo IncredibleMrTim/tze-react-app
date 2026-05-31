@@ -3,6 +3,10 @@ import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
 import { Navigation } from "./navigation";
 import { GlobalUI } from "./global-ui";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Tauranga Zinc Electroplaters",
@@ -29,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body>
         <AppProvider>
           <div className="w-full max-w-[430px] min-h-screen bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col mx-auto">
