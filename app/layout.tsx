@@ -1,0 +1,43 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import { AppProvider } from "@/context/AppContext";
+import { Navigation } from "./navigation";
+import { GlobalUI } from "./global-ui";
+
+export const metadata: Metadata = {
+  title: "Tauranga Zinc Electroplaters",
+  description: "Job management system for TZE",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <AppProvider>
+          <div className="w-full max-w-[430px] min-h-screen bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col mx-auto">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-4 py-3.5 flex items-center justify-between flex-shrink-0">
+              <h1 className="text-base font-bold text-primary">
+                Tauranga Zinc Electroplaters
+              </h1>
+              <span className="text-[11px] text-gray-400">v0.6.0</span>
+            </div>
+
+            {/* View Area */}
+            <div className="flex-1 overflow-y-auto p-3">{children}</div>
+
+            {/* Bottom Navigation */}
+            <Navigation />
+          </div>
+
+          {/* Global UI Components */}
+          <GlobalUI />
+        </AppProvider>
+      </body>
+    </html>
+  );
+}
