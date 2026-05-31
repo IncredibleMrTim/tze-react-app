@@ -7,6 +7,20 @@ import { GlobalUI } from "./global-ui";
 export const metadata: Metadata = {
   title: "Tauranga Zinc Electroplaters",
   description: "Job management system for TZE",
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-16x16-dark.png', sizes: '16x16', type: 'image/png', media: '(prefers-color-scheme: dark)' },
+      { url: '/favicon-32x32-dark.png', sizes: '32x32', type: 'image/png', media: '(prefers-color-scheme: dark)' },
+      { url: '/favicon-48x48-dark.png', sizes: '48x48', type: 'image/png', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: [
+      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-192-dark.png', sizes: '192x192', type: 'image/png', media: '(prefers-color-scheme: dark)' },
+    ],
+  },
 };
 
 export default function RootLayout({
