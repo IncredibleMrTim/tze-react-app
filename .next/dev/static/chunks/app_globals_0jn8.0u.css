@@ -422,10 +422,6 @@ input[type="number"] {
   margin-left: .75rem;
 }
 
-.mt-0\.5 {
-  margin-top: .125rem;
-}
-
 .mt-1 {
   margin-top: .25rem;
 }
@@ -818,11 +814,6 @@ input[type="number"] {
   border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
 }
 
-.border-yellow-200 {
-  --tw-border-opacity: 1;
-  border-color: rgb(254 240 138 / var(--tw-border-opacity, 1));
-}
-
 .border-t-primary {
   --tw-border-opacity: 1;
   border-top-color: rgb(29 158 117 / var(--tw-border-opacity, 1));
@@ -993,11 +984,6 @@ input[type="number"] {
 .px-3 {
   padding-left: .75rem;
   padding-right: .75rem;
-}
-
-.px-3\.5 {
-  padding-left: .875rem;
-  padding-right: .875rem;
 }
 
 .px-4 {
@@ -1308,11 +1294,6 @@ input[type="number"] {
 .text-yellow-800 {
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity, 1));
-}
-
-.text-yellow-900 {
-  --tw-text-opacity: 1;
-  color: rgb(113 63 18 / var(--tw-text-opacity, 1));
 }
 
 .shadow-2xl {
