@@ -117,6 +117,15 @@ export const resolveCustomer = (n: string): IContact | null => {
   const t = n.trim();
   const lc = t.toLowerCase();
 
+  // Helper: normalize company name by removing legal suffixes and extra words
+  const normalize = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/\b(limited|ltd|incorporated|inc|company|co|engineering|industries|industrial|componentry|pty|proprietary)\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   // Aliases
   if (lc.includes('sokoza')) return CONTACTS.find(c => c.account === 'SOKO') || null;
   if (lc.includes('nz manufacturing')) return CONTACTS.find(c => c.account === 'NZMFG') || null;
@@ -126,7 +135,19 @@ export const resolveCustomer = (n: string): IContact | null => {
   let c = CONTACTS.find(x => x.name.toLowerCase() === lc);
   if (c) return c;
 
-  // Fuzzy match
+  // Normalized match (strip legal suffixes)
+  const normalizedInput = normalize(lc);
+  c = CONTACTS.find(x => normalize(x.name) === normalizedInput);
+  if (c) return c;
+
+  // Fuzzy match with normalization
+  c = CONTACTS.find(x => {
+    const normalizedContact = normalize(x.name);
+    return normalizedContact.includes(normalizedInput) || normalizedInput.includes(normalizedContact);
+  });
+  if (c) return c;
+
+  // Original fuzzy match (fallback)
   c = CONTACTS.find(x => x.name.toLowerCase().includes(lc) || lc.includes(x.name.toLowerCase()));
   if (c) return c;
 

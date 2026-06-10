@@ -1,0 +1,782 @@
+"use client";
+
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { useStore } from "@/store/useStore";
+import type { IJob, IJigAssignment } from "@/types/interfaces";
+import { jigUsed } from "@/lib/helpers";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Overlay } from "@/components/Overlay";
+import { LuTriangleAlert, LuCamera, LuWrench } from "react-icons/lu";
+
+export default function JIGPage() {
+  const jigsList = useStore((state) => state.jigsList);
+  const jobs = useStore((state) => state.jobs);
+  const jigA = useStore((state) => state.jigA);
+  const setJigA = useStore((state) => state.setJigA);
+  const handleUpdateJob = useStore((state) => state.handleUpdateJob);
+  const handleCompleteJig = useStore((state) => state.handleCompleteJig);
+  const showToast = useStore((state) => state.showToast);
+
+  const [selectedJig, setSelectedJig] = useState<string | null>(null);
+  const [showJobSelector, setShowJobSelector] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedJobForAssignment, setSelectedJobForAssignment] =
+    useState<IJob | null>(null);
+  const [assignmentPercentage, setAssignmentPercentage] = useState("25");
+  const [poComplete, setPoComplete] = useState(false);
+  const [jigPhoto, setJigPhoto] = useState<string | null>(null);
+  const [uploadedJigPhoto, setUploadedJigPhoto] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [incompleteJigInfo, setIncompleteJigInfo] = useState({
+    name: "",
+    percent: 0,
+  });
+  const [editingAssignment, setEditingAssignment] = useState<{
+    assignment: IJigAssignment;
+    job: IJob;
+  } | null>(null);
+  const [editPercentage, setEditPercentage] = useState("");
+  const [editJigPhoto, setEditJigPhoto] = useState<string | null>(null);
+  const [editPoComplete, setEditPoComplete] = useState(false);
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(
+    null,
+  );
+
+  const editJigPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const jigPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  const availableJobs = jobs.filter((j) => {
+    if (j.dispatchedAt) return false;
+    const isOnJig = jigA.some((g) => g.jobId === j.id && !g.completedAt);
+    return !isOnJig;
+  });
+
+  const getJigJobs = (jigName: string) => {
+    return jigA.filter((g) => g.jigName === jigName && !g.completedAt);
+  };
+
+  const handleSelectJig = (jigName: string) => {
+    setSelectedJig(selectedJig === jigName ? null : jigName);
+  };
+
+  const handleAddJobClick = () => {
+    setShowJobSelector(true);
+    setSearchTerm("");
+    setSelectedJobForAssignment(null);
+    setAssignmentPercentage("25");
+    setPoComplete(false);
+    setJigPhoto(null);
+  };
+
+  const handleJobClick = (job: IJob) => {
+    setSelectedJobForAssignment(job);
+    setPoComplete(job.poComplete);
+  };
+
+  const handleConfirmAssignment = () => {
+    if (!selectedJig || !selectedJobForAssignment) return;
+
+    const pct = parseInt(assignmentPercentage) || 20;
+    const used = jigUsed(selectedJig, jigA);
+    const available = 100 - used;
+
+    if (pct > available) {
+      showToast(`Only ${available}% space remaining on ${selectedJig}`);
+      return;
+    }
+
+    if (pct <= 0 || pct > 100) {
+      showToast("Please enter a valid percentage (1-100)");
+      return;
+    }
+
+    // Update job if PO complete status changed
+    if (poComplete !== selectedJobForAssignment.poComplete) {
+      handleUpdateJob({ ...selectedJobForAssignment, poComplete });
+    }
+
+    // Create assignment with photo
+    const assignment: IJigAssignment = {
+      id: Date.now().toString(),
+      jobId: selectedJobForAssignment.id,
+      jigName: selectedJig,
+      pct,
+      pic: jigPhoto,
+      completedAt: null,
+      loadedAt: Date.now(),
+    };
+
+    const updatedJigA = [...jigA, assignment];
+    setJigA(updatedJigA);
+
+    showToast(`Job assigned to ${selectedJig}`);
+    setShowJobSelector(false);
+    setSelectedJobForAssignment(null);
+    setJigPhoto(null);
+  };
+
+  const handleJigPhotoUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setJigPhoto(reader.result as string);
+      showToast("JIG photo added");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhotoUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedJigPhoto(reader.result as string);
+      showToast("Photo uploaded");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveClick = (assignmentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmingRemoveId(assignmentId);
+  };
+
+  const handleConfirmRemove = (assignmentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedJigA = jigA.filter((g) => g.id !== assignmentId);
+    setJigA(updatedJigA);
+    showToast("Job removed from JIG");
+    setConfirmingRemoveId(null);
+  };
+
+  const handleCancelRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmingRemoveId(null);
+  };
+
+  const handleCompleteJigClick = () => {
+    if (!selectedJig) return;
+
+    const used = jigUsed(selectedJig, jigA);
+    if (used < 100) {
+      setIncompleteJigInfo({
+        name: selectedJig,
+        percent: Math.round(used),
+      });
+      setShowIncompleteDialog(true);
+      return;
+    }
+
+    if (window.confirm(`Mark ${selectedJig} as complete and move to tank?`)) {
+      handleCompleteJig(selectedJig);
+      showToast(`${selectedJig} marked complete`);
+    }
+  };
+
+  const handleEditJobClick = (assignment: IJigAssignment, job: IJob) => {
+    setEditingAssignment({ assignment, job });
+    setEditPercentage(assignment.pct.toString());
+    setEditJigPhoto(assignment.pic || null);
+    setEditPoComplete(job.poComplete);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingAssignment) return;
+
+    const newPct = parseInt(editPercentage) || 20;
+    if (newPct <= 0 || newPct > 100) {
+      showToast("Please enter a valid percentage (1-100)");
+      return;
+    }
+
+    // Update assignment
+    const updatedJigA = jigA.map((g) =>
+      g.id === editingAssignment.assignment.id
+        ? { ...g, pct: newPct, pic: editJigPhoto }
+        : g,
+    );
+    setJigA(updatedJigA);
+
+    // Update job if PO complete changed
+    if (editPoComplete !== editingAssignment.job.poComplete) {
+      handleUpdateJob({ ...editingAssignment.job, poComplete: editPoComplete });
+    }
+
+    showToast("Changes saved");
+    setShowEditModal(false);
+    setEditingAssignment(null);
+  };
+
+  const handleEditJigPhotoUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditJigPhoto(reader.result as string);
+      showToast("Photo added");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const filteredJobs = availableJobs.filter((j) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      j.po_number.toLowerCase().includes(term) ||
+      j.customer_name.toLowerCase().includes(term) ||
+      j.parts.some(
+        (p) =>
+          p.code.toLowerCase().includes(term) ||
+          p.desc.toLowerCase().includes(term),
+      )
+    );
+  });
+
+  const spaceRemaining = selectedJig
+    ? 100 - Math.round(jigUsed(selectedJig, jigA))
+    : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Warning Banner */}
+      <Alert className="border-yellow-300 bg-yellow-50 p-3 md:p-4">
+        <LuTriangleAlert className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 flex-shrink-0" />
+        <AlertDescription className="ml-2 text-xs md:text-sm leading-relaxed">
+          <span className="font-semibold">Phase 1 — single device:</span> Data
+          lives on this device only. All staff must share this device.
+        </AlertDescription>
+      </Alert>
+
+      {/* Heading */}
+      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+        TAP A JIG TO MANAGE IT
+      </h2>
+
+      {/* JIG Grid */}
+      <div className="grid grid-cols-3 gap-3">
+        {jigsList.map((jigName) => {
+          const used = jigUsed(jigName, jigA);
+          const pct = Math.round(used);
+          const jigJobs = getJigJobs(jigName);
+          const isEmpty = pct === 0;
+          const isSelected = selectedJig === jigName;
+
+          return (
+            <Card
+              key={jigName}
+              onClick={() => handleSelectJig(jigName)}
+              className={`p-4 text-center cursor-pointer transition-all hover:shadow-md ${
+                isSelected
+                  ? "border-2 border-primary shadow-lg"
+                  : "border-2 border-gray-200"
+              }`}
+            >
+              <div className="font-bold text-lg mb-2">{jigName}</div>
+              <div className="text-sm text-gray-500 mb-1">
+                {isEmpty ? "Empty" : `${pct}% used`}
+              </div>
+              <Progress value={pct} className="h-2 mb-2" />
+              <div className="text-xs text-gray-500">
+                {isEmpty
+                  ? "–"
+                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""}`}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Selected JIG Details */}
+      {selectedJig && (
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold">{selectedJig}</h3>
+            <span className="text-lg text-gray-500">
+              {Math.round(jigUsed(selectedJig, jigA))}% loaded
+            </span>
+          </div>
+
+          <div
+            onClick={() => photoInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
+          >
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePhotoUpload(file);
+              }}
+            />
+            {uploadedJigPhoto ? (
+              <div className="relative w-full aspect-video">
+                <Image
+                  src={uploadedJigPhoto}
+                  alt="Loaded JIG"
+                  fill
+                  className="object-cover rounded"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <>
+                <LuCamera className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-gray-500">Tap to photograph loaded JIG</p>
+              </>
+            )}
+          </div>
+
+          {/* Jobs on this JIG */}
+          {getJigJobs(selectedJig).length > 0 && (
+            <div className="space-y-3">
+              {getJigJobs(selectedJig).map((assignment) => {
+                const job = jobs.find((j) => j.id === assignment.jobId);
+                if (!job) return null;
+
+                const isConfirming = confirmingRemoveId === assignment.id;
+
+                return (
+                  <div
+                    key={assignment.id}
+                    onClick={() =>
+                      !isConfirming && handleEditJobClick(assignment, job)
+                    }
+                    className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-bold text-lg">{job.po_number}</div>
+                        <div className="text-sm text-gray-600">
+                          {job.customer_name} —{" "}
+                          {job.plating === "gold" ? "Gold" : "Silver"}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {assignment.pct}% · tap to edit
+                      </div>
+                    </div>
+
+                    {isConfirming ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={(e) => handleConfirmRemove(assignment.id, e)}
+                          className="bg-red-100 text-red-700 hover:bg-red-200 border-2 border-red-300 font-semibold"
+                        >
+                          Yes, remove
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleCancelRemove}
+                          className="bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300 font-semibold"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={(e) => handleRemoveClick(assignment.id, e)}
+                        className="w-full border-2 border-red-300 text-red-600 hover:bg-red-50"
+                      >
+                        Remove from JIG
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <Button
+            onClick={handleAddJobClick}
+            className="w-full h-12 md:h-14 text-sm md:text-lg font-semibold"
+            size="lg"
+          >
+            + Add job to {selectedJig}
+          </Button>
+
+          {/* Mark JIG Complete */}
+          <Button
+            onClick={handleCompleteJigClick}
+            className={`w-full h-12 md:h-14 text-sm md:text-lg font-semibold ${
+              jigUsed(selectedJig, jigA) < 100
+                ? "bg-gray-300 text-gray-500 hover:bg-gray-400"
+                : "bg-emerald-600 hover:bg-emerald-700"
+            }`}
+            size="lg"
+          >
+            ✓ Mark {selectedJig} complete — out of tank
+          </Button>
+        </div>
+      )}
+
+      {/* Job Selector Modal */}
+      {showJobSelector && selectedJig && (
+        <Overlay onClose={() => setShowJobSelector(false)}>
+          <div className="p-6">
+            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">
+              Add job to {selectedJig}
+            </h2>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+              <p className="text-blue-700 font-medium">
+                {spaceRemaining}% space remaining on {selectedJig}
+              </p>
+            </div>
+
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              SELECT A JOB
+            </h3>
+
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search PO, customer, parts..."
+              className="w-full mb-4"
+            />
+
+            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+              {filteredJobs.map((job) => {
+                const isRework = job.isRework;
+                const isInternal = job.isInternal;
+                const isSelected = selectedJobForAssignment?.id === job.id;
+
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => handleJobClick(job)}
+                    className={`border-2 rounded-lg p-3 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-yellow-400 bg-yellow-50"
+                        : isRework || isInternal
+                          ? "border-orange-400 bg-orange-50 hover:shadow-md"
+                          : "border-gray-200 hover:border-primary hover:shadow-md"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        {(isRework || isInternal) && (
+                          <LuWrench className="text-orange-600" />
+                        )}
+                        <span className="font-bold text-base">
+                          {isRework || isInternal ? "Rework" : job.po_number}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(isRework || isInternal) && (
+                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                            Space holder
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded font-medium">
+                            Select
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-gray-600 mb-1">
+                      {isRework || isInternal
+                        ? "Internal rework — no invoice"
+                        : job.customer_name}
+                    </div>
+
+                    {!isRework && !isInternal && (
+                      <>
+                        <div className="text-xs text-gray-500 mb-2">
+                          Arrived:{" "}
+                          {new Date(job.createdAt).toLocaleDateString("en-NZ", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}{" "}
+                          {new Date(job.createdAt).toLocaleTimeString("en-NZ", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
+                        </div>
+                        <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
+                          {job.plating === "gold" ? "Gold" : "Silver"}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+
+              {filteredJobs.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No jobs found
+                </div>
+              )}
+            </div>
+
+            {/* Assignment Details */}
+            {selectedJobForAssignment && (
+              <div className="border-t pt-4 space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold mb-2">
+                    Selected: {selectedJobForAssignment.po_number} —{" "}
+                    {selectedJobForAssignment.customer_name}
+                  </h3>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Space this job takes on {selectedJig} (%)
+                  </label>
+                  <Input
+                    type="number"
+                    value={assignmentPercentage}
+                    onChange={(e) => setAssignmentPercentage(e.target.value)}
+                    placeholder="e.g. 25"
+                    min="1"
+                    max={spaceRemaining}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                    JIG PHOTO (OPTIONAL)
+                  </label>
+                  <div
+                    onClick={() => jigPhotoInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                  >
+                    <input
+                      ref={jigPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleJigPhotoUpload(file);
+                      }}
+                    />
+                    {jigPhoto ? (
+                      <div className="relative w-full aspect-video">
+                        <Image
+                          src={jigPhoto}
+                          alt="JIG"
+                          fill
+                          className="object-cover rounded"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <LuCamera className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-500">
+                          Tap to photograph loaded JIG
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="text-base font-semibold text-gray-900">
+                        PO complete — all parts processed
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Job moves straight to Dispatch
+                      </div>
+                    </div>
+                    <Switch
+                      checked={poComplete}
+                      onCheckedChange={setPoComplete}
+                      className="ml-3"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleConfirmAssignment}
+                  className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600"
+                >
+                  Confirm — add to {selectedJig}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedJobForAssignment(null)}
+                  className="w-full h-12 text-base"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        </Overlay>
+      )}
+
+      {/* Edit Job Assignment Modal */}
+      {showEditModal && editingAssignment && selectedJig && (
+        <Overlay onClose={() => setShowEditModal(false)}>
+          <div className="p-6">
+            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">
+              Edit JIG — {editingAssignment.job.po_number}
+            </h2>
+
+            {/* Job Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="font-bold text-xl mb-1">
+                {editingAssignment.job.po_number}
+              </div>
+              <div className="text-gray-600">
+                {editingAssignment.job.customer_name}
+              </div>
+            </div>
+
+            {/* JIG Status */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+              <p className="text-blue-700 font-medium">
+                {selectedJig} — {Math.round(jigUsed(selectedJig, jigA))}% loaded
+              </p>
+            </div>
+
+            {/* Space Percentage */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Space this job takes (%)
+              </label>
+              <Input
+                type="number"
+                value={editPercentage}
+                onChange={(e) => setEditPercentage(e.target.value)}
+                min="1"
+                max="100"
+                className="w-full text-lg"
+              />
+            </div>
+
+            {/* JIG Photo */}
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                JIG PHOTO
+              </label>
+              <div
+                onClick={() => editJigPhotoInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              >
+                <input
+                  ref={editJigPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleEditJigPhotoUpload(file);
+                  }}
+                />
+                {editJigPhoto ? (
+                  <div className="relative w-full aspect-video">
+                    <Image
+                      src={editJigPhoto}
+                      alt="JIG"
+                      fill
+                      className="object-cover rounded"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <LuCamera className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                    <p className="text-gray-500">Tap to add photo</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* PO Complete Toggle */}
+            <div className="border border-gray-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-gray-900">
+                    PO complete — all parts processed
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Job moves to Dispatch when toggled on
+                  </div>
+                </div>
+                <Switch
+                  checked={editPoComplete}
+                  onCheckedChange={setEditPoComplete}
+                  className="ml-3"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <Button
+              onClick={handleSaveEdit}
+              className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 mb-3"
+            >
+              Save changes
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowEditModal(false)}
+              className="w-full h-12 text-base"
+            >
+              Cancel
+            </Button>
+          </div>
+        </Overlay>
+      )}
+
+      {/* Incomplete JIG Dialog */}
+      <AlertDialog
+        open={showIncompleteDialog}
+        onOpenChange={setShowIncompleteDialog}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Cannot complete {incompleteJigInfo.name} — only{" "}
+              {incompleteJigInfo.percent}% loaded.
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-2">
+              <p>JIG must be at 100% before marking complete.</p>
+              <p className="font-medium">
+                Add a Rework allocation or additional job to fill the remaining{" "}
+                {100 - incompleteJigInfo.percent}%.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
