@@ -1,35 +1,27 @@
 "use client";
 
-import type { IJob, IJigAssignment, ISettings } from "@/types/interfaces";
+import { useStore } from "@/store/useStore";
+import type { IJob } from "@/types/interfaces";
 import { isReady, calcPrice } from "@/lib/helpers";
 import { genFPN, genCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 
-interface DispatchViewProps {
-  jobs: IJob[];
-  jigA: IJigAssignment[];
-  settings: ISettings;
-  invSeq: number;
-  onDispatch: (job: IJob, invoiceNumber: string) => void;
-  onShowToast: (msg: string) => void;
-}
+export default function DispatchPage() {
+  const jobs = useStore((state) => state.jobs);
+  const jigA = useStore((state) => state.jigA);
+  const settings = useStore((state) => state.settings);
+  const invSeq = useStore((state) => state.invSeq);
+  const handleDispatch = useStore((state) => state.handleDispatch);
+  const showToast = useStore((state) => state.showToast);
 
-export const DispatchView: React.FC<DispatchViewProps> = ({
-  jobs,
-  jigA,
-  settings,
-  invSeq,
-  onDispatch,
-  onShowToast,
-}) => {
   const readyJobs = jobs.filter((j) => isReady(j, jigA) && !j.dispatchedAt);
   const dispatchedJobs = jobs
     .filter((j) => j.dispatchedAt && !j.fpnHidden)
     .sort((a, b) => (b.dispatchedAt || 0) - (a.dispatchedAt || 0));
 
-  const handleDispatch = (job: IJob) => {
+  const handleDispatchJob = (job: IJob) => {
     const invoiceNumber =
       job.isInternal || job.isRework
         ? "INTERNAL"
@@ -43,31 +35,29 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
       csvDownloaded: false,
     };
 
-    onDispatch(dispatchedJob, invoiceNumber);
+    handleDispatch(dispatchedJob, invoiceNumber);
 
-    // Generate FPN
     genFPN(dispatchedJob);
 
-    // Generate CSV if not internal
     if (!job.isInternal && !job.isRework) {
       genCSV(dispatchedJob, settings);
     }
 
-    onShowToast(`Dispatched: ${job.po_number}`);
+    showToast(`Dispatched: ${job.po_number}`);
   };
 
   const handleDownloadFPN = (job: IJob) => {
     genFPN(job);
-    onShowToast("FPN downloaded");
+    showToast("FPN downloaded");
   };
 
   const handleDownloadCSV = (job: IJob) => {
     if (job.isInternal || job.isRework) {
-      onShowToast("Internal jobs do not generate CSV");
+      showToast("Internal jobs do not generate CSV");
       return;
     }
     genCSV(job, settings);
-    onShowToast("CSV downloaded");
+    showToast("CSV downloaded");
   };
 
   return (
@@ -115,7 +105,7 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
               </div>
 
               <Button
-                onClick={() => handleDispatch(j)}
+                onClick={() => handleDispatchJob(j)}
                 className="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold"
                 variant="outline"
               >
@@ -180,4 +170,4 @@ export const DispatchView: React.FC<DispatchViewProps> = ({
       )}
     </div>
   );
-};
+}

@@ -13,7 +13,7 @@
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 1.25rem;
+    padding: 0.5rem;
     background-color: #f0f0f0;
     color: hsl(var(--foreground));
     @apply bg-background text-foreground;

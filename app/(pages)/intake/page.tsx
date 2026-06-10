@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useStore } from "@/store/useStore";
 import type {
   IJob,
   IContact,
   IPart,
   IItem,
-  IJigAssignment,
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
@@ -14,27 +14,18 @@ import { CONTACTS, fixOrientation } from "@/lib/helpers";
 import { scanPODocument } from "@/actions/scan-po";
 import ITEMS from "@/data/items.json";
 import { FiPlus } from "react-icons/fi";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Switch } from "./ui/switch";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
-interface IntakeViewProps {
-  jobs: IJob[];
-  jigA: IJigAssignment[];
-  onSave: (job: IJob) => void;
-  onUpdateJob: (job: IJob) => void;
-  onDeleteJob: (jobId: string) => void;
-  onShowToast: (msg: string) => void;
-}
+export default function IntakePage() {
+  const jobs = useStore((state) => state.jobs);
+  const jigA = useStore((state) => state.jigA);
+  const handleSaveJob = useStore((state) => state.handleSaveJob);
+  const handleUpdateJob = useStore((state) => state.handleUpdateJob);
+  const handleDeleteJob = useStore((state) => state.handleDeleteJob);
+  const showToast = useStore((state) => state.showToast);
 
-export const IntakeView: React.FC<IntakeViewProps> = ({
-  jobs,
-  jigA,
-  onSave,
-  onUpdateJob,
-  onDeleteJob,
-  onShowToast,
-}) => {
   const [showSheet, setShowSheet] = useState(false);
   const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
@@ -76,7 +67,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
     setScanResult("");
 
     try {
-      // Read and process the file
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -86,33 +76,24 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      console.log("T1");
-      // Save the image to state
+
       setPoPic(dataUrl);
-
-      // Extract base64 data (remove data:image/jpeg;base64, prefix)
       const base64Data = dataUrl.split(",")[1];
-
-      // Call server action
       const result = await scanPODocument(base64Data);
-      console.log("T1", result);
-      // Set PO number
+
       if (result.po_number) {
         setPoNumber(result.po_number);
       }
 
-      // Set customer
       if (result.customer) {
         setCustomer(result.customer);
         setCustomerInput(result.customer.name);
       }
 
-      // Set parts
       if (result.parts.length > 0) {
         setParts(result.parts);
       }
 
-      // Set urgent flag
       if (result.urgent) {
         setUrgent(true);
       }
@@ -120,10 +101,10 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
       setScanResult(
         `✓ Scanned: ${result.customer_name || "Unknown"} - ${result.parts.length} parts found`,
       );
-      onShowToast("PO scanned successfully");
+      showToast("PO scanned successfully");
     } catch (err: any) {
       setScanResult(`Error: ${err.message}`);
-      onShowToast("Scan failed: " + err.message);
+      showToast("Scan failed: " + err.message);
     } finally {
       setScanning(false);
     }
@@ -133,30 +114,28 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
     const reader = new FileReader();
     reader.onloadend = () => {
       setPartsPic(reader.result as string);
-      onShowToast("Parts photo added");
+      showToast("Parts photo added");
     };
     reader.readAsDataURL(file);
   };
 
   const handleSave = () => {
     if (!customer && !isInternal) {
-      onShowToast("Please select a customer");
+      showToast("Please select a customer");
       return;
     }
 
     if (!po_number.trim()) {
-      onShowToast("Please enter a PO number");
+      showToast("Please enter a PO number");
       return;
     }
 
-    // Check for duplicate PO (only when creating new job)
     if (!editingJobId && jobs.some((j) => j.po_number === po_number)) {
-      onShowToast("PO number already exists");
+      showToast("PO number already exists");
       return;
     }
 
     if (editingJobId) {
-      // Update existing job
       const existingJob = jobs.find((j) => j.id === editingJobId);
       if (!existingJob) return;
 
@@ -183,13 +162,11 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         partDescription: partsDescription,
       };
 
-      onUpdateJob(updatedJob);
+      handleUpdateJob(updatedJob);
       resetForm();
       setShowSheet(false);
-      onShowToast("Job updated: " + po_number);
+      showToast("Job updated: " + po_number);
     } else {
-      // Create new job
-
       const now = Date.now();
       const job: IJob = {
         id: now.toString(),
@@ -226,10 +203,10 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         csvDownloaded: false,
       };
 
-      onSave(job);
+      handleSaveJob(job);
       resetForm();
       setShowSheet(false);
-      onShowToast("Job created: " + po_number);
+      showToast("Job created: " + po_number);
     }
   };
 
@@ -289,12 +266,10 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
 
     const term = partSearchTerm.toLowerCase();
     return ITEMS.filter((item) => {
-      // Match search term
       const matchesTerm =
         item.code.toLowerCase().includes(term) ||
         item.desc.toLowerCase().includes(term);
 
-      // Filter by customer if one is selected (not for internal jobs)
       const matchesCustomer =
         !customer || isInternal || item.customer === customer.account;
 
@@ -343,7 +318,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
 
   return (
     <div className="relative h-full">
-      {/* Header with job count and FAB */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div className="text-base text-gray-600">
           On floor:{" "}
@@ -353,7 +327,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         </div>
         <Button
           onClick={() => setShowSheet(true)}
-          size="icon-lg"
+          size="icon"
           className="w-10 h-10 rounded-full"
           aria-label="Add new job"
         >
@@ -361,7 +335,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         </Button>
       </div>
 
-      {/* Empty state */}
       {jobs.length === 0 && (
         <div className="text-center py-16">
           <div className="text-7xl mb-4">🏭</div>
@@ -372,7 +345,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         </div>
       )}
 
-      {/* Job list grouped by date */}
       {jobs.length > 0 && !selectedJob && (
         <div className="space-y-4">
           {Object.entries(groupJobsByDate()).map(([dateLabel, dateJobs]) => (
@@ -459,10 +431,8 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
         </div>
       )}
 
-      {/* Job Detail View */}
       {selectedJob && (
         <div className="pb-20">
-          {/* Back button and actions */}
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setSelectedJob(null)}
@@ -474,9 +444,9 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               <button
                 onClick={() => {
                   if (window.confirm(`Delete job ${selectedJob.po_number}?`)) {
-                    onDeleteJob(selectedJob.id);
+                    handleDeleteJob(selectedJob.id);
                     setSelectedJob(null);
-                    onShowToast("Job deleted");
+                    showToast("Job deleted");
                   }
                 }}
                 className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50"
@@ -510,7 +480,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                   setPartsPic(selectedJob.partsPic);
                   setSelectedJob(null);
                   setShowSheet(true);
-                  onShowToast("Editing job");
+                  showToast("Editing job");
                 }}
                 className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg"
               >
@@ -519,7 +489,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           </div>
 
-          {/* Job header */}
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-bold text-xl">{selectedJob.po_number}</span>
@@ -548,7 +517,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           </div>
 
-          {/* PARTS Section */}
           {selectedJob.parts.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -578,7 +546,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           )}
 
-          {/* PARTS ON ARRIVAL */}
           {selectedJob.partsPic && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -592,7 +559,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           )}
 
-          {/* JIG ASSIGNMENTS */}
           <div className="mb-4">
             <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
               JIG ASSIGNMENTS
@@ -602,7 +568,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           </div>
 
-          {/* PARTS DESCRIPTION */}
           {selectedJob.partDescription && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -614,7 +579,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             </div>
           )}
 
-          {/* JOB TIMELINE */}
           <div className="mb-4">
             <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
               JOB TIMELINE
@@ -648,7 +612,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
             <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
             <h2 className="text-[17px] font-bold mb-4">Enter Job</h2>
 
-            {/* SCAN PO Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
                 SCAN PO —{" "}
@@ -710,7 +673,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               )}
             </div>
 
-            {/* CUSTOMER Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 CUSTOMER
@@ -755,7 +717,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               )}
             </div>
 
-            {/* PO Number */}
             <div className="mb-4">
               <label className="text-[13px] font-medium text-gray-700 mb-1.5 block">
                 PO number{" "}
@@ -772,7 +733,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               />
             </div>
 
-            {/* Contact Number */}
             <div className="mb-4">
               <label className="text-[13px] font-medium text-gray-700 mb-1.5 block">
                 Contact number{" "}
@@ -789,7 +749,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               />
             </div>
 
-            {/* Parts Description */}
             <div className="mb-5">
               <label className="text-[13px] font-medium text-gray-700 mb-1.5 block">
                 Parts description{" "}
@@ -806,7 +765,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               />
             </div>
 
-            {/* PLATING Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 PLATING
@@ -835,7 +793,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               </div>
             </div>
 
-            {/* JIG RATE OPTIONS Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 JIG RATE OPTIONS —{" "}
@@ -885,7 +842,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               </div>
             </div>
 
-            {/* PARTS Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 PARTS ({parts.length}/15)
@@ -1023,7 +979,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               )}
             </div>
 
-            {/* PARTS / ARRIVAL PHOTO Section */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 PARTS / ARRIVAL PHOTO{" "}
@@ -1072,7 +1027,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               )}
             </div>
 
-            {/* Collection Instructions */}
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                 COLLECTION INSTRUCTIONS / NOTES
@@ -1086,9 +1040,7 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               />
             </div>
 
-            {/* Job Options */}
             <div className="space-y-3 mb-5">
-              {/* Urgent - Red Border */}
               <div className="border-2 border-red-300 rounded-lg p-3 bg-red-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -1108,7 +1060,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 </div>
               </div>
 
-              {/* Internal TGAEP */}
               <div className="border border-gray-300 rounded-lg p-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -1128,7 +1079,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 </div>
               </div>
 
-              {/* Freight Requested */}
               <div className="border border-gray-300 rounded-lg p-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -1148,7 +1098,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 </div>
               </div>
 
-              {/* Minimum Charge */}
               <div className="border border-gray-300 rounded-lg p-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -1168,7 +1117,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
                 </div>
               </div>
 
-              {/* Flag This Job - Orange Border */}
               <div className="border-2 border-orange-300 rounded-lg p-3 bg-orange-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -1190,7 +1138,6 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
@@ -1214,4 +1161,4 @@ export const IntakeView: React.FC<IntakeViewProps> = ({
       )}
     </div>
   );
-};
+}

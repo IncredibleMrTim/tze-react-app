@@ -1,22 +1,16 @@
-'use client'
+"use client";
 
 import { useState } from "react";
-import type { IJob, IJigAssignment } from "@/types/interfaces";
+import { useStore } from "@/store/useStore";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady } from "@/lib/helpers";
 
-interface JobsViewProps {
-  jobs: IJob[];
-  jigA: IJigAssignment[];
-  onJobClick: (job: IJob) => void;
-}
+export default function JobsPage() {
+  const jobs = useStore((state) => state.jobs);
+  const jigA = useStore((state) => state.jigA);
+  const handleJobClick = useStore((state) => state.handleJobClick);
 
-export const JobsView: React.FC<JobsViewProps> = ({
-  jobs,
-  jigA,
-  onJobClick,
-}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -33,7 +27,6 @@ export const JobsView: React.FC<JobsViewProps> = ({
   const filtered = jobs.filter((j) => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      // Search across PO, customer, part codes, and descriptions
       const matchesPO = j.po_number.toLowerCase().includes(term);
       const matchesCustomer = j.customer_name.toLowerCase().includes(term);
       const matchesParts = j.parts.some(
@@ -46,7 +39,6 @@ export const JobsView: React.FC<JobsViewProps> = ({
       }
     }
 
-    // Filter by date based on selected mode
     const dateToCheck =
       dateMode === "created" ? j.createdAt : j.dispatchedAt || 0;
     if (dateFrom && dateToCheck < new Date(dateFrom).getTime()) return false;
@@ -136,7 +128,7 @@ export const JobsView: React.FC<JobsViewProps> = ({
               key={j.id}
               job={j}
               jigA={jigA}
-              onClick={() => onJobClick(j)}
+              onClick={() => handleJobClick(j)}
             />
           ))}
         </div>
@@ -152,7 +144,7 @@ export const JobsView: React.FC<JobsViewProps> = ({
               key={j.id}
               job={j}
               jigA={jigA}
-              onClick={() => onJobClick(j)}
+              onClick={() => handleJobClick(j)}
             />
           ))}
         </div>
@@ -168,7 +160,7 @@ export const JobsView: React.FC<JobsViewProps> = ({
               key={j.id}
               job={j}
               jigA={jigA}
-              onClick={() => onJobClick(j)}
+              onClick={() => handleJobClick(j)}
             />
           ))}
         </div>
@@ -203,4 +195,4 @@ export const JobsView: React.FC<JobsViewProps> = ({
         )}
     </div>
   );
-};
+}
