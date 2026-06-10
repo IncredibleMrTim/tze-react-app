@@ -1,4 +1,4 @@
-'use server'
+"use server";
 
 import type { IContact, IPart } from "@/types/interfaces";
 import { resolveCustomer } from "@/lib/helpers";
@@ -21,11 +21,13 @@ export interface ScanPOResponse {
   urgent: boolean;
 }
 
-export async function scanPODocument(base64Data: string): Promise<ScanPOResponse> {
+export async function scanPODocument(
+  base64Data: string,
+): Promise<ScanPOResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!apiKey) {
-    throw new Error('No API key configured');
+    throw new Error("No API key configured");
   }
 
   // Call Claude API to extract PO data
@@ -41,21 +43,25 @@ export async function scanPODocument(base64Data: string): Promise<ScanPOResponse
   try {
     parsed = JSON.parse(rawResponse);
   } catch (error) {
-    throw new Error('Could not parse JSON response from Claude API', {
+    throw new Error("Could not parse JSON response from Claude API", {
       cause: error,
     });
   }
-
-  const po_number = parsed.po_number || '';
-  const customer_name = parsed.customer_name || '';
+  console.log("T2 - Parsed from Claude:", parsed);
+  const po_number = parsed.po_number || "";
+  const customer_name = parsed.customer_name || "";
   const scannedParts = parsed.parts || [];
-  const urgent = rawResponse.toUpperCase().includes('URGENT');
+  const urgent = rawResponse.toUpperCase().includes("URGENT");
+
+  console.log("T2 - Scanned parts from Claude:", scannedParts);
 
   // Resolve customer from name
   const customer = customer_name ? resolveCustomer(customer_name) : null;
+  console.log("T2 - Customer resolved:", customer?.name || "NOT FOUND");
 
   // Match scanned parts to inventory
   const parts = matchScannedParts(scannedParts, customer);
+  console.log("T2 - Matched parts:", parts);
 
   return {
     po_number,
