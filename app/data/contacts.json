@@ -2,897 +2,1435 @@
   {
     "name": "A&G PRICE Ltd",
     "account": "AGP",
-    "email": "grace.rowe@agprice.co.nz"
+    "email": "grace.rowe@agprice.co.nz",
+    "alias": [
+      "A&G PRICE Ltd"
+    ]
   },
   {
     "name": "A. One Switch Boards Ltd",
     "account": "A1SB",
-    "email": "accounts@aionline.co.nz"
+    "email": "accounts@aionline.co.nz",
+    "alias": [
+      "A. One Switch Boards Ltd"
+    ]
   },
   {
     "name": "Absolute Access",
     "account": "AA",
-    "email": "accounts@absoluteaccess.co.nz"
+    "email": "accounts@absoluteaccess.co.nz",
+    "alias": [
+      "Absolute Access"
+    ]
   },
   {
     "name": "Active Engineering Solutions",
     "account": "AES",
-    "email": "accountspayable@activevma.co.nz"
+    "email": "accountspayable@activevma.co.nz",
+    "alias": [
+      "Active Engineering Solutions"
+    ]
   },
   {
     "name": "Addline Transport",
     "account": "ADDL",
-    "email": "seanw@addlinetransport.co.nz"
+    "email": "seanw@addlinetransport.co.nz",
+    "alias": [
+      "Addline Transport"
+    ]
   },
   {
     "name": "Advance Steel Engineering",
     "account": "ASE",
-    "email": "office@aseltd.co.nz"
+    "email": "office@aseltd.co.nz",
+    "alias": [
+      "Advance Steel Engineering"
+    ]
   },
   {
     "name": "Aero Machinists & Engineers Limited",
     "account": "AMEL",
-    "email": "aeromachinists@xtra.co.nz"
+    "email": "aeromachinists@xtra.co.nz",
+    "alias": [
+      "Aero Machinists & Engineers Limited"
+    ]
   },
   {
     "name": "Aeropanel",
     "account": "APAN",
-    "email": "admin@aeropanel.co.nz"
+    "email": "admin@aeropanel.co.nz",
+    "alias": [
+      "Aeropanel"
+    ]
   },
   {
     "name": "Agility Stuff Ltd",
     "account": "ASL",
-    "email": "schnauzer@agilitystuff.co.nz"
+    "email": "schnauzer@agilitystuff.co.nz",
+    "alias": [
+      "Agility Stuff Ltd"
+    ]
   },
   {
     "name": "Alert Engineering",
     "account": "ALERT",
-    "email": "jeremy@alertnz.co.nz"
+    "email": "jeremy@alertnz.co.nz",
+    "alias": [
+      "Alert Engineering"
+    ]
   },
   {
     "name": "Allied Industrial Engineering",
     "account": "AIE",
-    "email": "louise.mitchell@aie.co.nz"
+    "email": "louise.mitchell@aie.co.nz",
+    "alias": [
+      "Allied Industrial Engineering"
+    ]
   },
   {
     "name": "Alted Engineering",
     "account": "ALTE",
-    "email": "bennet@altedengineering.co.nz"
+    "email": "bennet@altedengineering.co.nz",
+    "alias": [
+      "Alted Engineering"
+    ]
   },
   {
     "name": "Alton Drilling Ltd",
     "account": "ADL",
-    "email": "emma@altondrilling.nz"
+    "email": "emma@altondrilling.nz",
+    "alias": [
+      "Alton Drilling Ltd"
+    ]
   },
   {
     "name": "Arcryte Limited",
     "account": "ARC",
-    "email": "brett@arcryte.co.nz"
+    "email": "brett@arcryte.co.nz",
+    "alias": [
+      "Arcryte Limited"
+    ]
   },
   {
     "name": "AVID Concept Design Manufacture",
     "account": "AVID",
-    "email": "chris@avid.nz"
+    "email": "chris@avid.nz",
+    "alias": [
+      "AVID Concept Design Manufacture"
+    ]
   },
   {
     "name": "Balmac Manufacturing",
     "account": "BMAC",
-    "email": "info@balmacservices.co.nz"
+    "email": "info@balmacservices.co.nz",
+    "alias": [
+      "Balmac Manufacturing"
+    ]
   },
   {
     "name": "Bayform",
     "account": "BAYF",
-    "email": "admin@bayform.co.nz"
+    "email": "admin@bayform.co.nz",
+    "alias": [
+      "Bayform"
+    ]
   },
   {
     "name": "Baytex structurflex LTD",
     "account": "BAYT",
-    "email": "accounts@baytex.co.nz"
+    "email": "accounts@baytex.co.nz",
+    "alias": [
+      "Baytex structurflex LTD"
+    ]
   },
   {
     "name": "Beacon Engineering",
     "account": "BCON",
-    "email": "beacon.enterprises@outlook.co.nz"
+    "email": "beacon.enterprises@outlook.co.nz",
+    "alias": [
+      "Beacon Engineering"
+    ]
   },
   {
     "name": "Bell Precision Engineering",
     "account": "BELL",
-    "email": "gary.bpe@xtra.co.nz"
+    "email": "gary.bpe@xtra.co.nz",
+    "alias": [
+      "Bell Precision Engineering"
+    ]
   },
   {
     "name": "Bennett Mirror & Glass",
     "account": "BMG",
-    "email": "mirrors@bennettmirror.co.nz"
+    "email": "mirrors@bennettmirror.co.nz",
+    "alias": [
+      "Bennett Mirror & Glass"
+    ]
   },
   {
     "name": "Bethlehem Motors",
     "account": "BMOT",
-    "email": "service@bethlehemmotors.co.nz"
+    "email": "service@bethlehemmotors.co.nz",
+    "alias": [
+      "Bethlehem Motors"
+    ]
   },
   {
     "name": "Blaymires Engineering",
     "account": "BLAY",
-    "email": "blaymires@xtra.co.nz"
+    "email": "blaymires@xtra.co.nz",
+    "alias": [
+      "Blaymires Engineering"
+    ]
   },
   {
     "name": "BLM Engineering",
     "account": "BLME",
-    "email": "accounts@blmnz.com"
+    "email": "accounts@blmnz.com",
+    "alias": [
+      "BLM Engineering"
+    ]
   },
   {
     "name": "Bluerock Innovations Ltd.",
     "account": "BRI",
-    "email": "b.lloyd@xtra.co.nz"
+    "email": "b.lloyd@xtra.co.nz",
+    "alias": [
+      "Bluerock Innovations Ltd."
+    ]
   },
   {
     "name": "BOP Gear Cutting",
     "account": "BOP",
-    "email": "admin@bopgears.co.nz"
+    "email": "admin@bopgears.co.nz",
+    "alias": [
+      "BOP Gear Cutting"
+    ]
   },
   {
     "name": "Boshier Engineering",
     "account": "BOSH",
-    "email": "boshengine@xtra.co.nz"
+    "email": "boshengine@xtra.co.nz",
+    "alias": [
+      "Boshier Engineering"
+    ]
   },
   {
     "name": "Browne Engineering",
     "account": "BROWN",
-    "email": "andrew@browneengineering.co.nz"
+    "email": "andrew@browneengineering.co.nz",
+    "alias": [
+      "Browne Engineering"
+    ]
   },
   {
     "name": "Camco Industries",
     "account": "CAMCO",
-    "email": "michael@camcoindustries.co.nz"
+    "email": "michael@camcoindustries.co.nz",
+    "alias": [
+      "Camco Industries"
+    ]
   },
   {
     "name": "Camengineering",
     "account": "CAME",
-    "email": "camservicesnz@gmail.com"
+    "email": "camservicesnz@gmail.com",
+    "alias": [
+      "Camengineering"
+    ]
   },
   {
     "name": "Cash Sale",
     "account": "CS",
-    "email": "mountviewfarm61@gmail.com"
+    "email": "mountviewfarm61@gmail.com",
+    "alias": [
+      "Cash Sale"
+    ]
   },
   {
     "name": "Chaytor fences LTD",
     "account": "CHAY",
-    "email": "admin@chaytorfences.co.nz"
+    "email": "admin@chaytorfences.co.nz",
+    "alias": [
+      "Chaytor fences LTD"
+    ]
   },
   {
     "name": "CM Safety Ltd.",
     "account": "CMS",
-    "email": "gdsindustries@xtra.co.nz"
+    "email": "gdsindustries@xtra.co.nz",
+    "alias": [
+      "CM Safety Ltd."
+    ]
   },
   {
     "name": "Coastline Automotive",
     "account": "CLA",
-    "email": "dmathers@xtra.co.nz"
+    "email": "dmathers@xtra.co.nz",
+    "alias": [
+      "Coastline Automotive"
+    ]
   },
   {
     "name": "colchester engineering LTD",
     "account": "COLE",
-    "email": "accounts@colchester.co.nz"
+    "email": "accounts@colchester.co.nz",
+    "alias": [
+      "colchester engineering LTD"
+    ]
   },
   {
     "name": "Connett Engineering Ltd.",
     "account": "CONET",
-    "email": "workshop@connettengineering.co.nz"
+    "email": "workshop@connettengineering.co.nz",
+    "alias": [
+      "Connett Engineering Ltd."
+    ]
   },
   {
     "name": "Contract Mechanical Services",
     "account": "CTMS",
-    "email": "mount@contractmech.co.nz"
+    "email": "mount@contractmech.co.nz",
+    "alias": [
+      "Contract Mechanical Services"
+    ]
   },
   {
     "name": "Covertex Ltd.",
     "account": "CTEX",
-    "email": "accounts@covertex.co.nz"
+    "email": "accounts@covertex.co.nz",
+    "alias": [
+      "Covertex Ltd."
+    ]
   },
   {
     "name": "Craft Kitchen and cabinets",
     "account": "CKC",
-    "email": "robandrebecca@xtra.co.nz"
+    "email": "robandrebecca@xtra.co.nz",
+    "alias": [
+      "Craft Kitchen and cabinets"
+    ]
   },
   {
     "name": "CRAFTY GATHERER",
     "account": "CG",
-    "email": "info@craftygatherer.co.nz"
+    "email": "info@craftygatherer.co.nz",
+    "alias": [
+      "CRAFTY GATHERER"
+    ]
   },
   {
     "name": "Cullen Engineering",
     "account": "CUL",
-    "email": "margaret@cullen.co.nz"
+    "email": "margaret@cullen.co.nz",
+    "alias": [
+      "Cullen Engineering"
+    ]
   },
   {
     "name": "Cut Fold NZ Ltd.",
     "account": "CUTF",
-    "email": "sales@cutfoldnz.co.nz"
+    "email": "sales@cutfoldnz.co.nz",
+    "alias": [
+      "Cut Fold NZ Ltd."
+    ]
   },
   {
     "name": "Daltons Ltd",
     "account": "DALT",
-    "email": "payables@daltons.co.nz"
+    "email": "payables@daltons.co.nz",
+    "alias": [
+      "Daltons Ltd"
+    ]
   },
   {
     "name": "Danz Engineering",
     "account": "DANZ",
-    "email": "accounts@danz.net.nz"
+    "email": "accounts@danz.net.nz",
+    "alias": [
+      "Danz Engineering"
+    ]
   },
   {
     "name": "Domett Truck & Trailer",
     "account": "DOM",
-    "email": "admin@dttl.co.nz"
+    "email": "admin@dttl.co.nz",
+    "alias": [
+      "Domett Truck & Trailer"
+    ]
   },
   {
     "name": "Donaldson Mechanical",
     "account": "DONM",
-    "email": "jo@donaldsonmechanical.co.nz"
+    "email": "jo@donaldsonmechanical.co.nz",
+    "alias": [
+      "Donaldson Mechanical"
+    ]
   },
   {
     "name": "Earnest Engineering",
     "account": "ERNE",
-    "email": "craig@earnestengineering.co.nz"
+    "email": "craig@earnestengineering.co.nz",
+    "alias": [
+      "Earnest Engineering"
+    ]
   },
   {
     "name": "Easy CNC",
     "account": "ECNC",
-    "email": "iain.hughes@outlook.com"
+    "email": "iain.hughes@outlook.com",
+    "alias": [
+      "Easy CNC"
+    ]
   },
   {
     "name": "Easygate",
     "account": "EASG",
-    "email": "ray@easygate.co.nz"
+    "email": "ray@easygate.co.nz",
+    "alias": [
+      "Easygate"
+    ]
   },
   {
     "name": "Electrical & Machinery Services ltd",
     "account": "EMS",
-    "email": "accounts@emsrotorua.co.nz"
+    "email": "accounts@emsrotorua.co.nz",
+    "alias": [
+      "Electrical & Machinery Services ltd"
+    ]
   },
   {
     "name": "Equipmaster NZ",
     "account": "EQMNZ",
-    "email": "info@equipmaster.co.nz"
+    "email": "info@equipmaster.co.nz",
+    "alias": [
+      "Equipmaster NZ"
+    ]
   },
   {
     "name": "Fabrications and Repair",
     "account": "FABR",
-    "email": "rd-tm.tarr@slingshot.co.nz"
+    "email": "rd-tm.tarr@slingshot.co.nz",
+    "alias": [
+      "Fabrications and Repair"
+    ]
   },
   {
     "name": "Fabworx",
     "account": "FABW",
-    "email": "admin@fabworx.co.nz"
+    "email": "admin@fabworx.co.nz",
+    "alias": [
+      "Fabworx"
+    ]
   },
   {
     "name": "Foremac",
     "account": "FMAC",
-    "email": "foremac@hotmail.co.nz"
+    "email": "foremac@hotmail.co.nz",
+    "alias": [
+      "Foremac"
+    ]
   },
   {
     "name": "Forest Freighters Parts & Services Ltd",
     "account": "FFPS",
-    "email": "forestfreighters@xtra.co.nz"
+    "email": "forestfreighters@xtra.co.nz",
+    "alias": [
+      "Forest Freighters Parts & Services Ltd"
+    ]
   },
   {
     "name": "fotheringhame Contractors Ltd",
     "account": "FCL",
-    "email": "fothcon@xtra.co.nz"
+    "email": "fothcon@xtra.co.nz",
+    "alias": [
+      "fotheringhame Contractors Ltd"
+    ]
   },
   {
     "name": "Franklin Engineering Ltd.",
     "account": "FRNKE",
-    "email": "accounts@franklineng.co.nz"
+    "email": "accounts@franklineng.co.nz",
+    "alias": [
+      "Franklin Engineering Ltd."
+    ]
   },
   {
     "name": "Fraser Engineering",
     "account": "FR",
-    "email": "admin@fraserengineering.co.nz"
+    "email": "admin@fraserengineering.co.nz",
+    "alias": [
+      "Fraser Engineering"
+    ]
   },
   {
     "name": "Fraser Gear Ltd",
     "account": "FGEAR",
-    "email": "admin@frasergear.co.nz"
+    "email": "admin@frasergear.co.nz",
+    "alias": [
+      "Fraser Gear Ltd"
+    ]
   },
   {
     "name": "Freedom Cabins",
     "account": "FCAB",
-    "email": "freedomcabinsnz@gmail.com"
+    "email": "freedomcabinsnz@gmail.com",
+    "alias": [
+      "Freedom Cabins"
+    ]
   },
   {
     "name": "G90 Engineering",
     "account": "G90",
-    "email": "ralph@g90engineering.co.nz"
+    "email": "ralph@g90engineering.co.nz",
+    "alias": [
+      "G90 Engineering"
+    ]
   },
   {
     "name": "Gamman Engineering",
     "account": "GAME",
-    "email": "gammaneng@xtra.co.nz"
+    "email": "gammaneng@xtra.co.nz",
+    "alias": [
+      "Gamman Engineering"
+    ]
   },
   {
     "name": "GamminCo",
-    "alias": ["GamminCo", "Gamman Industrial", "Gamman Industrial componentry limited"],
+    "alias": [
+      "GamminCo",
+      "Gamman Industrial",
+      "Gamman Industrial componentry limited"
+    ],
     "account": "GAM",
     "email": "accounts@gamminco.co.nz"
   },
   {
     "name": "Garland Engineering 2020 Limited",
     "account": "GARE",
-    "email": "garlandeng2020@outlook.co.nz"
+    "email": "garlandeng2020@outlook.co.nz",
+    "alias": [
+      "Garland Engineering 2020 Limited"
+    ]
   },
   {
     "name": "GDS IND",
     "account": "GDS",
-    "email": "gdsindustries@xtra.co.nz"
+    "email": "gdsindustries@xtra.co.nz",
+    "alias": [
+      "GDS IND"
+    ]
   },
   {
     "name": "Gear Welding Services",
     "account": "GWELD",
-    "email": "accounts@gearwelding.co.nz"
+    "email": "accounts@gearwelding.co.nz",
+    "alias": [
+      "Gear Welding Services"
+    ]
   },
   {
     "name": "Gloster Engineering Limited",
     "account": "GLE",
-    "email": "accounts@gloster.co.nz"
+    "email": "accounts@gloster.co.nz",
+    "alias": [
+      "Gloster Engineering Limited"
+    ]
   },
   {
     "name": "H.P. Easy Set",
     "account": "HPES",
-    "email": "hpeasyset@xtra.co.nz"
+    "email": "hpeasyset@xtra.co.nz",
+    "alias": [
+      "H.P. Easy Set"
+    ]
   },
   {
     "name": "Heads Racing Supplies",
     "account": "HEADR",
-    "email": "rodney@headsracingsupplies.co.nz"
+    "email": "rodney@headsracingsupplies.co.nz",
+    "alias": [
+      "Heads Racing Supplies"
+    ]
   },
   {
     "name": "High Duty Plastics Ltd",
     "account": "HDP",
-    "email": "sales@hdp.co.nz"
+    "email": "sales@hdp.co.nz",
+    "alias": [
+      "High Duty Plastics Ltd"
+    ]
   },
   {
     "name": "HUTEC",
     "account": "HUET",
-    "email": "accounts@hutec.co.nz"
+    "email": "accounts@hutec.co.nz",
+    "alias": [
+      "HUTEC"
+    ]
   },
   {
     "name": "HW Industries",
     "account": "HWI",
-    "email": "accounts@hwmaxi.com"
+    "email": "accounts@hwmaxi.com",
+    "alias": [
+      "HW Industries"
+    ]
   },
   {
     "name": "Hydraulink Hose And Fittings",
     "account": "HYDLKT",
-    "email": "bruce@hydraulinktauranga.co.nz"
+    "email": "bruce@hydraulinktauranga.co.nz",
+    "alias": [
+      "Hydraulink Hose And Fittings"
+    ]
   },
   {
     "name": "Hydraulink Tauranga Ltd",
     "account": "HYDLKW",
-    "email": "chris@hydraulinktauranga.co.nz"
+    "email": "chris@hydraulinktauranga.co.nz",
+    "alias": [
+      "Hydraulink Tauranga Ltd"
+    ]
   },
   {
     "name": "IEE",
     "account": "IEE",
-    "email": "stefanetter@iee.nz"
+    "email": "stefanetter@iee.nz",
+    "alias": [
+      "IEE"
+    ]
   },
   {
     "name": "Impact Engineering",
     "account": "IMPE",
-    "email": "Info@pipefitters.co.nz"
+    "email": "Info@pipefitters.co.nz",
+    "alias": [
+      "Impact Engineering"
+    ]
   },
   {
     "name": "Inforce Global Ltd",
     "account": "IFG",
-    "email": "Gerhard.d@inforceglobal.com"
+    "email": "Gerhard.d@inforceglobal.com",
+    "alias": [
+      "Inforce Global Ltd"
+    ]
   },
   {
     "name": "Intaks",
     "account": "INTAK",
-    "email": "admin@intaks.co.nz"
+    "email": "admin@intaks.co.nz",
+    "alias": [
+      "Intaks"
+    ]
   },
   {
     "name": "Intertruck Distributors (NZ) Ltd",
     "account": "INTD",
-    "email": "accounts@intertruck.co.nz"
+    "email": "accounts@intertruck.co.nz",
+    "alias": [
+      "Intertruck Distributors (NZ) Ltd"
+    ]
   },
   {
     "name": "Iron Design",
     "account": "IDES",
-    "email": "sales@irondesign.co.nz"
+    "email": "sales@irondesign.co.nz",
+    "alias": [
+      "Iron Design"
+    ]
   },
   {
     "name": "J S Engineering",
     "account": "JSE",
-    "email": "jse.jason@yahoo.co.nz"
+    "email": "jse.jason@yahoo.co.nz",
+    "alias": [
+      "J S Engineering"
+    ]
   },
   {
     "name": "J.P.Marshall Engineering",
     "account": "JPM",
-    "email": "creditors@jpmarshall.co.nz"
+    "email": "creditors@jpmarshall.co.nz",
+    "alias": [
+      "J.P.Marshall Engineering"
+    ]
   },
   {
     "name": "Jenkins Freshpac Systems Ltd",
     "account": "JFPS",
-    "email": "accounts@jenkinsfps.co.nz"
+    "email": "accounts@jenkinsfps.co.nz",
+    "alias": [
+      "Jenkins Freshpac Systems Ltd"
+    ]
   },
   {
     "name": "Jump Technics Ltd",
     "account": "JUMP",
-    "email": "steve@jumptechnics.com"
+    "email": "steve@jumptechnics.com",
+    "alias": [
+      "Jump Technics Ltd"
+    ]
   },
   {
     "name": "Juno Engineering Ltd",
     "account": "JUNO",
-    "email": "admin@junoengineering.co.nz"
+    "email": "admin@junoengineering.co.nz",
+    "alias": [
+      "Juno Engineering Ltd"
+    ]
   },
   {
     "name": "Kaimai Steel Precision Manufacturing",
     "account": "PEAR",
-    "email": "accounts@kaimaisteel.co.nz"
+    "email": "accounts@kaimaisteel.co.nz",
+    "alias": [
+      "Kaimai Steel Precision Manufacturing"
+    ]
   },
   {
     "name": "Karimor AG",
     "account": "KARP",
-    "email": "sbmuir@xtra.co.nz"
+    "email": "sbmuir@xtra.co.nz",
+    "alias": [
+      "Karimor AG"
+    ]
   },
   {
     "name": "Kawerau Engineering",
     "account": "KAWEL",
-    "email": "info@kaweraueng.co.nz"
+    "email": "info@kaweraueng.co.nz",
+    "alias": [
+      "Kawerau Engineering"
+    ]
   },
   {
     "name": "Kea Trailers",
     "account": "KEAT",
-    "email": "accounts@keatrailers.co.nz"
+    "email": "accounts@keatrailers.co.nz",
+    "alias": [
+      "Kea Trailers"
+    ]
   },
   {
     "name": "Kimberley Tool & Design",
     "account": "KTD",
-    "email": "admin@ktd.co.nz"
+    "email": "admin@ktd.co.nz",
+    "alias": [
+      "Kimberley Tool & Design"
+    ]
   },
   {
     "name": "Kiwi Bus Builders Ltd",
     "account": "KIWI",
-    "email": "admin@kiwibus.co.nz"
+    "email": "admin@kiwibus.co.nz",
+    "alias": [
+      "Kiwi Bus Builders Ltd"
+    ]
   },
   {
     "name": "Kraft Engineering LTD",
     "account": "KRFT",
-    "email": "heather@krafteng.co.nz"
+    "email": "heather@krafteng.co.nz",
+    "alias": [
+      "Kraft Engineering LTD"
+    ]
   },
   {
     "name": "Kustom Works",
     "account": "KUSTW",
-    "email": "Karl@kustomworks.nz"
+    "email": "Karl@kustomworks.nz",
+    "alias": [
+      "Kustom Works"
+    ]
   },
   {
     "name": "Laser Speed Limited",
     "account": "LSPED",
-    "email": "TeamAccounts@laserspeed.co.nz"
+    "email": "TeamAccounts@laserspeed.co.nz",
+    "alias": [
+      "Laser Speed Limited"
+    ]
   },
   {
     "name": "LEASK ENGINEERING",
     "account": "LEASK",
-    "email": "accounts@leask.co.nz"
+    "email": "accounts@leask.co.nz",
+    "alias": [
+      "LEASK ENGINEERING"
+    ]
   },
   {
     "name": "Linich Engineering Ltd",
     "account": "LINI",
-    "email": "linich@fleggbrothers.co.nz"
+    "email": "linich@fleggbrothers.co.nz",
+    "alias": [
+      "Linich Engineering Ltd"
+    ]
   },
   {
     "name": "Luca Engineering Services Ltd",
     "account": "LENG",
-    "email": "luigiluca28@gmail.com"
+    "email": "luigiluca28@gmail.com",
+    "alias": [
+      "Luca Engineering Services Ltd"
+    ]
   },
   {
     "name": "Macfab",
     "account": "MACF",
-    "email": "maia.macfab@gmail.com"
+    "email": "maia.macfab@gmail.com",
+    "alias": [
+      "Macfab"
+    ]
   },
   {
     "name": "Magnum Industries",
     "account": "MAGI",
-    "email": "michelle@magnum.co.nz"
+    "email": "michelle@magnum.co.nz",
+    "alias": [
+      "Magnum Industries"
+    ]
   },
   {
     "name": "Maintenance and Machinery Ltd.",
     "account": "MAM",
-    "email": "igmamltd@gmail.com"
+    "email": "igmamltd@gmail.com",
+    "alias": [
+      "Maintenance and Machinery Ltd."
+    ]
   },
   {
     "name": "MAJACRAFT LTD",
     "account": "MAJA",
-    "email": "support@majacraft.co.nz"
+    "email": "support@majacraft.co.nz",
+    "alias": [
+      "MAJACRAFT LTD"
+    ]
   },
   {
     "name": "Marsh Engineering Services",
     "account": "MES",
-    "email": "accounts@marshengineering.co.nz"
+    "email": "accounts@marshengineering.co.nz",
+    "alias": [
+      "Marsh Engineering Services"
+    ]
   },
   {
     "name": "Marshall Fleet Maintenance Ltd.",
     "account": "MFM",
-    "email": "marshallfleetmaintenance@outlook.co.nz"
+    "email": "marshallfleetmaintenance@outlook.co.nz",
+    "alias": [
+      "Marshall Fleet Maintenance Ltd."
+    ]
   },
   {
     "name": "Metal Tech Katikati",
     "account": "MTEK",
-    "email": "Admin@mtkk.co.nz"
+    "email": "Admin@mtkk.co.nz",
+    "alias": [
+      "Metal Tech Katikati"
+    ]
   },
   {
     "name": "Metz Engineering",
     "account": "METZ",
-    "email": "metzengineering@xtra.co.nz"
+    "email": "metzengineering@xtra.co.nz",
+    "alias": [
+      "Metz Engineering"
+    ]
   },
   {
     "name": "Mills Tui Limited",
     "account": "MTUI",
-    "email": "accounts@mills-tui.co.nz"
+    "email": "accounts@mills-tui.co.nz",
+    "alias": [
+      "Mills Tui Limited"
+    ]
   },
   {
     "name": "Mount Pack & Cool",
     "account": "MPAC",
-    "email": "admin@mpac.co.nz"
+    "email": "admin@mpac.co.nz",
+    "alias": [
+      "Mount Pack & Cool"
+    ]
   },
   {
     "name": "Mountain fresh Ltd.",
     "account": "MFSH",
-    "email": "kim@mountainfresh.co.nz"
+    "email": "kim@mountainfresh.co.nz",
+    "alias": [
+      "Mountain fresh Ltd."
+    ]
   },
   {
     "name": "MSC Engineering",
     "account": "MSC",
-    "email": "sales@mscengineering.co.nz"
+    "email": "sales@mscengineering.co.nz",
+    "alias": [
+      "MSC Engineering"
+    ]
   },
   {
     "name": "Mt Maunganui Engineering",
     "account": "MTE",
-    "email": "admin@mounteng.co.nz"
+    "email": "admin@mounteng.co.nz",
+    "alias": [
+      "Mt Maunganui Engineering"
+    ]
   },
   {
     "name": "Nacsan Products",
     "account": "NACP",
-    "email": "sales@nacsan.co.nz"
+    "email": "sales@nacsan.co.nz",
+    "alias": [
+      "Nacsan Products"
+    ]
   },
   {
     "name": "Naisby CNC",
     "account": "NAIC",
-    "email": "naisbycnc@gmail.com"
+    "email": "naisbycnc@gmail.com",
+    "alias": [
+      "Naisby CNC"
+    ]
   },
   {
     "name": "Nationwide Stock Crates Ltd.",
     "account": "NWSC",
-    "email": "accounts@nationwidecrates.co.nz"
+    "email": "accounts@nationwidecrates.co.nz",
+    "alias": [
+      "Nationwide Stock Crates Ltd."
+    ]
   },
   {
     "name": "Neale Blaymires, Trapworx",
     "account": "TRAP",
-    "email": "neale@eol.co.nz"
+    "email": "neale@eol.co.nz",
+    "alias": [
+      "Neale Blaymires, Trapworx"
+    ]
   },
   {
     "name": "Northern Automotive",
     "account": "NORA",
-    "email": "office@northauto.co.nz"
+    "email": "office@northauto.co.nz",
+    "alias": [
+      "Northern Automotive"
+    ]
   },
   {
     "name": "Numedic Ltd",
     "account": "NUM",
-    "email": "accounts@numedic.co.nz"
+    "email": "accounts@numedic.co.nz",
+    "alias": [
+      "Numedic Ltd"
+    ]
   },
   {
     "name": "NZ Equine Solutions",
     "account": "NZES",
-    "email": "accounts@nzequinesolutions.co.nz"
+    "email": "accounts@nzequinesolutions.co.nz",
+    "alias": [
+      "NZ Equine Solutions"
+    ]
   },
   {
     "name": "NZ Machining Alloy and Components",
     "account": "NZMAC",
-    "email": "James@nzmachining.co.nz"
+    "email": "James@nzmachining.co.nz",
+    "alias": [
+      "NZ Machining Alloy and Components"
+    ]
   },
   {
     "name": "NZ MANUFACTURING",
     "account": "NZM",
-    "email": "accounts@nzman.co.nz"
+    "email": "accounts@nzman.co.nz",
+    "alias": [
+      "NZ MANUFACTURING"
+    ]
   },
   {
     "name": "Onsite Spouting",
     "account": "ONSP",
-    "email": "onsitespouting@gmail.com"
+    "email": "onsitespouting@gmail.com",
+    "alias": [
+      "Onsite Spouting"
+    ]
   },
   {
     "name": "Opal Kiwi Packaging",
     "account": "OPAL",
-    "email": "P2pinvoices@opalanz.com"
+    "email": "P2pinvoices@opalanz.com",
+    "alias": [
+      "Opal Kiwi Packaging"
+    ]
   },
   {
     "name": "Otumoetai Automotive",
     "account": "OAUTO",
-    "email": "otumoetaiauto@gmail.com"
+    "email": "otumoetaiauto@gmail.com",
+    "alias": [
+      "Otumoetai Automotive"
+    ]
   },
   {
     "name": "P F Automotive",
     "account": "PFA",
-    "email": "info@pfauto.co.nz"
+    "email": "info@pfauto.co.nz",
+    "alias": [
+      "P F Automotive"
+    ]
   },
   {
     "name": "Pacific Sawmill Engineering",
     "account": "PSE",
-    "email": "enquiries@pacificsawmilleng.com"
+    "email": "enquiries@pacificsawmilleng.com",
+    "alias": [
+      "Pacific Sawmill Engineering"
+    ]
   },
   {
     "name": "Page & McRae",
     "account": "PGMC",
-    "email": "creditors@page-macrae.co.nz"
+    "email": "creditors@page-macrae.co.nz",
+    "alias": [
+      "Page & McRae"
+    ]
   },
   {
     "name": "Patchell Industries",
     "account": "PATI",
-    "email": "accountspayable@patchell.co.nz"
+    "email": "accountspayable@patchell.co.nz",
+    "alias": [
+      "Patchell Industries"
+    ]
   },
   {
     "name": "Performance Engineering Solutions",
     "account": "PERF",
-    "email": "info@performanceengineering.co.nz"
+    "email": "info@performanceengineering.co.nz",
+    "alias": [
+      "Performance Engineering Solutions"
+    ]
   },
   {
     "name": "Perry Geotech Ltd.",
     "account": "GEO",
-    "email": "office@perrygeotech.co.nz"
+    "email": "office@perrygeotech.co.nz",
+    "alias": [
+      "Perry Geotech Ltd."
+    ]
   },
   {
     "name": "Peterson Portable Sawmills",
     "account": "PPS",
-    "email": "mchristie@petersonsawmills.com"
+    "email": "mchristie@petersonsawmills.com",
+    "alias": [
+      "Peterson Portable Sawmills"
+    ]
   },
   {
     "name": "PFS Engineering Ltd",
     "account": "PFS",
-    "email": "accounts@pfseng.co.nz"
+    "email": "accounts@pfseng.co.nz",
+    "alias": [
+      "PFS Engineering Ltd"
+    ]
   },
   {
     "name": "Photon Profile Service",
     "account": "PHPS",
-    "email": "dylan@photonprofileservices.co.nz"
+    "email": "dylan@photonprofileservices.co.nz",
+    "alias": [
+      "Photon Profile Service"
+    ]
   },
   {
     "name": "Plazmax Ltd",
     "account": "PLAZ",
-    "email": "admin@plazmax.co.nz"
+    "email": "admin@plazmax.co.nz",
+    "alias": [
+      "Plazmax Ltd"
+    ]
   },
   {
     "name": "Precision Workz Engineering Ltd.",
     "account": "PWE",
-    "email": "admin@precisionworkz.co.nz"
+    "email": "admin@precisionworkz.co.nz",
+    "alias": [
+      "Precision Workz Engineering Ltd."
+    ]
   },
   {
     "name": "Prescott Trailers Ltd",
     "account": "PRES",
-    "email": "admin@prescotttrailers.co.nz"
+    "email": "admin@prescotttrailers.co.nz",
+    "alias": [
+      "Prescott Trailers Ltd"
+    ]
   },
   {
     "name": "Primero Profiles",
     "account": "PRIM",
-    "email": "accounts@primero.co.nz"
+    "email": "accounts@primero.co.nz",
+    "alias": [
+      "Primero Profiles"
+    ]
   },
   {
     "name": "ProComp Engineering Ltd",
     "account": "PROC",
-    "email": "procomplimited@gmail.com"
+    "email": "procomplimited@gmail.com",
+    "alias": [
+      "ProComp Engineering Ltd"
+    ]
   },
   {
     "name": "Progressive Hydraulics Ltd",
     "account": "PROH",
-    "email": "office@prohyd.co.nz"
+    "email": "office@prohyd.co.nz",
+    "alias": [
+      "Progressive Hydraulics Ltd"
+    ]
   },
   {
     "name": "Pyes Pa Engineering",
     "account": "PYES",
-    "email": "tim@pyespaengineering.co.nz"
+    "email": "tim@pyespaengineering.co.nz",
+    "alias": [
+      "Pyes Pa Engineering"
+    ]
   },
   {
     "name": "Quinn Engineering",
     "account": "QUIN",
-    "email": "office@quinn.co.nz"
+    "email": "office@quinn.co.nz",
+    "alias": [
+      "Quinn Engineering"
+    ]
   },
   {
     "name": "Reid & Harrison (1980) Ltd",
     "account": "REIDH",
-    "email": "sharon@yardmaster.co.nz"
+    "email": "sharon@yardmaster.co.nz",
+    "alias": [
+      "Reid & Harrison (1980) Ltd"
+    ]
   },
   {
     "name": "Rex Barnes Engineering",
     "account": "RBE",
-    "email": "admin@rexbarneseng.co.nz"
+    "email": "admin@rexbarneseng.co.nz",
+    "alias": [
+      "Rex Barnes Engineering"
+    ]
   },
   {
     "name": "Rob Jennings Developments Limited",
     "account": "RJD",
-    "email": "info@rjdl.com"
+    "email": "info@rjdl.com",
+    "alias": [
+      "Rob Jennings Developments Limited"
+    ]
   },
   {
     "name": "Robert Page Engineering Ltd",
     "account": "RPE",
-    "email": "enquiry@robertpage.co.nz"
+    "email": "enquiry@robertpage.co.nz",
+    "alias": [
+      "Robert Page Engineering Ltd"
+    ]
   },
   {
     "name": "Robotics Plus Ltd",
     "account": "ROBO",
-    "email": "purchasing@roboticsplus.co.nz"
+    "email": "purchasing@roboticsplus.co.nz",
+    "alias": [
+      "Robotics Plus Ltd"
+    ]
   },
   {
     "name": "Rowe Motors",
     "account": "ROWEM",
-    "email": "transport@rowemotors.co.nz"
+    "email": "transport@rowemotors.co.nz",
+    "alias": [
+      "Rowe Motors"
+    ]
   },
   {
     "name": "Safety tensioners LTD",
     "account": "STL",
-    "email": "lincoln.taylor@xtra.co.nz"
+    "email": "lincoln.taylor@xtra.co.nz",
+    "alias": [
+      "Safety tensioners LTD"
+    ]
   },
   {
     "name": "Satco Ltd",
     "account": "SAT",
-    "email": "accounts@satco.co.nz"
+    "email": "accounts@satco.co.nz",
+    "alias": [
+      "Satco Ltd"
+    ]
   },
   {
     "name": "Scorpro Engineering Development co LTD",
     "account": "SPRO",
-    "email": "eric@scorpro.co.nz"
+    "email": "eric@scorpro.co.nz",
+    "alias": [
+      "Scorpro Engineering Development co LTD"
+    ]
   },
   {
     "name": "Shepherd Engineering Design",
     "account": "SED",
-    "email": "Neil@shepeng.co.nz"
+    "email": "Neil@shepeng.co.nz",
+    "alias": [
+      "Shepherd Engineering Design"
+    ]
   },
   {
     "name": "Sokoza ltd",
     "account": "SKZA",
-    "email": "carl@sokoza.co.nz"
+    "email": "carl@sokoza.co.nz",
+    "alias": [
+      "Sokoza ltd"
+    ]
   },
   {
     "name": "Sonic Race & Machine",
     "account": "SONR",
-    "email": "info@sonicrace.co.nz"
+    "email": "info@sonicrace.co.nz",
+    "alias": [
+      "Sonic Race & Machine"
+    ]
   },
   {
     "name": "South Waikato Precision Engineering 2017 Ltd",
     "account": "SWPE",
-    "email": "accounts@swpe.co.nz"
+    "email": "accounts@swpe.co.nz",
+    "alias": [
+      "South Waikato Precision Engineering 2017 Ltd"
+    ]
   },
   {
     "name": "Speedfab",
     "account": "SPFAB",
-    "email": "tom@speedfab.co.nz"
+    "email": "tom@speedfab.co.nz",
+    "alias": [
+      "Speedfab"
+    ]
   },
   {
     "name": "Spida Machinery",
     "account": "SML",
-    "email": "accounts@spida.com"
+    "email": "accounts@spida.com",
+    "alias": [
+      "Spida Machinery"
+    ]
   },
   {
     "name": "Stainless Design Ltd",
     "account": "SDL",
-    "email": "accounts@stainlessdesign.co.nz"
+    "email": "accounts@stainlessdesign.co.nz",
+    "alias": [
+      "Stainless Design Ltd"
+    ]
   },
   {
     "name": "Steve Pickering",
     "account": "SPIK",
-    "email": "grandadpick@xtra.co.nz"
+    "email": "grandadpick@xtra.co.nz",
+    "alias": [
+      "Steve Pickering"
+    ]
   },
   {
     "name": "Syos",
     "account": "SYOS",
-    "email": "karl.oemcke@syos-aerospace.com"
+    "email": "karl.oemcke@syos-aerospace.com",
+    "alias": [
+      "Syos"
+    ]
   },
   {
     "name": "Tauranga Production Machining Limited",
     "account": "TPM",
-    "email": "admin@tpmachining.co.nz"
+    "email": "admin@tpmachining.co.nz",
+    "alias": [
+      "Tauranga Production Machining Limited"
+    ]
   },
   {
     "name": "Tauranga Tooling",
     "account": "TGAT",
-    "email": "tga.tooling@xtra.co.nz"
+    "email": "tga.tooling@xtra.co.nz",
+    "alias": [
+      "Tauranga Tooling"
+    ]
   },
   {
     "name": "Terminator Breaker Company",
     "account": "TERM",
-    "email": "apr@xtra.co.nz"
+    "email": "apr@xtra.co.nz",
+    "alias": [
+      "Terminator Breaker Company"
+    ]
   },
   {
     "name": "Terraway Attachments Ltd",
     "account": "TAA",
-    "email": "trenchitnz@xtra.co.nz"
+    "email": "trenchitnz@xtra.co.nz",
+    "alias": [
+      "Terraway Attachments Ltd"
+    ]
   },
   {
     "name": "The Toy Shed",
     "account": "TOYS",
-    "email": "thetoyshedv8@gmail.com"
+    "email": "thetoyshedv8@gmail.com",
+    "alias": [
+      "The Toy Shed"
+    ]
   },
   {
     "name": "Tidd Ross Todd Ltd",
     "account": "TRT",
-    "email": "invoices@trt.co.nz"
+    "email": "invoices@trt.co.nz",
+    "alias": [
+      "Tidd Ross Todd Ltd"
+    ]
   },
   {
     "name": "Tokoroa Engineering",
     "account": "TOKE",
-    "email": "admin@tokoroaengineering.co.nz"
+    "email": "admin@tokoroaengineering.co.nz",
+    "alias": [
+      "Tokoroa Engineering"
+    ]
   },
   {
     "name": "Total Hydraulic Solutions Ltd",
     "account": "THS",
-    "email": "accounts@thsolutions.co.nz"
+    "email": "accounts@thsolutions.co.nz",
+    "alias": [
+      "Total Hydraulic Solutions Ltd"
+    ]
   },
   {
     "name": "Trevelyan Pack & Cool",
     "account": "TREV",
-    "email": "shane.laing@trevelyan.co.nz"
+    "email": "shane.laing@trevelyan.co.nz",
+    "alias": [
+      "Trevelyan Pack & Cool"
+    ]
   },
   {
     "name": "Trimax Mowing Systems NZ Ltd",
     "account": "TRI",
-    "email": "accounts@trimaxmowers.com"
+    "email": "accounts@trimaxmowers.com",
+    "alias": [
+      "Trimax Mowing Systems NZ Ltd"
+    ]
   },
   {
     "name": "Tubular Equipment",
     "account": "TEQ",
-    "email": "tubularworks@gmail.com"
+    "email": "tubularworks@gmail.com",
+    "alias": [
+      "Tubular Equipment"
+    ]
   },
   {
     "name": "TUFF Plastic Moulders LTD",
     "account": "TUFF",
-    "email": "info@tuffplastics.co.nz"
+    "email": "info@tuffplastics.co.nz",
+    "alias": [
+      "TUFF Plastic Moulders LTD"
+    ]
   },
   {
     "name": "Vulcan steel",
     "account": "VULS",
-    "email": "adminteam@vulcansteel.co.nz"
+    "email": "adminteam@vulcansteel.co.nz",
+    "alias": [
+      "Vulcan steel"
+    ]
   },
   {
     "name": "Wade Group 2011 Ltd",
     "account": "WADE",
-    "email": "stores@wadegroup.co.nz"
+    "email": "stores@wadegroup.co.nz",
+    "alias": [
+      "Wade Group 2011 Ltd"
+    ]
   },
   {
     "name": "Waikato Milking Systems Limited partnership",
     "account": "WMS",
-    "email": "accounts@waikatomilking.com"
+    "email": "accounts@waikatomilking.com",
+    "alias": [
+      "Waikato Milking Systems Limited partnership"
+    ]
   },
   {
     "name": "warren Auger Bins NZ Limited",
     "account": "WAB",
-    "email": "office@wab.co.nz"
+    "email": "office@wab.co.nz",
+    "alias": [
+      "warren Auger Bins NZ Limited"
+    ]
   },
   {
     "name": "Waterjet Inc",
     "account": "WJI",
-    "email": "spike@waterjet-inc.co.nz"
+    "email": "spike@waterjet-inc.co.nz",
+    "alias": [
+      "Waterjet Inc"
+    ]
   },
   {
     "name": "whakatane Pallets 2018 Ltd",
     "account": "WKAP",
-    "email": "jerome@whakatanepallets.nz"
+    "email": "jerome@whakatanepallets.nz",
+    "alias": [
+      "whakatane Pallets 2018 Ltd"
+    ]
   },
   {
     "name": "Wheelco Ltd",
     "account": "WCO",
-    "email": "accounts@wheelco.co.nz"
+    "email": "accounts@wheelco.co.nz",
+    "alias": [
+      "Wheelco Ltd"
+    ]
   },
   {
     "name": "Whyteline",
     "account": "WHYT",
-    "email": "whyteline@whyteline.co.nz"
+    "email": "whyteline@whyteline.co.nz",
+    "alias": [
+      "Whyteline"
+    ]
   },
   {
     "name": "Willcox Building Removals Ltd",
     "account": "WBR",
-    "email": "Willcoxbuildingremovals@xtra.co.nz"
+    "email": "Willcoxbuildingremovals@xtra.co.nz",
+    "alias": [
+      "Willcox Building Removals Ltd"
+    ]
   },
   {
     "name": "Windust Hydraulic Setvices Ltd.",
     "account": "WINDH",
-    "email": "Sharon@windusthydraulics.co.nz"
+    "email": "Sharon@windusthydraulics.co.nz",
+    "alias": [
+      "Windust Hydraulic Setvices Ltd."
+    ]
   }
 ]
