@@ -1,7 +1,11 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Add any custom Next.js config here
-}
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
+};
 
-export default nextConfig
+export default nextConfig;
