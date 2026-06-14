@@ -3,6 +3,7 @@ import type { TPlating } from "@/types/types";
 export interface IContact {
   name: string;
   account: string;
+  alias: string[];
   email: string;
 }
 

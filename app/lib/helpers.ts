@@ -1,5 +1,14 @@
-import type { IJob, IJigAssignment, IContact, IItem, ISettings } from "@/types/interfaces";
-import { calculateRates, calculateMinCharges } from "@/constants/settings.const";
+import type {
+  IJob,
+  IJigAssignment,
+  IContact,
+  IItem,
+  ISettings,
+} from "@/types/interfaces";
+import {
+  calculateRates,
+  calculateMinCharges,
+} from "@/constants/settings.const";
 import contactsData from "@/data/contacts.json";
 import itemsData from "@/data/items.json";
 
@@ -17,7 +26,7 @@ export const setNextTZE = (val: number) => {
 export const getNextTZE = () => nextTZECounter;
 
 export const tzeId = (): string => {
-  return 'TZE-' + String(nextTZECounter++).padStart(4, '0');
+  return "TZE-" + String(nextTZECounter++).padStart(4, "0");
 };
 
 // ================ Formatting Helpers ================ //
@@ -29,24 +38,34 @@ export const dispCode = (code: string): string => {
 };
 
 export const fmt = (ts: number): string => {
-  if (!ts) return '';
+  if (!ts) return "";
   const d = new Date(ts);
-  return d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' }) + ' ' +
-         d.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
+  return (
+    d.toLocaleDateString("en-NZ", { day: "numeric", month: "short" }) +
+    " " +
+    d.toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })
+  );
 };
 
 export const fmtDate = (ts: number): string => {
-  return ts ? new Date(ts).toISOString().slice(0, 10) : '';
+  return ts ? new Date(ts).toISOString().slice(0, 10) : "";
 };
 
 export const fmtArrived = (ts: number): string => {
-  if (!ts) return '';
+  if (!ts) return "";
   const d = new Date(ts);
-  return d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' +
-         d.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
+  return (
+    d.toLocaleDateString("en-NZ", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }) +
+    " " +
+    d.toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })
+  );
 };
 
-export const csvQ = (s: any): string => {
+export const csvQ = (s: unknown): string => {
   return '"' + String(s).replace(/"/g, '""') + '"';
 };
 
@@ -63,17 +82,22 @@ export const due20th = (ts?: number): string => {
 
 // ================ JIG Helpers ================ //
 
-export const jigsOf = (jid: string, jigA: IJigAssignment[]): IJigAssignment[] => {
-  return jigA.filter(g => g.jobId === jid);
+export const jigsOf = (
+  jid: string,
+  jigA: IJigAssignment[],
+): IJigAssignment[] => {
+  return jigA.filter((g) => g.jobId === jid);
 };
 
 export const jigUsed = (nm: string, jigA: IJigAssignment[]): number => {
-  return jigA.filter(g => g.jigName === nm && !g.completedAt).reduce((s, g) => s + g.pct, 0);
+  return jigA
+    .filter((g) => g.jigName === nm && !g.completedAt)
+    .reduce((s, g) => s + g.pct, 0);
 };
 
 export const allDone = (jid: string, jigA: IJigAssignment[]): boolean => {
   const gs = jigsOf(jid, jigA);
-  return gs.length > 0 && gs.every(g => g.completedAt);
+  return gs.length > 0 && gs.every((g) => g.completedAt);
 };
 
 // ================ Job Status Helpers ================ //
@@ -84,75 +108,82 @@ export const jobAgeDays = (j: IJob): number => {
 
 export const trafficLight = (j: IJob) => {
   const d = jobAgeDays(j);
-  if (d < 3) return { color: '#16a34a', bg: '#f0fdf4', border: '#16a34a', label: 'On time' };
-  if (d < 5) return { color: '#d97706', bg: '#fffbeb', border: '#d97706', label: 'Due soon' };
-  return { color: '#dc2626', bg: '#fff5f5', border: '#dc2626', label: 'Overdue' };
+  if (d < 2)
+    return {
+      color: "#16a34a",
+      bg: "#f0fdf4",
+      border: "#16a34a",
+      label: "On time",
+    };
+  if (d < 5)
+    return {
+      color: "#d97706",
+      bg: "#fffbeb",
+      border: "#d97706",
+      label: "Due soon",
+    };
+  return {
+    color: "#dc2626",
+    bg: "#fff5f5",
+    border: "#dc2626",
+    label: "Overdue",
+  };
 };
 
 export const isReady = (j: IJob, jigA: IJigAssignment[]): boolean => {
   if (j.dispatchedAt || !j.poComplete) return false;
-  const gs = jigA.filter(g => g.jobId === j.id);
+  const gs = jigA.filter((g) => g.jobId === j.id);
   if (!gs.length) return true;
-  return gs.every(g => !!g.completedAt);
+  return gs.every((g) => !!g.completedAt);
 };
 
 export const stageLabel = (j: IJob, jigA: IJigAssignment[]): string => {
-  if (j.dispatchedAt) return 'Dispatched';
-  if (isReady(j, jigA)) return 'Ready to dispatch';
-  if (jigsOf(j.id, jigA).length) return 'WIP';
-  return 'Intake';
+  if (j.dispatchedAt) return "Dispatched";
+  if (isReady(j, jigA)) return "Ready to dispatch";
+  if (jigsOf(j.id, jigA).length) return "WIP";
+  return "Intake";
 };
 
 export const stageBadge = (j: IJob, jigA: IJigAssignment[]): string => {
-  if (j.dispatchedAt) return 'b-done';
-  if (isReady(j, jigA)) return 'b-dispatch';
-  if (jigsOf(j.id, jigA).length) return 'b-jig';
-  return 'b-intake';
+  if (j.dispatchedAt) return "b-done";
+  if (isReady(j, jigA)) return "b-dispatch";
+  if (jigsOf(j.id, jigA).length) return "b-jig";
+  return "b-intake";
 };
 
 // ================ Customer Resolution ================ //
 
 export const resolveCustomer = (n: string): IContact | null => {
   if (!n) return null;
-  const t = n.trim();
-  const lc = t.toLowerCase();
-
-  // Helper: normalize company name by removing legal suffixes and extra words
-  const normalize = (name: string): string => {
-    return name
-      .toLowerCase()
-      .replace(/\b(limited|ltd|incorporated|inc|company|co|engineering|industries|industrial|componentry|pty|proprietary)\b/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  };
+  const trimmedName = n.trim();
+  const searchTerm = trimmedName.toLowerCase();
 
   // Aliases
-  if (lc.includes('sokoza')) return CONTACTS.find(c => c.account === 'SOKO') || null;
-  if (lc.includes('nz manufacturing')) return CONTACTS.find(c => c.account === 'NZMFG') || null;
-  if (lc.includes('baytex')) return CONTACTS.find(c => c.account === 'BAYT') || null;
+  if (searchTerm.includes("sokoza"))
+    return CONTACTS.find((c) => c.account === "SOKO") || null;
+  if (searchTerm.includes("nz manufacturing"))
+    return CONTACTS.find((c) => c.account === "NZMFG") || null;
+  if (searchTerm.includes("baytex"))
+    return CONTACTS.find((c) => c.account === "BAYT") || null;
 
-  // Exact match
-  let c = CONTACTS.find(x => x.name.toLowerCase() === lc);
+  // Exact match (name or alias)
+  let c = CONTACTS.find(
+    (x) =>
+      x.name.toLowerCase() === searchTerm ||
+      x.alias?.some((n) => n.toLowerCase() === searchTerm),
+  );
   if (c) return c;
 
-  // Normalized match (strip legal suffixes)
-  const normalizedInput = normalize(lc);
-  c = CONTACTS.find(x => normalize(x.name) === normalizedInput);
-  if (c) return c;
-
-  // Fuzzy match with normalization
-  c = CONTACTS.find(x => {
-    const normalizedContact = normalize(x.name);
-    return normalizedContact.includes(normalizedInput) || normalizedInput.includes(normalizedContact);
-  });
-  if (c) return c;
-
-  // Original fuzzy match (fallback)
-  c = CONTACTS.find(x => x.name.toLowerCase().includes(lc) || lc.includes(x.name.toLowerCase()));
+  // Fuzzy match (fallback)
+  c = CONTACTS.find(
+    (x) =>
+      searchTerm.includes(x.name.toLowerCase()) ||
+      x.name.toLowerCase().includes(searchTerm),
+  );
   if (c) return c;
 
   // Account code match
-  c = CONTACTS.find(x => x.account.toLowerCase() === lc);
+  c = CONTACTS.find((x) => x.account.toLowerCase() === searchTerm);
   return c || null;
 };
 
@@ -167,7 +198,7 @@ export const calcPrice = (j: IJob, settings: ISettings): number => {
   const minC = minCharges[j.plating] || 60;
 
   let sum = 0;
-  j.parts.forEach(p => {
+  j.parts.forEach((p) => {
     sum += (p.price || 0) * (p.qty || 1);
   });
 
@@ -192,15 +223,18 @@ export const calcPrice = (j: IJob, settings: ISettings): number => {
 
 // ================ Image Processing ================ //
 
-export const fixOrientation = (dataUrl: string, cb: (processed: string, rotated: boolean) => void) => {
+export const fixOrientation = (
+  dataUrl: string,
+  cb: (processed: string, rotated: boolean) => void,
+) => {
   const img = new Image();
   img.onload = () => {
     const w = img.width;
     const h = img.height;
     const isLandscape = w > h;
 
-    let canvas = document.createElement('canvas');
-    let ctx = canvas.getContext('2d')!;
+    let canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
 
     if (isLandscape) {
       canvas.width = h;
@@ -220,22 +254,22 @@ export const fixOrientation = (dataUrl: string, cb: (processed: string, rotated:
       const scale = maxDim / Math.max(canvas.width, canvas.height);
       const newW = Math.floor(canvas.width * scale);
       const newH = Math.floor(canvas.height * scale);
-      const canvas2 = document.createElement('canvas');
+      const canvas2 = document.createElement("canvas");
       canvas2.width = newW;
       canvas2.height = newH;
-      const ctx2 = canvas2.getContext('2d')!;
+      const ctx2 = canvas2.getContext("2d")!;
       ctx2.drawImage(canvas, 0, 0, newW, newH);
       canvas = canvas2;
     }
 
     // Compress
     let quality = 0.82;
-    let result = canvas.toDataURL('image/jpeg', quality);
+    let result = canvas.toDataURL("image/jpeg", quality);
     const maxSize = 5.4 * 1024 * 1024;
 
     while (result.length > maxSize && quality > 0.4) {
       quality -= 0.05;
-      result = canvas.toDataURL('image/jpeg', quality);
+      result = canvas.toDataURL("image/jpeg", quality);
     }
 
     cb(result, isLandscape);

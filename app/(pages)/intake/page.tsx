@@ -10,7 +10,7 @@ import type {
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
-import { CONTACTS, fixOrientation } from "@/lib/helpers";
+import { CONTACTS, fixOrientation, trafficLight } from "@/lib/helpers";
 import { scanPODocument } from "@/actions/scan-po";
 import ITEMS from "@/data/items.json";
 import { FiPlus } from "react-icons/fi";
@@ -357,17 +357,24 @@ export default function IntakePage() {
                   (g) => g.jobId === job.id && !g.completedAt,
                 );
                 const status = getJobStatus(job);
+                const ageColors = trafficLight(job);
+
+                // Urgent overrides age-based colors
+                const cardColors = job.urgent
+                  ? { border: "border-red-400", bg: "bg-red-50" }
+                  : job.flagged
+                    ? { border: "border-orange-400", bg: "bg-orange-50" }
+                    : ageColors.label === "On time"
+                      ? { border: "border-green-400", bg: "bg-green-50" }
+                      : ageColors.label === "Due soon"
+                        ? { border: "border-orange-400", bg: "bg-orange-50" }
+                        : { border: "border-red-400", bg: "bg-red-50" };
+
                 return (
                   <div
                     key={job.id}
                     onClick={() => setSelectedJob(job)}
-                    className={`border-2 rounded-xl p-3.5 mb-2.5 cursor-pointer active:scale-[0.98] transition-all ${
-                      job.urgent
-                        ? "border-red-400 bg-red-50"
-                        : job.flagged
-                          ? "border-orange-400 bg-orange-50"
-                          : "border-gray-200 bg-white hover:border-primary"
-                    }`}
+                    className={`border-2 rounded-xl p-3.5 mb-2.5 cursor-pointer active:scale-[0.98] transition-all ${cardColors.border} ${cardColors.bg} hover:opacity-90`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
