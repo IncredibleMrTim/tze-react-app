@@ -24,17 +24,23 @@ Return **ONLY** a JSON object with no markdown, no explanation:
 
 Before applying specific rules, analyze the document structure to identify key elements.
 
+## Finding the company name
+
+You must meticulously scan the document to find the company name, do not assume the company based on partial finds.
+
 ### Finding the PO Number
 
 **Strategy**: Look for a unique identifier near the top of the document.
 
 Common label patterns:
+
 - "Purchase Order" / "PO No" / "Order No" / "Order #"
 - Usually in the header area (top 1/3 of document)
 - Often formatted as: `Label: VALUE` or `Label VALUE`
 - Typically alphanumeric (letters + numbers) or just numbers
 
 **Analysis steps**:
+
 1. Scan the header area for labels containing "order", "PO", or similar
 2. Extract the value immediately after or near the label
 3. Verify it looks like an identifier (not a date, address, or phone number)
@@ -46,6 +52,7 @@ Common label patterns:
 **Strategy**: Identify table structure by examining column headers and data patterns.
 
 **Step 1: Locate the table**
+
 - Usually the largest table on the page
 - Contains multiple rows of similar data
 - Has column headers at the top
@@ -64,17 +71,17 @@ Common label patterns:
 
 For each data row in the table:
 
-- **code**: 
+- **code**:
   - Primary: Use the leftmost column that looks like a part identifier (short, alphanumeric, consistent format)
   - If the primary column is empty or looks like a catch-all number (e.g., same value repeated), check if codes appear elsewhere (description area, secondary columns)
   - If truly no code: return empty string `""`
 
-- **description**: 
+- **description**:
   - Use the column with the longest text content
   - Strip any embedded part numbers or reference codes that aren't part of the actual description
   - If description spans multiple lines, decide based on context what to include
 
-- **quantity**: 
+- **quantity**:
   - Use the numeric column that represents "how many pieces"
   - Convert decimals to integers (120.0000 → 120)
   - **Never use**: prices, totals, weights, or order reference numbers
@@ -107,11 +114,6 @@ Extract and standardize the customer company name from the PO header to match ho
 - Our database uses simplified, core business names without verbose legal descriptions
 - The goal is matching accuracy, not legal precision
 
-### Examples
-
-- `Gamman Industrial Componentry Limited` → `Gamman Engineering`
-- `Baytex a division of Structurflex` → `Baytex`
-
 ### Standardization Process
 
 1. Keep the core business/trading name (e.g., "Fraser Gear", "High Duty Plastics")
@@ -119,6 +121,7 @@ Extract and standardize the customer company name from the PO header to match ho
 3. Apply these specific mappings if found:
    - "Sokoza Engineering" or variations → `Sokoza Ltd`
    - "NZ Manufacturing" or variations → `NZ MANUFACTURING`
+   - "Gamman Industrial" or "Gamman Industrial Componentry" → `GamminCo`
 
 ---
 
@@ -174,6 +177,7 @@ Match customers by any of these patterns (case-insensitive, partial match):
 | **Patchell** | `[LETTER][4-DIGITS]-[SUFFIX]` | Letter `I` misread as `G` | If starts with `I` + 4 digits + dash → Replace `I` with `G` |
 
 **Patchell Code Details**:
+
 - Valid starting letters: `G`, `D`, `C`, `J`, `SLB`, `T`
 - Letter `I` (straight line) is almost NEVER correct — it's usually `G` (curved with horizontal bar)
 - Examples: `I0125-007P3` → `G0125-007P3`, `I0319-001P3` → `G0319-001P3`
