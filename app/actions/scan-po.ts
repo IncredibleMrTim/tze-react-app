@@ -47,7 +47,7 @@ export async function scanPODocument(
       cause: error,
     });
   }
-  console.log("T2 - Parsed from Claude:", parsed);
+  console.log("T2 - Parsed from Claude:", parsed.customer_name);
   const po_number = parsed.po_number || "";
   const customer_name = parsed.customer_name || "";
   const scannedParts = parsed.parts || [];

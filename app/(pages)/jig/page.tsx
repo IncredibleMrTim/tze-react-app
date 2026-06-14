@@ -273,16 +273,23 @@ export default function JIGPage() {
           const pct = Math.round(used);
           const jigJobs = getJigJobs(jigName);
           const isEmpty = pct === 0;
+          const isFull = pct === 100;
+          const isPartial = pct > 0 && pct < 100;
           const isSelected = selectedJig === jigName;
+
+          // Color based on fill percentage (selected state just adds shadow)
+          const borderColor = isFull
+            ? "border-green-400 bg-green-50"
+            : isPartial
+              ? "border-orange-400 bg-orange-50"
+              : "border-gray-200";
 
           return (
             <Card
               key={jigName}
               onClick={() => handleSelectJig(jigName)}
-              className={`p-4 text-center cursor-pointer transition-all hover:shadow-md ${
-                isSelected
-                  ? "border-2 border-primary shadow-lg"
-                  : "border-2 border-gray-200"
+              className={`p-4 text-center cursor-pointer transition-all hover:shadow-md border-2 ${borderColor} ${
+                isSelected ? "shadow-lg ring-2 ring-blue-500" : ""
               }`}
             >
               <div className="font-bold text-lg mb-2">{jigName}</div>
