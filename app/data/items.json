@@ -170,7 +170,7 @@
   {
     "code": "004026_MAC_035_1A_HDP",
     "desc": "004026_MAC_035_1A (HDP)",
-    "price": 0.25,
+    "price": 0.35,
     "customer": "HDP"
   },
   {
@@ -315,13 +315,25 @@
     "code": "006064_MAC_001_1A_HDP",
     "desc": "RH Lifting Lug (HDP)",
     "price": 4.45,
-    "customer": ""
+    "customer": "HDP"
+  },
+  {
+    "code": "006064_MAC_001_1A-HDP",
+    "desc": "RH Lifting Lug (HDP)",
+    "price": 4.45,
+    "customer": "HDP"
   },
   {
     "code": "006064_MAC_002_1A_HDP",
     "desc": "LH Lifting Lug (HDP)",
     "price": 4.45,
-    "customer": ""
+    "customer": "HDP"
+  },
+  {
+    "code": "006064_MAC_002_1A-HDP",
+    "desc": "LH Lifting Lug (HDP)",
+    "price": 4.45,
+    "customer": "HDP"
   },
   {
     "code": "006083_MAC_002_A1_HDP",
@@ -438,7 +450,7 @@
     "customer": "SWPE"
   },
   {
-    "code": "009600v12_SWPE",
+    "code": "009600v02_SWPE",
     "desc": "Block (SWPE)",
     "price": 12.31,
     "customer": "SWPE"
@@ -484,6 +496,18 @@
     "desc": "Spacer (SAT)",
     "price": 0.71,
     "customer": "SAT"
+  },
+  {
+    "code": "011008_MAC_014_1A _HDP",
+    "desc": "011008_MAC_014_1A (HDP)",
+    "price": 0.98,
+    "customer": "HDP"
+  },
+  {
+    "code": "011008_MAC_015_1A_hdp",
+    "desc": "011008_MAC_015_1A (HDP)",
+    "price": 0.98,
+    "customer": "HDP"
   },
   {
     "code": "011592_SAT",
@@ -537,6 +561,24 @@
     "code": "014015_MAC_327_1B_HDP",
     "desc": "Slide Guide (HDP)",
     "price": 4.08,
+    "customer": "HDP"
+  },
+  {
+    "code": "014015_MAC_386_1A_HDP",
+    "desc": "014015_MAC_386_1A (HDP)",
+    "price": 1.43,
+    "customer": "HDP"
+  },
+  {
+    "code": "014015_MAC_390_1A_HDP",
+    "desc": "14015_MAC_390_1A (HDP)",
+    "price": 1.43,
+    "customer": "HDP"
+  },
+  {
+    "code": "014015_MAC_391_1A_HDP",
+    "desc": "014015_MAC_391_1A (HDP)",
+    "price": 1.43,
     "customer": "HDP"
   },
   {
@@ -1040,7 +1082,7 @@
   {
     "code": "084007_MAC_162_1A_HDP",
     "desc": "084007_MAC_162_1A  (HDP)",
-    "price": 0,
+    "price": 0.65,
     "customer": "HDP"
   },
   {
@@ -1245,7 +1287,7 @@
     "code": "108-071-513-GAM",
     "desc": "Washer (GAM)",
     "price": 0.34,
-    "customer": ""
+    "customer": "GAM"
   },
   {
     "code": "109901_GAM",
@@ -1311,7 +1353,7 @@
     "code": "110018-BAYT",
     "desc": "Keder repair Tool (BAYT)",
     "price": 10,
-    "customer": ""
+    "customer": "BAYT"
   },
   {
     "code": "110019_BAYT",
@@ -1950,21 +1992,9 @@
     "customer": "SWPE"
   },
   {
-    "code": "113978V02_SWPE",
-    "desc": "113978V02 (SWPE)",
-    "price": 31.9,
-    "customer": "SWPE"
-  },
-  {
     "code": "114015_MAC_409_1A_HDP",
     "desc": "Guide Roller Shaft (HDP)",
     "price": 1.42,
-    "customer": "HDP"
-  },
-  {
-    "code": "114042_MAC_101_1A_HDP",
-    "desc": "",
-    "price": 5.46,
     "customer": "HDP"
   },
   {
@@ -2184,93 +2214,15 @@
     "customer": "SWPE"
   },
   {
-    "code": "116709v03_SWPE",
-    "desc": "",
-    "price": 0.5,
-    "customer": "SWPE"
-  },
-  {
     "code": "116785V01_SWPE",
     "desc": "F-CAD Part 27.06kg (SWPE)",
     "price": 71.03,
     "customer": "SWPE"
   },
   {
-    "code": "116786V01_SWPE",
-    "desc": "116786V01 (SWPE)",
-    "price": 5.02,
-    "customer": "SWPE"
-  },
-  {
     "code": "116792V01_SWPE",
     "desc": "F-CAD Parts 27.38kg (SWPE)",
     "price": 71.88,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116795V01_SWPE",
-    "desc": "116795V01 (SWPE)",
-    "price": 67.95,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116796V01_SWPE",
-    "desc": "116796V01 (SWPE)",
-    "price": 6.84,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116796V02_SWPE",
-    "desc": "116796V02 (SWPE)",
-    "price": 8.69,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116800V01_SWPE",
-    "desc": "116800V01 (SWPE)",
-    "price": 32.69,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116800V02_SWPE",
-    "desc": "116800V02 (SWPE)",
-    "price": 31.9,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116802V01_SWPE",
-    "desc": "116802V01 (SWPE)",
-    "price": 62.52,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116805V01_SWPE",
-    "desc": "116805V01 (SWPE)",
-    "price": 67.83,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116806V01_SWPE",
-    "desc": "116806V01 (SWPE)",
-    "price": 14.72,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116810V01_SWPE",
-    "desc": "116810V01 (SWPE)",
-    "price": 30.65,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116810V02_SWPE",
-    "desc": "116810V02 (SWPE)",
-    "price": 29.17,
-    "customer": "SWPE"
-  },
-  {
-    "code": "116812V01_SWPE",
-    "desc": "116812V01 (SWPE)",
-    "price": 65.23,
     "customer": "SWPE"
   },
   {
@@ -2451,6 +2403,12 @@
     "code": "1223660_GAM",
     "desc": "SPCR D40X20 (GAM)",
     "price": 0.76,
+    "customer": "GAM"
+  },
+  {
+    "code": "1244_GAM",
+    "desc": "GRAPPLE CENTRE JOINT BODY ZINC PLATE (GAM)",
+    "price": 29.27,
     "customer": "GAM"
   },
   {
@@ -2868,9 +2826,57 @@
     "customer": "HDP"
   },
   {
+    "code": "14015_MAC_385_1A - HDP",
+    "desc": "Retainer 3 Holes (HDP)",
+    "price": 1.63,
+    "customer": "HDP"
+  },
+  {
     "code": "14015_MAC_387_1A_HDP",
     "desc": "CAP (HDP)",
     "price": 0.61,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_389_1A_HDP",
+    "desc": "Retainer (HDP)",
+    "price": 1.72,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_392_1A_HDP",
+    "desc": "14015_MAC_392_1A (HDP)",
+    "price": 2.5,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_393_1A_HDP",
+    "desc": "14015_MAC_393_1A (HDP)",
+    "price": 2.5,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_394_1A_HDP",
+    "desc": "14015_MAC_394_1A (HDP)",
+    "price": 2.5,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_396_1A - HDP",
+    "desc": "Spacer (HDP)",
+    "price": 1.58,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_397_1A - HDP",
+    "desc": "Spacer (HDP)",
+    "price": 1.58,
+    "customer": "HDP"
+  },
+  {
+    "code": "14015_MAC_399_1A - HDP",
+    "desc": "Spacer (HDP)",
+    "price": 1.58,
     "customer": "HDP"
   },
   {
@@ -3028,6 +3034,12 @@
     "desc": "Hex Head Shaft (HDP)",
     "price": 1.51,
     "customer": "HDP"
+  },
+  {
+    "code": "16115_SATCO",
+    "desc": "Swing Arm (SATCO)",
+    "price": 38.72,
+    "customer": "SATCO"
   },
   {
     "code": "163831_HDP",
@@ -3246,6 +3258,18 @@
     "customer": "TPM"
   },
   {
+    "code": "17711501_GAM",
+    "desc": "1711501 â€” SHAFT ZINC PLATE",
+    "price": 2.72,
+    "customer": "GAM"
+  },
+  {
+    "code": "178C002_GAM",
+    "desc": "178C002 â€” TOP WHEEL ZINC PLATE",
+    "price": 23.4,
+    "customer": "GAM"
+  },
+  {
     "code": "17B0209-Spida_SML",
     "desc": "Build Table rack (SML)",
     "price": 77.28,
@@ -3453,7 +3477,7 @@
     "code": "215-840-400-TRI",
     "desc": "U-Bolts Large Including corner polishing",
     "price": 5.47,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "215-840-402_TRI",
@@ -3465,7 +3489,7 @@
     "code": "215-840-402-TRI",
     "desc": "U-bolts Small Including corner polishing",
     "price": 4.1,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "216 Bracket_NACP",
@@ -4974,6 +4998,12 @@
     "customer": "HDP"
   },
   {
+    "code": "362001_MAC_002_1A_HDP",
+    "desc": "Pinion (HDP)",
+    "price": 1.89,
+    "customer": "HDP"
+  },
+  {
     "code": "362001_MAC_005_1A_HDP",
     "desc": "362001_MAC_005_1A (HDP)",
     "price": 0.69,
@@ -5323,7 +5353,7 @@
   },
   {
     "code": "401-000-034_GAM",
-    "desc": "Brake Rotor (GAM)(TRI)",
+    "desc": "Rotor Bearing Housing(GAM)(TRI)",
     "price": 8.79,
     "customer": "GAM"
   },
@@ -5397,7 +5427,7 @@
     "code": "402-000-091-TRI",
     "desc": "Spacer Tube",
     "price": 1.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-097_GAM",
@@ -5421,7 +5451,7 @@
     "code": "402-000-108-TRI",
     "desc": "Bush - LH and RH lock arms",
     "price": 0.73,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-114_GAM",
@@ -5439,7 +5469,7 @@
     "code": "402-000-114-TRI",
     "desc": "BUSH (TRI)",
     "price": 0.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-115_GAM",
@@ -5463,7 +5493,7 @@
     "code": "402-000-120-TRI",
     "desc": "Idler Arm - Spacer Bush (TRI)",
     "price": 0.53,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-126_GAM",
@@ -5523,7 +5553,7 @@
     "code": "402-000-154-TRI",
     "desc": "Caster Mount - Clamp Bush (TRI)",
     "price": 0.72,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-155_TRI",
@@ -5535,7 +5565,7 @@
     "code": "402-000-155-TRI",
     "desc": "Sleeve - Castor Axle 13x24x120",
     "price": 2.38,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-157_GAM",
@@ -5553,7 +5583,7 @@
     "code": "402-000-157-TRI",
     "desc": "Boss - Pivot - Optiadjust (TRI)",
     "price": 2.32,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "402-000-162_GAM",
@@ -5649,7 +5679,7 @@
     "code": "403-000-062-TRI",
     "desc": "Adjuster Long Stri",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-063_TRI",
@@ -5661,7 +5691,7 @@
     "code": "403-000-063-TRI",
     "desc": "Adjuster Med Strik",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-064_TRI",
@@ -5673,7 +5703,7 @@
     "code": "403-000-064-TRI",
     "desc": "Adjuster Short Str",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-065_TRI",
@@ -5685,7 +5715,7 @@
     "code": "403-000-065-TRI",
     "desc": "Idler Adjuster Vshort striker",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-075_TRI",
@@ -5697,7 +5727,7 @@
     "code": "403-000-075-TRI",
     "desc": "Tower Assy Ad Snak",
     "price": 5.37,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-076_TRI",
@@ -5709,7 +5739,7 @@
     "code": "403-000-076-TRI",
     "desc": "Idler Adj Fixed SN (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-086_TRI",
@@ -5721,7 +5751,7 @@
     "code": "403-000-086-TRI",
     "desc": "Low Stealth S 3",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-087_TRI",
@@ -5733,7 +5763,7 @@
     "code": "403-000-087-TRI",
     "desc": "Medium Stealth S3",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-088_TRI",
@@ -5745,7 +5775,7 @@
     "code": "403-000-088-TRI",
     "desc": "Idler High Stealth",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-089_GAM",
@@ -5763,7 +5793,7 @@
     "code": "403-000-094-TRI",
     "desc": "P4 Idler Med",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-095_TRI",
@@ -5775,7 +5805,7 @@
     "code": "403-000-095-TRI",
     "desc": "Short",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-096_TRI",
@@ -5787,7 +5817,7 @@
     "code": "403-000-096-TRI",
     "desc": "Long",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-101_TRI",
@@ -5799,7 +5829,7 @@
     "code": "403-000-101-TRI",
     "desc": "Snake Idler Base Weldment (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-102_TRI",
@@ -5811,7 +5841,7 @@
     "code": "403-000-102-TRI",
     "desc": "Snake Idler Arm Weldment",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-105_TRI",
@@ -5823,19 +5853,7 @@
     "code": "403-000-105-TRI",
     "desc": "Idler Slotted",
     "price": 3.76,
-    "customer": ""
-  },
-  {
-    "code": "403-000-110_TRI",
-    "desc": "",
-    "price": 3.27,
     "customer": "TRI"
-  },
-  {
-    "code": "403-000-110-TRI",
-    "desc": "",
-    "price": 3.27,
-    "customer": ""
   },
   {
     "code": "403-000-111_TRI",
@@ -5847,7 +5865,7 @@
     "code": "403-000-111-TRI",
     "desc": "160 Deck Idler Base VS",
     "price": 3.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-112_TRI",
@@ -5859,7 +5877,7 @@
     "code": "403-000-112-TRI",
     "desc": "Idler Base - Medium - Weldment",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-113_TRI",
@@ -5871,7 +5889,7 @@
     "code": "403-000-113-TRI",
     "desc": "Idler Base - Long - Weldment",
     "price": 3.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-115_TRI",
@@ -5883,7 +5901,7 @@
     "code": "403-000-115-TRI",
     "desc": "Idler Arm 1 - Weldment (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-118_TRI",
@@ -5895,7 +5913,7 @@
     "code": "403-000-118-TRI",
     "desc": "Idler Arm 2 - Weldment",
     "price": 5.41,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-120_TRI",
@@ -5907,7 +5925,7 @@
     "code": "403-000-120-TRI",
     "desc": "Idler Base Gusseted- Long",
     "price": 5.41,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-122_TRI",
@@ -5919,7 +5937,7 @@
     "code": "403-000-122-TRI",
     "desc": "Idler Arm",
     "price": 5.41,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-125_TRI",
@@ -5931,7 +5949,7 @@
     "code": "403-000-125-TRI",
     "desc": "Idler Short (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-126_TRI",
@@ -5943,7 +5961,7 @@
     "code": "403-000-126-TRI",
     "desc": "Idler Medium (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-127_TRI",
@@ -5955,7 +5973,7 @@
     "code": "403-000-127-TRI",
     "desc": "Idler Long (TRI)",
     "price": 5.74,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-133_GAM",
@@ -5973,7 +5991,7 @@
     "code": "403-000-134-TRI",
     "desc": "Idler Arm (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-143_GAM",
@@ -5991,7 +6009,7 @@
     "code": "403-000-161-TRI",
     "desc": "Manual Belt Tensioner - RH (TRI)",
     "price": 3.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-164_TRI",
@@ -6003,7 +6021,7 @@
     "code": "403-000-164-TRI",
     "desc": "Striker Idler (TRI)",
     "price": 5.92,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-165_TRI",
@@ -6015,7 +6033,7 @@
     "code": "403-000-165-TRI",
     "desc": "Idler Arm 237B Spindle Weldment",
     "price": 4.82,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-170_GAM",
@@ -6063,7 +6081,7 @@
     "code": "403-000-191-TRI",
     "desc": "Idler Arm 2 - Weldment",
     "price": 5.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-000-199_GAM",
@@ -6087,7 +6105,7 @@
     "code": "403-154-210-TRI",
     "desc": "Gearbox Flaild",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-154-230_TRI",
@@ -6099,7 +6117,7 @@
     "code": "403-154-230-TRI",
     "desc": "Gearbox Ezeemow",
     "price": 2.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-330-423_TRI",
@@ -6111,7 +6129,7 @@
     "code": "403-330-423-TRI",
     "desc": "Tower Base Short (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-330-424_TRI",
@@ -6123,7 +6141,7 @@
     "code": "403-330-424-TRI",
     "desc": "Idler Tower Vshort",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-330-432_TRI",
@@ -6135,7 +6153,7 @@
     "code": "403-330-432-TRI",
     "desc": "Idler Tower Medium",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-330-442_TRI",
@@ -6147,7 +6165,7 @@
     "code": "403-330-442-TRI",
     "desc": "Idler Tower Base",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "403-330-444_TRI",
@@ -6159,7 +6177,7 @@
     "code": "403-330-444-TRI",
     "desc": "Idler Base - Large High - weldment (TRI)",
     "price": 6.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "4043_ASM_006_1A_HDP",
@@ -6189,7 +6207,7 @@
     "code": "405-000-135-TRI",
     "desc": "Slotted Nut Tool - Spindle (TRI)",
     "price": 6.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "406-000-059_TRI",
@@ -6201,7 +6219,7 @@
     "code": "406-000-059-TRI",
     "desc": "P.T.O. Hook (TRI)",
     "price": 5.35,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "406-000-076_TRI",
@@ -6213,7 +6231,7 @@
     "code": "406-000-076-TRI",
     "desc": "Jack Shaft (TRI)",
     "price": 6.11,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "406-00-076_TRI",
@@ -6225,7 +6243,7 @@
     "code": "406-00-076-TRI",
     "desc": "X-WAM S5-P2 AJ-PR-37-03",
     "price": 8.04,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "406v05_SWPE",
@@ -6357,19 +6375,7 @@
     "code": "410-000-246-TRI",
     "desc": "Clamp Plate Mudguard",
     "price": 2.37,
-    "customer": ""
-  },
-  {
-    "code": "410-000-328_TRI",
-    "desc": "",
-    "price": 1.23,
     "customer": "TRI"
-  },
-  {
-    "code": "410-000-328-TRI",
-    "desc": "",
-    "price": 1.23,
-    "customer": ""
   },
   {
     "code": "410-000-357_TRI",
@@ -6381,13 +6387,13 @@
     "code": "410-000-357-TRI",
     "desc": "Clutch Cover Mount (TRI)",
     "price": 6.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-360 -TRI",
     "desc": "Clamp Strip Center front (TRI)",
     "price": 5.66,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-360_TRI",
@@ -6399,7 +6405,7 @@
     "code": "410-000-360-TRI",
     "desc": "Clamp Strip Center front (TRI)",
     "price": 6.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-382_TRI",
@@ -6411,13 +6417,13 @@
     "code": "410-000-382-TRI",
     "desc": "Front Flap Retaining Strip - 175",
     "price": 10.67,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-384 -TRI",
     "desc": "Rear Flap - Retaining Strip (TRI)",
     "price": 12.67,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-384_TRI",
@@ -6429,7 +6435,7 @@
     "code": "410-000-384-TRI",
     "desc": "Rear Flap - Retaining Strip (TRI)",
     "price": 13.81,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "410-000-423_TRI",
@@ -6441,7 +6447,7 @@
     "code": "410-000-423-TRI",
     "desc": "Cover Retainer Post (TRI)",
     "price": 0.81,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "4102112_TPM",
@@ -6471,7 +6477,7 @@
     "code": "410-464-073-TRI",
     "desc": "Bearing Cap For FL207 with Ctr Hole (TRI)",
     "price": 1.78,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "411-000-615_TRI",
@@ -6483,7 +6489,7 @@
     "code": "411-000-615-TRI",
     "desc": "FURY (TRI)",
     "price": 7.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-080_TRI",
@@ -6495,7 +6501,7 @@
     "code": "412-000-080-TRI",
     "desc": "Rooler Mount (TRI)",
     "price": 14.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-154_GAM",
@@ -6513,7 +6519,7 @@
     "code": "412-000-170-TRI",
     "desc": "Quadrant Weldment RH (TRI)",
     "price": 9.11,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-171_TRI",
@@ -6525,7 +6531,7 @@
     "code": "412-000-171-TRI",
     "desc": "Quadrant Weldment (TRI)",
     "price": 9.11,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-220_TRI",
@@ -6537,7 +6543,7 @@
     "code": "412-000-220-TRI",
     "desc": "Height Adjuster Rod Striker",
     "price": 1.58,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-255_GAM",
@@ -6561,7 +6567,7 @@
     "code": "412-000-330-TRI",
     "desc": "Height Spacer Ring 1\" (GAM)(TRI)",
     "price": 0.72,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-331_TRI",
@@ -6573,7 +6579,7 @@
     "code": "412-000-331-TRI",
     "desc": "Caster Stem - Weldment",
     "price": 20.54,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-333_TRI",
@@ -6585,7 +6591,7 @@
     "code": "412-000-333-TRI",
     "desc": "Castor Stem Formed",
     "price": 21.9,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-336_TRI",
@@ -6597,7 +6603,7 @@
     "code": "412-000-336-TRI",
     "desc": "Dummy Stem - Weldment",
     "price": 4.1,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-381_TRI",
@@ -6609,7 +6615,7 @@
     "code": "412-000-381-TRI",
     "desc": "Height Adjustment Quadrant RH (TRI)",
     "price": 15.02,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-474_GAM",
@@ -6627,7 +6633,7 @@
     "code": "412-000-505-TRI",
     "desc": "Ant Scalp Roller Mount LH (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-506_TRI",
@@ -6639,7 +6645,7 @@
     "code": "412-000-506-TRI",
     "desc": "Ant Scalp Roller Mount RH (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-548_TRI",
@@ -6651,7 +6657,7 @@
     "code": "412-000-548-TRI",
     "desc": "Skid Weldment  (TRI)",
     "price": 19.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-549_TRI",
@@ -6663,7 +6669,7 @@
     "code": "412-000-549-TRI",
     "desc": "Skid Weldment (TRI)",
     "price": 19.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-658_TRI",
@@ -6675,7 +6681,7 @@
     "code": "412-000-658-TRI",
     "desc": "Castor Stem (TRI)",
     "price": 26.27,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-671_TRI",
@@ -6687,7 +6693,7 @@
     "code": "412-000-671-TRI",
     "desc": "Shim (TRI)",
     "price": 0.8,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-690_TRI",
@@ -6699,7 +6705,7 @@
     "code": "412-000-690-TRI",
     "desc": "Diode Mount Plate (TRI)",
     "price": 5.41,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-726_GAM",
@@ -6717,7 +6723,7 @@
     "code": "412-000-834-TRI",
     "desc": "Jockey Wheel Large (TRI)",
     "price": 34.53,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-839_GAM",
@@ -6729,7 +6735,7 @@
     "code": "412-000-867-TRI-LSPD",
     "desc": "Washers (TRI)(LSPD)",
     "price": 0.98,
-    "customer": ""
+    "customer": "LSPD"
   },
   {
     "code": "412-000-867-TRI-LSPD_TRI",
@@ -6741,7 +6747,7 @@
     "code": "412-000-867-TRI-LSPD-TRI",
     "desc": "Washers (TRI)(LSPD)",
     "price": 1.07,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-000-868_TRI",
@@ -6753,7 +6759,7 @@
     "code": "412-000-868-TRI",
     "desc": "Threaded Rod- Height Indicator M12x150",
     "price": 1.22,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-00-867B - LSPD_TRI",
@@ -6765,7 +6771,7 @@
     "code": "412-00-867B - LSPD-TRI",
     "desc": "Washer (LSPD)(TRI)",
     "price": 1.07,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-152-400_TRI",
@@ -6777,7 +6783,7 @@
     "code": "412-152-400-TRI",
     "desc": "Adjuster Slide Assembly (TRI)",
     "price": 9.35,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-152-421_GAM",
@@ -6819,7 +6825,7 @@
     "code": "412-320-090-TRI",
     "desc": "Washer Retaining (TRI)",
     "price": 1.04,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-330-272_TRI",
@@ -6831,7 +6837,7 @@
     "code": "412-330-272-TRI",
     "desc": "Height Adjuster Rod Std (TRI)",
     "price": 2.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-330-273_GAM",
@@ -6849,7 +6855,7 @@
     "code": "412-850-180-TRI",
     "desc": "Stud Weldment (TRI)",
     "price": 3.99,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "412-850-221_GAM",
@@ -6879,7 +6885,7 @@
     "code": "413-000-094-TRI",
     "desc": "Side Shift - Slide Tube (TRI)",
     "price": 29.99,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "413-000-111_TRI",
@@ -6891,7 +6897,7 @@
     "code": "413-000-111-TRI",
     "desc": "Ram Mount - Side Shift (TRI)",
     "price": 5.41,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-076_GAM",
@@ -6909,7 +6915,7 @@
     "code": "414-000-077-TRI",
     "desc": "Mount Assy Front S3",
     "price": 12.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-078_TRI",
@@ -6921,7 +6927,7 @@
     "code": "414-000-078-TRI",
     "desc": "Roller mount LH st",
     "price": 12.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-079_TRI",
@@ -6933,7 +6939,7 @@
     "code": "414-000-079-TRI",
     "desc": "Roller Inner RH St",
     "price": 12.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-080_TRI",
@@ -6945,7 +6951,7 @@
     "code": "414-000-080-TRI",
     "desc": "Mount Assy Rear St",
     "price": 12.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-148_TRI",
@@ -6957,7 +6963,7 @@
     "code": "414-000-148-TRI",
     "desc": "Roller Mount Standard (TRI)",
     "price": 12.55,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-149_TRI",
@@ -6969,7 +6975,7 @@
     "code": "414-000-149-TRI",
     "desc": "Roller Mount Extended (TRI)",
     "price": 12.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-161_TRI",
@@ -6987,13 +6993,13 @@
     "code": "414-000-161C-TRI",
     "desc": "Washer (TRI)",
     "price": 1.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-161-TRI",
     "desc": "Stealth Roller Mount (TRI)",
     "price": 6.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-000-179_TRI",
@@ -7005,7 +7011,7 @@
     "code": "414-000-179-TRI",
     "desc": "FURY (TRI)",
     "price": 9.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "414-001-671_TRI",
@@ -7017,7 +7023,7 @@
     "code": "414-001-671-TRI",
     "desc": "Hinge Rod Weldment-Rear Flap 205",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "416-000-063_TRI",
@@ -7029,7 +7035,7 @@
     "code": "416-000-063-TRI",
     "desc": "Rear Flap - Weldment - Pin 175 - Force (TRI)",
     "price": 15.62,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "416-000-088_TRI",
@@ -7041,7 +7047,7 @@
     "code": "416-000-088-TRI",
     "desc": "Axle Stub - Bolt In",
     "price": 6.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "416-000-097_GAM",
@@ -7059,7 +7065,7 @@
     "code": "416-000-509-TRI",
     "desc": "Lock Arm Weldment - Rear (TRI)",
     "price": 21.42,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "416-449-063_GAM",
@@ -7083,7 +7089,7 @@
     "code": "416-842-200-TRI",
     "desc": "Castle Nuts (TRI)",
     "price": 0.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-428_TRI",
@@ -7095,7 +7101,7 @@
     "code": "417-000-428-TRI",
     "desc": "Gearbox Slide Adj Ass Warlord (TRI)",
     "price": 3.49,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-573_TRI",
@@ -7107,7 +7113,7 @@
     "code": "417-000-573-TRI",
     "desc": "Weldment Safety Storage Bracket (TRI)",
     "price": 64.96,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-601_TRI",
@@ -7119,7 +7125,7 @@
     "code": "417-000-601-TRI",
     "desc": "Flap Pin 135",
     "price": 17.8,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-602_TRI",
@@ -7131,7 +7137,7 @@
     "code": "417-000-602-TRI",
     "desc": "Flap Pin -155",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-603_TRI",
@@ -7143,7 +7149,7 @@
     "code": "417-000-603-TRI",
     "desc": "Flip Pin 185",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-000-893_TRI",
@@ -7155,7 +7161,7 @@
     "code": "417-000-893-TRI",
     "desc": "Pulley Cover",
     "price": 2.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-047_TRI",
@@ -7167,7 +7173,7 @@
     "code": "417-001-047-TRI",
     "desc": "Flap Rod 205 (TRI)",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-059_TRI",
@@ -7179,7 +7185,7 @@
     "code": "417-001-059-TRI",
     "desc": "Sideshift - RHS - Mount",
     "price": 39.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-094_TRI",
@@ -7191,7 +7197,7 @@
     "code": "417-001-094-TRI",
     "desc": "Flap Rod Assy. 175",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-095_TRI",
@@ -7203,7 +7209,7 @@
     "code": "417-001-095-TRI",
     "desc": "Flap Rod Assy. 205",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-096_TRI",
@@ -7215,7 +7221,7 @@
     "code": "417-001-096-TRI",
     "desc": "Flap Rod",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-163_TRI",
@@ -7227,7 +7233,7 @@
     "code": "417-001-163-TRI",
     "desc": "Front Hinge Arm (TRI)",
     "price": 15.89,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-164_TRI",
@@ -7239,7 +7245,7 @@
     "code": "417-001-164-TRI",
     "desc": "Rear Hinge Arm Stealth 3 (TRI)",
     "price": 12.26,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-178_TRI",
@@ -7251,7 +7257,7 @@
     "code": "417-001-178-TRI",
     "desc": "Belt Retainer Wing",
     "price": 1.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-179_TRI",
@@ -7263,7 +7269,7 @@
     "code": "417-001-179-TRI",
     "desc": "TIEROD SHORT",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-180_TRI",
@@ -7275,7 +7281,7 @@
     "code": "417-001-180-TRI",
     "desc": "Tierod Long",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-181_TRI",
@@ -7287,7 +7293,7 @@
     "code": "417-001-181-TRI",
     "desc": "Assembly Rh Stealt",
     "price": 7.87,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-182_TRI",
@@ -7299,7 +7305,7 @@
     "code": "417-001-182-TRI",
     "desc": "Assembly LH Stealt",
     "price": 7.87,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-183_TRI",
@@ -7311,7 +7317,7 @@
     "code": "417-001-183-TRI",
     "desc": "Gearbox Pulley",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-184_TRI",
@@ -7323,7 +7329,7 @@
     "code": "417-001-184-TRI",
     "desc": "Gearbox Pully",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-192_TRI",
@@ -7335,7 +7341,7 @@
     "code": "417-001-192-TRI",
     "desc": "Weldment",
     "price": 7.04,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-195_TRI",
@@ -7347,7 +7353,7 @@
     "code": "417-001-195-TRI",
     "desc": "Mounting Bracket Universal (TRI)",
     "price": 32.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-300_TRI",
@@ -7359,7 +7365,7 @@
     "code": "417-001-300-TRI",
     "desc": "GEARBOXx MOUNT - COMER SPACER DISC",
     "price": 2.88,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-309_TRI",
@@ -7371,7 +7377,7 @@
     "code": "417-001-309-TRI",
     "desc": "Mounting Bracket (TRI)",
     "price": 32.6,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-353_TRI",
@@ -7383,7 +7389,7 @@
     "code": "417-001-353-TRI",
     "desc": "Transport Guide Hook (TRI)",
     "price": 4.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-368_TRI",
@@ -7395,7 +7401,7 @@
     "code": "417-001-368-TRI",
     "desc": "Anti Scalp Roller Mount - Weldment",
     "price": 10.27,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-407_TRI",
@@ -7407,7 +7413,7 @@
     "code": "417-001-407-TRI",
     "desc": "Retainer Weldment (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-419_TRI",
@@ -7419,7 +7425,7 @@
     "code": "417-001-419-TRI",
     "desc": "Lock Arm Safety Transport (TRI)",
     "price": 8.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-509_TRI",
@@ -7431,7 +7437,7 @@
     "code": "417-001-509-TRI",
     "desc": "Mounting Bracket - Weldment (TRI)",
     "price": 38.96,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-573_TRI",
@@ -7443,7 +7449,7 @@
     "code": "417-001-573-TRI",
     "desc": "Weldment Safety Storage Bracket (TRI)",
     "price": 130.8,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-632_TRI",
@@ -7455,7 +7461,7 @@
     "code": "417-001-632-TRI",
     "desc": "Folding - ABT Bracket (TRI)",
     "price": 0.84,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-665_TRI",
@@ -7467,7 +7473,7 @@
     "code": "417-001-665-TRI",
     "desc": "Retaining Lug Weldment (TRI)",
     "price": 1.44,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-670_TRI",
@@ -7479,7 +7485,7 @@
     "code": "417-001-670-TRI",
     "desc": "Hinge Rod Weldment-Rear Flap 175",
     "price": 15.62,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-671_TRI",
@@ -7491,7 +7497,7 @@
     "code": "417-001-671-TRI",
     "desc": "Rear Flap Rod Assy. (TRI)",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-672_TRI",
@@ -7503,7 +7509,7 @@
     "code": "417-001-672-TRI",
     "desc": "Flap Rod (TRI)",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "417-001-747_TRI",
@@ -7515,19 +7521,7 @@
     "code": "417-001-747-TRI",
     "desc": "Storage Bracket (TRI)",
     "price": 34.88,
-    "customer": ""
-  },
-  {
-    "code": "417-001-873_TRI",
-    "desc": "",
-    "price": 19.28,
     "customer": "TRI"
-  },
-  {
-    "code": "417-001-873-TRI",
-    "desc": "",
-    "price": 19.28,
-    "customer": ""
   },
   {
     "code": "417-002-162_TRI",
@@ -7539,7 +7533,7 @@
     "code": "417-002-162-TRI",
     "desc": "Link Spacer (TRI)",
     "price": 0.74,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-081_TRI",
@@ -7551,7 +7545,7 @@
     "code": "418-000-081-TRI",
     "desc": "Guide Rope Hose (TRI)",
     "price": 4.47,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-183_GAM",
@@ -7575,7 +7569,7 @@
     "code": "418-000-397-TRI",
     "desc": "Mounting Bracket - Unlock Accumulator",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-429_TRI",
@@ -7587,7 +7581,7 @@
     "code": "418-000-429-TRI",
     "desc": "Bracket Cover Moun",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-466_TRI",
@@ -7599,7 +7593,7 @@
     "code": "418-000-466-TRI",
     "desc": "Guide Rope Hose",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-467_TRI",
@@ -7611,7 +7605,7 @@
     "code": "418-000-467-TRI",
     "desc": "Side Lock Plate (TRI)",
     "price": 11.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-469_TRI",
@@ -7623,7 +7617,7 @@
     "code": "418-000-469-TRI",
     "desc": "Snake Locking Arm (TRI)",
     "price": 15.31,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-470_GAM",
@@ -7641,7 +7635,7 @@
     "code": "418-000-471-TRI",
     "desc": "Parking Jack",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-509_TRI",
@@ -7653,7 +7647,7 @@
     "code": "418-000-509-TRI",
     "desc": "Rear Lock Ass",
     "price": 21.42,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-510_GAM",
@@ -7671,7 +7665,7 @@
     "code": "418-000-542-TRI",
     "desc": "Clevis plate weldment (TRI)",
     "price": 5.46,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-589_TRI",
@@ -7683,7 +7677,7 @@
     "code": "418-000-589-TRI",
     "desc": "Rear Lock  Release Weldment (TRI)",
     "price": 6.77,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-650_TRI",
@@ -7695,7 +7689,7 @@
     "code": "418-000-650-TRI",
     "desc": "Prox Cam Quick Lift",
     "price": 0.69,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-651_TRI",
@@ -7707,7 +7701,7 @@
     "code": "418-000-651-TRI",
     "desc": "Prox Cam ILS",
     "price": 0.69,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-652_TRI",
@@ -7719,7 +7713,7 @@
     "code": "418-000-652-TRI",
     "desc": "Prox Cam Rear",
     "price": 0.69,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-682_TRI",
@@ -7731,7 +7725,7 @@
     "code": "418-000-682-TRI",
     "desc": "Axle Subs",
     "price": 7.54,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-704_TRI",
@@ -7743,7 +7737,7 @@
     "code": "418-000-704-TRI",
     "desc": "Lock Arm Rear - Weldment",
     "price": 34.24,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-706_TRI",
@@ -7755,7 +7749,7 @@
     "code": "418-000-706-TRI",
     "desc": "Stirrup Rear - Weldment",
     "price": 10.95,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-707_TRI",
@@ -7767,7 +7761,7 @@
     "code": "418-000-707-TRI",
     "desc": "Stirrup weldment",
     "price": 10.95,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-773_TRI",
@@ -7779,7 +7773,7 @@
     "code": "418-000-773-TRI",
     "desc": "(TRI)",
     "price": 4.29,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-777_TRI",
@@ -7791,7 +7785,7 @@
     "code": "418-000-777-TRI",
     "desc": "Rear Prox Cam (TRI)",
     "price": 1.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-779_TRI",
@@ -7803,7 +7797,7 @@
     "code": "418-000-779-TRI",
     "desc": "Clutch Cover (TRI)",
     "price": 6.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-782_TRI",
@@ -7815,7 +7809,7 @@
     "code": "418-000-782-TRI",
     "desc": "PTO hanger (TRI)",
     "price": 4.57,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-838_TRI",
@@ -7827,7 +7821,7 @@
     "code": "418-000-838-TRI",
     "desc": "Mount - Prox Rear (TRI)",
     "price": 1.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-854_TRI",
@@ -7839,7 +7833,7 @@
     "code": "418-000-854-TRI",
     "desc": "Spacer - Transport Guide Hook (TRI)",
     "price": 1.69,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-855_TRI",
@@ -7851,7 +7845,7 @@
     "code": "418-000-855-TRI",
     "desc": "Hook - Transport Guide (TRI)",
     "price": 2.7,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-864_TRI",
@@ -7863,7 +7857,7 @@
     "code": "418-000-864-TRI",
     "desc": "Plate-LH-Lock Mech(TRI)",
     "price": 17.04,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-865_TRI",
@@ -7875,7 +7869,7 @@
     "code": "418-000-865-TRI",
     "desc": "Plate-RH-Lock Mech (TRI)",
     "price": 17.04,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-866_TRI",
@@ -7887,19 +7881,7 @@
     "code": "418-000-866-TRI",
     "desc": "Lock Weldment Rear (TRI)",
     "price": 14.21,
-    "customer": ""
-  },
-  {
-    "code": "418-000-879_TRI",
-    "desc": "",
-    "price": 9.56,
     "customer": "TRI"
-  },
-  {
-    "code": "418-000-879-TRI",
-    "desc": "",
-    "price": 9.56,
-    "customer": ""
   },
   {
     "code": "418-000-883_TRI",
@@ -7911,7 +7893,7 @@
     "code": "418-000-883-TRI",
     "desc": "Link(TRI)",
     "price": 1.2,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-901_TRI",
@@ -7923,7 +7905,7 @@
     "code": "418-000-901-TRI",
     "desc": "Cover - Remote Unlock (TRI)",
     "price": 4,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-903_TRI",
@@ -7935,7 +7917,7 @@
     "code": "418-000-903-TRI",
     "desc": "Lever - Weldment - Remote Control (TRI)",
     "price": 5.18,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-916_TRI",
@@ -7947,19 +7929,7 @@
     "code": "418-000-916-TRI",
     "desc": "Mount Plate - Slow Moving Triangle (TRI)",
     "price": 30.93,
-    "customer": ""
-  },
-  {
-    "code": "418-000-919_TRI",
-    "desc": "",
-    "price": 14.17,
     "customer": "TRI"
-  },
-  {
-    "code": "418-000-919-TRI",
-    "desc": "",
-    "price": 14.17,
-    "customer": ""
   },
   {
     "code": "418-000-921_TRI",
@@ -7971,19 +7941,7 @@
     "code": "418-000-921-TRI",
     "desc": "Tool Box Legs (TRI)",
     "price": 9.11,
-    "customer": ""
-  },
-  {
-    "code": "418-000-922_TRI",
-    "desc": "",
-    "price": 39.99,
     "customer": "TRI"
-  },
-  {
-    "code": "418-000-922-TRI",
-    "desc": "",
-    "price": 39.99,
-    "customer": ""
   },
   {
     "code": "418-000-928_TRI",
@@ -7995,7 +7953,7 @@
     "code": "418-000-928-TRI",
     "desc": "Tie Rod - X-WAM Remote (TRI)",
     "price": 12.12,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-931_TRI",
@@ -8007,7 +7965,7 @@
     "code": "418-000-931-TRI",
     "desc": "Light Bracket Spacer (TRI)",
     "price": 0.56,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-944_TRI",
@@ -8019,7 +7977,7 @@
     "code": "418-000-944-TRI",
     "desc": "Ned PVK Retainer (TRI)",
     "price": 6.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-945_TRI",
@@ -8031,7 +7989,7 @@
     "code": "418-000-945-TRI",
     "desc": "Turf Mudguard Mount Plate (TRI)",
     "price": 3.08,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-000-949_TRI",
@@ -8043,7 +8001,7 @@
     "code": "418-000-949-TRI",
     "desc": "Lock Linkage Weldment (TRI)",
     "price": 5.92,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-013_TRI",
@@ -8055,7 +8013,7 @@
     "code": "418-001-013-TRI",
     "desc": "Side Lamp Bracket LH (TRI)",
     "price": 5.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-014_TRI",
@@ -8067,7 +8025,7 @@
     "code": "418-001-014-TRI",
     "desc": "Side Lamp Bracket RH (TRI)",
     "price": 5.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-015_TRI",
@@ -8079,7 +8037,7 @@
     "code": "418-001-015-TRI",
     "desc": "Front Reflector Bracket LH (TRI)",
     "price": 5.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-016_TRI",
@@ -8091,7 +8049,7 @@
     "code": "418-001-016-TRI",
     "desc": "Front Reflector Bracket RH (TRI)",
     "price": 5.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-039_TRI",
@@ -8103,7 +8061,7 @@
     "code": "418-001-039-TRI",
     "desc": "Bolt On Axle Stub (TRI)",
     "price": 6.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-040_TRI",
@@ -8115,7 +8073,7 @@
     "code": "418-001-040-TRI",
     "desc": "Bolt On Axle (TRI)",
     "price": 6.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-062_TRI",
@@ -8127,7 +8085,7 @@
     "code": "418-001-062-TRI",
     "desc": "Rear Lock Weldment (TRI)",
     "price": 19.55,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-071_TRI",
@@ -8139,7 +8097,7 @@
     "code": "418-001-071-TRI",
     "desc": "Side Lamp Bracket LH (TRI)",
     "price": 5.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-072_TRI",
@@ -8151,7 +8109,7 @@
     "code": "418-001-072-TRI",
     "desc": "Side Lamp Bracket RH(TRI)",
     "price": 5.68,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-073_TRI",
@@ -8163,7 +8121,7 @@
     "code": "418-001-073-TRI",
     "desc": "Front Lamp Bracket LH (TRI)",
     "price": 5.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-074_TRI",
@@ -8175,7 +8133,7 @@
     "code": "418-001-074-TRI",
     "desc": "Front Lamp Bracket RH (TRI)",
     "price": 5.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-001-081_TRI",
@@ -8187,7 +8145,7 @@
     "code": "418-001-081-TRI",
     "desc": "Guide - Rope and Hose Raw (TRI)",
     "price": 4.47,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-840-640_TRI",
@@ -8199,7 +8157,7 @@
     "code": "418-840-640-TRI",
     "desc": "Tie rod transport lock- peg 493 (TRI)",
     "price": 4.8,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-840-641_TRI",
@@ -8211,7 +8169,7 @@
     "code": "418-840-641-TRI",
     "desc": "Tie Rod Bent (TRI)",
     "price": 4.8,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-840-680_TRI",
@@ -8223,7 +8181,7 @@
     "code": "418-840-680-TRI",
     "desc": "Transport Lock",
     "price": 1.58,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "418-844-170_TRI",
@@ -8235,7 +8193,7 @@
     "code": "418-844-170-TRI",
     "desc": "Clutch Mount",
     "price": 3.16,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-013_GAM",
@@ -8260,18 +8218,6 @@
     "desc": "Lift Arm Pin (TRI)",
     "price": 2.17,
     "customer": "GAM"
-  },
-  {
-    "code": "419-000-035_TRI",
-    "desc": "",
-    "price": 2.27,
-    "customer": "TRI"
-  },
-  {
-    "code": "419-000-035-TRI",
-    "desc": "",
-    "price": 2.27,
-    "customer": ""
   },
   {
     "code": "419-000-038_GAM",
@@ -8301,7 +8247,7 @@
     "code": "419-000-043-TRI",
     "desc": "Pin - Lift Arm - Long",
     "price": 2.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-050_TRI",
@@ -8313,7 +8259,7 @@
     "code": "419-000-050-TRI",
     "desc": "Flat Head Hitch Pins",
     "price": 3.43,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-053_TRI",
@@ -8325,7 +8271,7 @@
     "code": "419-000-053-TRI",
     "desc": "Slot Cover - Top Link SR Inner (TRI)",
     "price": 2.11,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-061_TRI",
@@ -8337,7 +8283,7 @@
     "code": "419-000-061-TRI",
     "desc": "Rear Flap - Weldment - Pin  - 115 (TRI)",
     "price": 15,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-062_TRI",
@@ -8349,7 +8295,7 @@
     "code": "419-000-062-TRI",
     "desc": "Rear Flap Pin (TRI)",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-063_TRI",
@@ -8361,7 +8307,7 @@
     "code": "419-000-063-TRI",
     "desc": "Rear Flap 175",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-064_TRI",
@@ -8373,7 +8319,7 @@
     "code": "419-000-064-TRI",
     "desc": "Rear Flap - Weldment - Pin - 205 (TRI)",
     "price": 15.75,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-065_TRI",
@@ -8385,7 +8331,7 @@
     "code": "419-000-065-TRI",
     "desc": "Rear Flap Pin 235 (TRI)",
     "price": 15.92,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-068_TRI",
@@ -8397,7 +8343,7 @@
     "code": "419-000-068-TRI",
     "desc": "Lift Arm Pin (GAM)(TRI)",
     "price": 2.47,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-000-076_GAM",
@@ -8415,7 +8361,7 @@
     "code": "419-000-080-TRI",
     "desc": "Stealth S3 Roller Mount (TRI)",
     "price": 5.21,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-170-060_TRI",
@@ -8427,7 +8373,7 @@
     "code": "419-170-060-TRI",
     "desc": "Retainer Axle",
     "price": 1.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-320-040_TRI",
@@ -8439,7 +8385,7 @@
     "code": "419-320-040-TRI",
     "desc": "Front Antiscalp",
     "price": 1.58,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-845-400_TRI",
@@ -8451,7 +8397,7 @@
     "code": "419-845-400-TRI",
     "desc": "Hydraulic Cyl Pin Weldment (TRI)",
     "price": 5.21,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-845-500_TRI",
@@ -8463,7 +8409,7 @@
     "code": "419-845-500-TRI",
     "desc": "Pin Lift Ram Lower",
     "price": 2.37,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-845-550_GAM",
@@ -8487,7 +8433,7 @@
     "code": "419-845-561-TRI",
     "desc": "P 4 Pins",
     "price": 2.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-850-600_TRI",
@@ -8499,7 +8445,7 @@
     "code": "419-850-600-TRI",
     "desc": "Hinge Pin Weldment - Wing Front Stealth S2 (TRI)",
     "price": 6.17,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "419-850-620_TRI",
@@ -8511,7 +8457,7 @@
     "code": "419-850-620-TRI",
     "desc": "Hinge Weldment (TRI)",
     "price": 5.36,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "42:_BMG",
@@ -8529,7 +8475,7 @@
     "code": "421-000-166-TRI",
     "desc": "Plate Adaptor- MLS Controller (TRI)",
     "price": 0.85,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "421-000-382_TRI",
@@ -8541,7 +8487,7 @@
     "code": "421-000-382-TRI",
     "desc": "Electric Unlock - Tear Drop (TRI)",
     "price": 0.39,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "423001_MAC_002_1A_HDP",
@@ -8691,31 +8637,7 @@
     "code": "450-000-079-TRI",
     "desc": "Mount Folding - Spare Wheel (TRI)",
     "price": 12.82,
-    "customer": ""
-  },
-  {
-    "code": "450-000-106_TRI",
-    "desc": "",
-    "price": 1.44,
     "customer": "TRI"
-  },
-  {
-    "code": "450-000-106-TRI",
-    "desc": "",
-    "price": 1.44,
-    "customer": ""
-  },
-  {
-    "code": "450-000-107_TRI",
-    "desc": "",
-    "price": 0.56,
-    "customer": "TRI"
-  },
-  {
-    "code": "450-000-107-TRI",
-    "desc": "",
-    "price": 0.56,
-    "customer": ""
   },
   {
     "code": "450-000-126_GAM",
@@ -8733,7 +8655,7 @@
     "code": "450-000-128-TRI",
     "desc": "Mount Clamp Plate - Spare Wheel (TRI)",
     "price": 2.26,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "450-000-135_TRI",
@@ -8745,7 +8667,7 @@
     "code": "450-000-135-TRI",
     "desc": "Spindle Slotted Nut Tool  (TRI)",
     "price": 1.69,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "450-844-160_GAM",
@@ -8834,7 +8756,7 @@
   {
     "code": "481001_MAC_014_1A_HDP",
     "desc": "Disc (HDP)",
-    "price": 1.53,
+    "price": 2.06,
     "customer": "HDP"
   },
   {
@@ -8847,6 +8769,12 @@
     "code": "481001_MAC_037_1A_HDP",
     "desc": "Flange (HDP)",
     "price": 2.34,
+    "customer": "HDP"
+  },
+  {
+    "code": "481001_MAC_048_1A_HDP",
+    "desc": "Disc (HDP)",
+    "price": 2.06,
     "customer": "HDP"
   },
   {
@@ -8913,7 +8841,7 @@
     "code": "4868-004-TRI",
     "desc": "LH CASTOR WELDMENT - HIGH CUT (TRI)",
     "price": 19.59,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "4868-008_TRI",
@@ -8925,7 +8853,7 @@
     "code": "4868-008-TRI",
     "desc": "BOLT ON CASTOR PIVOT (TRI)",
     "price": 15.02,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "4868-011_TRI",
@@ -8937,7 +8865,7 @@
     "code": "4868-011-TRI",
     "desc": "BOLT ON AXLE STUB (TRI)",
     "price": 8.52,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "4868-017_TRI",
@@ -8949,7 +8877,7 @@
     "code": "4868-017-TRI",
     "desc": "DUMMY STEM BAR- HIGH CT (TRI)",
     "price": 10.89,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "493701_FMAC",
@@ -8979,6 +8907,12 @@
     "code": "5004_MAC_003_1B_HDP",
     "desc": "Spindles",
     "price": 0.52,
+    "customer": "HDP"
+  },
+  {
+    "code": "5004_MAC_007_1D_HDP",
+    "desc": "5004_MAC_007_1D (HDP)",
+    "price": 1.52,
     "customer": "HDP"
   },
   {
@@ -9093,7 +9027,7 @@
     "code": "5054_MAC_136_1A-HDP",
     "desc": "Isuzu Air Delivery Pipe Spacer (HDP)",
     "price": 0.71,
-    "customer": ""
+    "customer": "HDP"
   },
   {
     "code": "5067_MAC_001_1A_HDP",
@@ -9561,7 +9495,7 @@
     "code": "808-000-013-TRI",
     "desc": "Sp Wheel Bracket",
     "price": 14.93,
-    "customer": ""
+    "customer": "TRI"
   },
   {
     "code": "82:_BMG",
@@ -10047,7 +9981,7 @@
     "code": "A2-207360-GAM",
     "desc": "Spacer (GAM)",
     "price": 6.21,
-    "customer": ""
+    "customer": "GAM"
   },
   {
     "code": "ABS Angles_BMG",
@@ -10113,13 +10047,13 @@
     "code": "Arm Stand Columns-TEQ",
     "desc": "Arm Stand Columns - (TEQ)",
     "price": 6.91,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Arm_Stand-TEQ",
     "desc": "Arm Stand (TEQ)",
     "price": 14.41,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "AS Purlin Fork Hip Head_BAYT",
@@ -10401,7 +10335,7 @@
     "code": "BRC41-TEQ",
     "desc": "BRC41 (TEQ)",
     "price": 0.69,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "breakaway weight_EMS",
@@ -10410,10 +10344,16 @@
     "customer": "EMS"
   },
   {
+    "code": "BRG-001_GAM",
+    "desc": "BEARING HOUSING CONCEPT ZINC PLATE BEARING (GAM)",
+    "price": 3.75,
+    "customer": "GAM"
+  },
+  {
     "code": "BRG-001-GAM",
     "desc": "Bearing Housing (GAM)",
     "price": 4.31,
-    "customer": ""
+    "customer": "GAM"
   },
   {
     "code": "Bridge Entry Brackets_WMS",
@@ -10632,6 +10572,18 @@
     "customer": "BLAY"
   },
   {
+    "code": "Clamp - Inner for Track_PPS",
+    "desc": "Clamp - Inner for Track (PPS)",
+    "price": 3.43,
+    "customer": "PPS"
+  },
+  {
+    "code": "Clamp - Outer Bracket _PPS",
+    "desc": "Clamp - Outer Bracket for Track (PPS)",
+    "price": 7.2,
+    "customer": "PPS"
+  },
+  {
     "code": "Clamp - PC_JPM",
     "desc": "ABS900 Clamp - PC-JPM",
     "price": 1.45,
@@ -10752,6 +10704,12 @@
     "customer": "PRES"
   },
   {
+    "code": "Cover plates_AGP",
+    "desc": "Ø256 Cover plates (AGP)",
+    "price": 10.29,
+    "customer": "AGP"
+  },
+  {
     "code": "Cover Rack Rods_NZES",
     "desc": "Cover Rack Rods (NZES)",
     "price": 17.85,
@@ -10851,13 +10809,13 @@
     "code": "curved para inner - TEQ",
     "desc": "Curved Parallel Bar Inner (TEQ)",
     "price": 6.65,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "curved para inner-TEQ",
     "desc": "Curved Parallel Bar Inner (TEQ)",
     "price": 6.98,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Curved Slide Stand_HWI",
@@ -11163,31 +11121,25 @@
     "code": "EFR Brake Handles-TEQ",
     "desc": "Brake Handles (TEQ)",
     "price": 2.51,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "EFR Pulpit Top Frame - TEQ",
     "desc": "EFR Pulpit Top Frame  (TEQ)",
     "price": 15,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "EFR Pulpit Top Frame-TEQ",
     "desc": "EFR Pulpit Top Frame  (TEQ)",
     "price": 15.75,
-    "customer": ""
-  },
-  {
-    "code": "EFR Rear Legs (TEQ)",
-    "desc": "Rear Legs",
-    "price": 1.5,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "EFR Rear Legs-TEQ",
     "desc": "Rear Legs (TEQ)",
     "price": 1.58,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Elelectrical Box Set_EMS",
@@ -11823,7 +11775,7 @@
     "code": "GC8 LOWER LEG SEC-TEQ",
     "desc": "GC8 LOWER LEG SEC (TEQ)",
     "price": 3.77,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GE Eave_BAYT",
@@ -11835,7 +11787,7 @@
     "code": "GFR Ext-TEQ",
     "desc": "GFR Ext (TEQ)",
     "price": 5.02,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GFR Handle - TEQ",
@@ -11847,31 +11799,37 @@
     "code": "GFR Handle-TEQ",
     "desc": "GRF Handle (TEQ)",
     "price": 10.36,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GFR Legs-TEQ",
     "desc": "GFR Legs (TEQ)",
     "price": 1.58,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GFR Rear Leg - TEQ",
     "desc": "GFR Rear Leg (TEQ)",
     "price": 1.92,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GFR Rear Leg-TEQ",
     "desc": "GFR Rear Leg (TEQ)",
     "price": 2.02,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "GMS-01-EP_SML",
     "desc": "Gun Mount Stud Long (SML)",
     "price": 0.57,
     "customer": "SML"
+  },
+  {
+    "code": "GMS-02_GAM",
+    "desc": "GMS-02 GUN MOUNT STUD MED (GAM)",
+    "price": 0.35,
+    "customer": "GAM"
   },
   {
     "code": "Goose Neck_JPM",
@@ -12046,6 +12004,12 @@
     "desc": "Heavey Duty Support (DOM)",
     "price": 11.81,
     "customer": "DOM"
+  },
+  {
+    "code": "HF2800A_FMAC",
+    "desc": "Washer (FMAC)",
+    "price": 0.56,
+    "customer": "FMAC"
   },
   {
     "code": "HI - P32_JPM",
@@ -12396,6 +12360,24 @@
     "customer": "WBR"
   },
   {
+    "code": "JP Bed_PPS",
+    "desc": "JP Bed (PPS)",
+    "price": 176.2,
+    "customer": "PPS"
+  },
+  {
+    "code": "JP End Frame LE_PPS",
+    "desc": "JP End Frame Left End (PPS)",
+    "price": 148,
+    "customer": "PPS"
+  },
+  {
+    "code": "JP End Frame WE_PPS",
+    "desc": "JP End Frame Winch End (PPS)",
+    "price": 148,
+    "customer": "PPS"
+  },
+  {
     "code": "JQP Handle_TEQ",
     "desc": "JQP Handle (TEQ)",
     "price": 8.19,
@@ -12405,7 +12387,7 @@
     "code": "JR100-TEQ",
     "desc": "JR100 (TEQ)",
     "price": 2.51,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "KEA8460111PBZ_KEAT",
@@ -12460,6 +12442,12 @@
     "desc": "L Brackets (DOM)",
     "price": 0.71,
     "customer": "DOM"
+  },
+  {
+    "code": "LABOUR-TGAEP",
+    "desc": "Labour (TGAEP)",
+    "price": 120,
+    "customer": "TGAEP"
   },
   {
     "code": "LABSCZP_DONM",
@@ -12538,6 +12526,12 @@
     "desc": "Latches (BROWN)",
     "price": 1.04,
     "customer": "BROWN"
+  },
+  {
+    "code": "Lever Foot - Low Track_PPS",
+    "desc": "Lever Foot - Low Track (PPS)",
+    "price": 8.75,
+    "customer": "PPS"
   },
   {
     "code": "Lift Lug_HDP",
@@ -12652,12 +12646,6 @@
     "desc": "Ring (AGP)",
     "price": 1.97,
     "customer": "AGP"
-  },
-  {
-    "code": "M36 Bolts_PATI",
-    "desc": "M36 x 180 socket head cap screws (PATI)",
-    "price": 4.9,
-    "customer": "PATI"
   },
   {
     "code": "Main Ram Pin Cap_JPM",
@@ -12804,6 +12792,18 @@
     "customer": "MTUI"
   },
   {
+    "code": "MINIMUM CHARGE GOLD",
+    "desc": "Minimum charge Parts as supplied (GOLD)",
+    "price": 70,
+    "customer": "GOLD"
+  },
+  {
+    "code": "MINIMUM CHARGE SILVER",
+    "desc": "Zinc Electroplating - Minimum charge",
+    "price": 63,
+    "customer": ""
+  },
+  {
     "code": "MLS00109_GLE",
     "desc": "Wheels (GLE)",
     "price": 2.02,
@@ -12918,12 +12918,6 @@
     "customer": "NZM"
   },
   {
-    "code": "Ø256 side plates_AGP",
-    "desc": "Ø256 side plates (AGP)",
-    "price": 10.29,
-    "customer": "AGP"
-  },
-  {
     "code": "OABBB_GAM",
     "desc": "Anti Bounce Back Bracket (GAM)",
     "price": 3.37,
@@ -13017,13 +13011,13 @@
     "code": "Parallel Bar Inners - TEQ",
     "desc": "Straight Parallel Bar Inners (TEQ)",
     "price": 5.79,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Parallel Bar Inners-TEQ",
     "desc": "Straight Parallel Bar Inners (TEQ)",
     "price": 6.08,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "PB001-017_GAM",
@@ -13053,7 +13047,7 @@
     "code": "PBS18 Arm Troughs-TEQ",
     "desc": "PBS18 Arm Troughs (TEQ)",
     "price": 14.38,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "PC1_HDP",
@@ -13257,13 +13251,13 @@
     "code": "Pulpit Top Frames  - TEQ",
     "desc": "Pulpit Top Frames (TEQ)",
     "price": 19.94,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Pulpit Top Frames-TEQ",
     "desc": "Pulpit Top Frames (TEQ)",
     "price": 20.94,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Purlin Fork End_BAYT",
@@ -13287,13 +13281,13 @@
     "code": "Quad Stick Handles - TEQ",
     "desc": "Quad Stick Handles (TEQ)",
     "price": 3.31,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Quad Stick Handles-TEQ",
     "desc": "Quad Stick Handles (TEQ)",
     "price": 3.48,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "QUICK_CHAN00000|*001_GAM",
@@ -13576,6 +13570,12 @@
     "desc": "Wheel Stud M12 x 1.5 x 45mm (GAM)",
     "price": 0.55,
     "customer": "GAM"
+  },
+  {
+    "code": "Safety Chain Spacer_KEA",
+    "desc": "Safety Chain Spacer  (KEA)",
+    "price": 0.63,
+    "customer": "KEA"
   },
   {
     "code": "Safety Pins_FMAC",
@@ -13872,8 +13872,20 @@
     "customer": "PATI"
   },
   {
+    "code": "SLB259-001P1_PATI",
+    "desc": "M36 x 180 socket head cap screws (PATI)",
+    "price": 4.9,
+    "customer": "PATI"
+  },
+  {
     "code": "SLB2863-001P1_PATI",
     "desc": "Banjo Fitting Female Part (PATI)",
+    "price": 0.6,
+    "customer": "PATI"
+  },
+  {
+    "code": "SLB2864-001P!_PATI",
+    "desc": "Banjo Fitting Male Part (PATI)",
     "price": 0.6,
     "customer": "PATI"
   },
@@ -13896,13 +13908,13 @@
     "customer": "PATI"
   },
   {
-    "code": "SLB3079-001 D_PATI",
+    "code": "SLB3079-001P3_PATI",
     "desc": "FRONT ADAPTOR PLATE WALVOIL SD8/5 (PATI)",
     "price": 11.57,
     "customer": "PATI"
   },
   {
-    "code": "SLB3079-002 D_PATI",
+    "code": "SLB3079-002P3_PATI",
     "desc": "REAR ADAPTOR BASE PLATE (PATI)",
     "price": 11.57,
     "customer": "PATI"
@@ -14118,6 +14130,12 @@
     "customer": "SML"
   },
   {
+    "code": "SMPGPTC",
+    "desc": "SMPGPTC -TENSIONER CONNECTOR ZINC PLATE (GAM)",
+    "price": 3.75,
+    "customer": "GAM"
+  },
+  {
     "code": "SMPGPTC_SML",
     "desc": "Belt Tensioner Plate -(SML)",
     "price": 1.96,
@@ -14172,6 +14190,12 @@
     "customer": "BROWN"
   },
   {
+    "code": "Socket Shoulder Bolt M10_SKZA",
+    "desc": "Socket Shoulder Bolt M10 x 12 x 16 (SKZA)",
+    "price": 0.7,
+    "customer": "SKZA"
+  },
+  {
     "code": "Solenoid Bracket_TREV",
     "desc": "Solenoid  Bracket (TREV)",
     "price": 2.86,
@@ -14188,6 +14212,12 @@
     "desc": "Shim 100 x 8 (GAM)",
     "price": 1.58,
     "customer": "GAM"
+  },
+  {
+    "code": "Spacer Safety Chain_KEA",
+    "desc": "Spacer Safety Chain (KEA)",
+    "price": 0.63,
+    "customer": "KEA"
   },
   {
     "code": "Spacer_JPM",
@@ -14553,7 +14583,7 @@
     "code": "T500 Brackets-TEQ",
     "desc": "T500 Brackets (TEQ)",
     "price": 3.77,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "T6MPERSONIC Bar_JPM",
@@ -14673,43 +14703,43 @@
     "code": "Tiny Tot Extension - TEQ",
     "desc": "Tiny Tot Extension (TEQ)",
     "price": 5.45,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Tiny Tot Extension-TEQ",
     "desc": "Tiny Tot Extension (TEQ)",
     "price": 5.72,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Tiny Trough Handles - TEQ",
     "desc": "Tiny Trough Handles  (TEQ)",
     "price": 2.41,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Tiny Trough Handles-TEQ",
     "desc": "Tiny Trough Handles  (TEQ)",
     "price": 2.53,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Tiny_Tot_Pulpit_Top-TEQ",
     "desc": "Tiny Tot Pulpit Top (TEQ)",
     "price": 15.71,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "TinyTot Pulpit TopHandle - TEQ",
     "desc": "TinyTot Pulpit Top Handle (TEQ)",
     "price": 2.27,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "TinyTot Pulpit TopHandle-TEQ",
     "desc": "TinyTot Pulpit Top Handle (TEQ)",
     "price": 2.38,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "TinyTot Telescope Slides - TEQ",
@@ -14721,19 +14751,19 @@
     "code": "TinyTot Telescope Slides-TEQ",
     "desc": "TinyTot Telescope Slides - (TEQ)",
     "price": 1.08,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "TinyTot Telescopes - TEQ",
     "desc": "TinyTot Telescopes (TEQ)",
     "price": 0.82,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "TinyTot Telescopes-TEQ",
     "desc": "TinyTot Telescopes (TEQ)",
     "price": 0.86,
-    "customer": ""
+    "customer": "TEQ"
   },
   {
     "code": "Tip Ass Locking Shaft_MTUI",
@@ -16524,9 +16554,9 @@
     "customer": "TERM"
   },
   {
-    "code": "ZINC GOLD - TGAEP",
-    "desc": "Zinc Part as Supplied GOLD",
-    "price": 100,
+    "code": "ZINC GOLD STANDARD",
+    "desc": "Zinc Electroplating Parts As Supplied",
+    "price": 400,
     "customer": ""
   },
   {
@@ -16536,33 +16566,15 @@
     "customer": ""
   },
   {
-    "code": "ZINC MINIMUM CHARGE GOLD",
-    "desc": "Parts As Supplied\n\nMinimum Charge GOLD",
-    "price": 73.5,
-    "customer": ""
-  },
-  {
-    "code": "ZINC MINIMUM CHARGE SILVER",
-    "desc": "Parts As Supplied\n\nMinimum charge",
-    "price": 63,
-    "customer": ""
-  },
-  {
     "code": "ZINC MISCELLANEOUS",
     "desc": "Miscellaneous Parts",
     "price": 1.05,
     "customer": ""
   },
   {
-    "code": "ZINC SILVER - TGAEP",
-    "desc": "ZINC Parts as supplied",
-    "price": 100,
-    "customer": ""
-  },
-  {
     "code": "ZINC SILVER STANDARD",
-    "desc": "Zinc Electroplating - JIG space (39%)",
-    "price": 140.4,
+    "desc": "Zinc Electroplating - JIG space",
+    "price": 360,
     "customer": ""
   },
   {

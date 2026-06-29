@@ -158,6 +158,9 @@ export const resolveCustomer = (n: string): IContact | null => {
   const trimmedName = n.trim();
   const searchTerm = trimmedName.toLowerCase();
 
+  console.log("🔍 resolveCustomer - Input:", n);
+  console.log("🔍 resolveCustomer - searchTerm (lowercased):", searchTerm);
+
   // Aliases
   if (searchTerm.includes("sokoza"))
     return CONTACTS.find((c) => c.account === "SOKO") || null;
@@ -170,21 +173,36 @@ export const resolveCustomer = (n: string): IContact | null => {
   let c = CONTACTS.find(
     (x) =>
       x.name.toLowerCase() === searchTerm ||
-      x.alias?.some((n) => n.toLowerCase() === searchTerm),
+      x.alias?.some((n) => n === searchTerm),
   );
-  if (c) return c;
+  if (c) {
+    console.log("✅ Found exact match:", c.name);
+    return c;
+  }
 
-  // Fuzzy match (fallback)
+  // Fuzzy match (fallback) - check name and aliases
   c = CONTACTS.find(
     (x) =>
       searchTerm.includes(x.name.toLowerCase()) ||
-      x.name.toLowerCase().includes(searchTerm),
+      x.name.toLowerCase().includes(searchTerm) ||
+      x.alias?.some((alias) =>
+        searchTerm.includes(alias) || alias.includes(searchTerm)
+      ),
   );
-  if (c) return c;
+  if (c) {
+    console.log("✅ Found fuzzy match:", c.name);
+    return c;
+  }
 
   // Account code match
   c = CONTACTS.find((x) => x.account.toLowerCase() === searchTerm);
-  return c || null;
+  if (c) {
+    console.log("✅ Found by account code:", c.name);
+    return c;
+  }
+
+  console.log("❌ No match found for:", searchTerm);
+  return null;
 };
 
 // ================ Price Calculation ================ //
@@ -236,17 +254,10 @@ export const fixOrientation = (
     let canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
 
-    if (isLandscape) {
-      canvas.width = h;
-      canvas.height = w;
-      ctx.translate(h / 2, w / 2);
-      ctx.rotate(Math.PI / 2);
-      ctx.drawImage(img, -w / 2, -h / 2);
-    } else {
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(img, 0, 0);
-    }
+    // Don't auto-rotate - keep original orientation
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(img, 0, 0);
 
     // Cap dimension
     const maxDim = 2400;

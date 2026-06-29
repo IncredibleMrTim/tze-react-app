@@ -29,6 +29,10 @@ export async function callClaudeWithImage(params: {
 }): Promise<string> {
   const { base64Data, systemPrompt, maxTokens, apiKey } = params;
 
+  console.log('📸 Image data length:', base64Data.length);
+  console.log('📸 Image data starts with:', base64Data.substring(0, 50));
+  console.log('📸 Max tokens:', maxTokens);
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -37,7 +41,7 @@ export async function callClaudeWithImage(params: {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{
