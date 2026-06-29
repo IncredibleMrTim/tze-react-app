@@ -102,6 +102,47 @@ function findBySubstring(code: string, customer: IContact): ReturnType<typeof IT
 }
 
 /**
+ * Fuzzy match code similarity - ONLY within customer's items
+ */
+function findByCodeFuzzy(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+  if (code.length < 3) return undefined;
+
+  const normalizedCode = code.toLowerCase().replace(/[\s\-_]/g, '');
+  let bestMatch: IItem | undefined = undefined;
+  let bestScore = 0;
+
+  for (const item of ITEMS) {
+    // CRITICAL: Only match items for this customer or generic items
+    if (item.customer && item.customer !== customer.account) continue;
+
+    const itemCode = item.code.toLowerCase().replace(/[\s\-_]/g, '');
+
+    // Calculate similarity score
+    let score = 0;
+
+    // Check if codes are very similar (allow 1-2 char difference)
+    const minLen = Math.min(normalizedCode.length, itemCode.length);
+    const maxLen = Math.max(normalizedCode.length, itemCode.length);
+
+    if (maxLen - minLen > 2) continue; // Too different in length
+
+    // Count matching characters in order
+    for (let i = 0; i < minLen; i++) {
+      if (normalizedCode[i] === itemCode[i]) score++;
+    }
+
+    // Require at least 90% match
+    const similarity = score / maxLen;
+    if (similarity >= 0.9 && score > bestScore) {
+      bestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
  * Attempts to find a match by description keywords
  */
 function findByDescription(description: string, customer: IContact): ReturnType<typeof ITEMS.find> {
@@ -144,8 +185,28 @@ export function matchScannedParts(
       findWithoutTicker(code, customer) ||
       findWithTicker(code, customer) ||
       findBySubstring(code, customer) ||
-      findByDescription(description, customer) ||
-      ITEMS.find(x => x.code === 'ZINC MISCELLANEOUS');
+      findByCodeFuzzy(code, customer) ||
+      findByDescription(description, customer);
+
+    // If no match found, use ZINC MISCELLANEOUS but keep the scanned data
+    if (!item) {
+      const zincMisc = ITEMS.find(x => x.code === 'ZINC MISCELLANEOUS');
+
+      // Build description from scanned PO data
+      let fallbackDesc = description;
+      if (code && description) {
+        fallbackDesc = `${code} - ${description}`;
+      } else if (code) {
+        fallbackDesc = code;
+      }
+
+      return {
+        code: code || '',
+        desc: fallbackDesc,
+        price: zincMisc?.price || 0,
+        qty: quantity,
+      };
+    }
 
     return {
       code: code || item?.code || '',
