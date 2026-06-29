@@ -34,15 +34,19 @@ export async function scanPODocument(
   const rawResponse = await callClaudeWithImage({
     base64Data,
     systemPrompt: PO_SCAN_SYSTEM_PROMPT,
-    maxTokens: 1500,
+    maxTokens: 2500,
     apiKey,
   });
+
+  console.log("📄 Raw Claude response:", rawResponse);
+  console.log("📄 Response length:", rawResponse.length);
 
   // Parse the JSON response
   let parsed: POScanResult;
   try {
     parsed = JSON.parse(rawResponse);
   } catch (error) {
+    console.error("❌ Failed to parse JSON. Raw response:", rawResponse);
     throw new Error("Could not parse JSON response from Claude API", {
       cause: error,
     });
