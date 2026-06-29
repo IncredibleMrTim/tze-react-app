@@ -29,12 +29,12 @@ export const genFPN = (j: IJob): void => {
 
   const html =
     `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FPN ${j.po_number}</title>` +
-    "<style>body{font-family:Arial,sans-serif;margin:0;padding:0;color:#222}@media print{.np{display:none!important}*{orphans:3;widows:3}.no-break{page-break-inside:avoid;break-inside:avoid;page-break-before:auto;page-break-after:auto}.no-break *{page-break-inside:avoid;break-inside:avoid}img,table,div[style*='border']{page-break-inside:avoid;break-inside:avoid;page-break-before:auto;page-break-after:auto}div[style*='background:#f']{page-break-inside:avoid;break-inside:avoid}div[style*='background:#F']{page-break-inside:avoid;break-inside:avoid}div[style*='padding:14px'],div[style*='padding:20px']{page-break-inside:avoid;break-inside:avoid}}</style></head><body>" +
+    "<style>body{font-family:Arial,sans-serif;margin:0;padding:0;color:#222}@media print{.np{display:none}}</style></head><body>" +
     `<div class="np" style="background:#1D9E75;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center">` +
     `<span style="font-weight:600">Finished Product Notification — ${j.po_number || "No PO"}</span>` +
     '<button onclick="window.print()" style="background:#fff;color:#1D9E75;border:none;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Print / Save PDF</button></div>' +
     '<div style="max-width:680px;margin:0 auto;padding:32px 24px">' +
-    `<div class="no-break" style="text-align:center;padding-bottom:20px;border-bottom:3px solid ${go}">` +
+    `<div style="text-align:center;padding-bottom:20px;border-bottom:3px solid ${go}">` +
     `<img src="${LOGO}" style="height:64px;max-width:220px;object-fit:contain;margin:0 auto 12px;display:block">` +
     `<div style="font-size:22px;font-weight:700;color:${ch}">Tauranga Electroplaters</div>` +
     '<div style="font-size:13px;color:#666;margin-top:6px">9/61 Maleme Street, Greerton, Tauranga</div>' +
@@ -45,7 +45,7 @@ export const genFPN = (j: IJob): void => {
     '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888">PO Number</div>' +
     `<div style="font-size:18px;font-weight:700">${j.po_number}</div>` +
     `<div style="font-size:11px;color:#888;margin-top:4px">Invoice: ${j.invoiceNumber}</div></div></div>` +
-    '<div class="no-break" style="border:1px solid #e8e8e8;border-radius:8px;overflow:hidden;margin-bottom:20px">' +
+    '<div style="border:1px solid #e8e8e8;border-radius:8px;overflow:hidden;margin-bottom:20px">' +
     `<div style="background:${ch};color:#fff;padding:8px 14px;font-size:12px;font-weight:600;text-transform:uppercase">Customer</div>` +
     `<div style="padding:14px"><div style="font-size:16px;font-weight:600">${j.customer_name}</div>` +
     (j.customer_contact
@@ -58,18 +58,18 @@ export const genFPN = (j: IJob): void => {
       : "") +
     `<span>Total: <strong>$${pr.toFixed(2)}</strong></span></div></div></div>` +
     (ph
-      ? `<div class="no-break" style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts</div>${ph}</div>`
+      ? `<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts</div>${ph}</div>`
       : "") +
     (j.poPic
-      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Original PO Document</div><img src="${j.poPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
+      ? `<div style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Original PO Document</div><img src="${j.poPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
       : "") +
     (j.partsPic
-      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts on Arrival</div><img src="${j.partsPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
+      ? `<div style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts on Arrival</div><img src="${j.partsPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
       : "") +
     (j.notes
-      ? `<div class="no-break" style="margin-top:20px;padding:14px;background:#FFF9C4;border-left:4px solid ${go};border-radius:4px"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px">Collection Instructions</div><div style="font-size:14px">${j.notes}</div></div>`
+      ? `<div style="margin-top:20px;padding:14px;background:#FFF9C4;border-left:4px solid ${go};border-radius:4px"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px">Collection Instructions</div><div style="font-size:14px">${j.notes}</div></div>`
       : "") +
-    '<div class="no-break" style="margin-top:28px;padding:20px;background:#f0fdf8;border:2px solid #1D9E75;border-radius:10px;text-align:center">' +
+    '<div style="margin-top:28px;padding:20px;background:#f0fdf8;border:2px solid #1D9E75;border-radius:10px;text-align:center">' +
     '<div style="font-size:18px;font-weight:700;color:#065F46;margin-bottom:8px">✓ Your parts are ready for collection</div>' +
     '<div style="font-size:14px;color:#555;margin-bottom:12px">Please collect during opening hours or contact us to arrange pickup.</div>' +
     '<div style="font-size:13px;color:#444;line-height:1.8;text-align:left;display:inline-block">' +
