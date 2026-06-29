@@ -1,19 +1,44 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/store/useStore";
 import type { IJob } from "@/types/interfaces";
+import type { TPlating } from "@/types/types";
 import { isReady, calcPrice } from "@/lib/helpers";
-import { genFPN, genCSV } from "@/lib/exports";
+import { genFPN, genBatchCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Overlay } from "@/components/Overlay";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function DispatchPage() {
+  const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null);
+  const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null);
+  const [editedJob, setEditedJob] = useState<IJob | null>(null);
+  const [priceOverride, setPriceOverride] = useState("");
+  const [freightCost, setFreightCost] = useState("0.00");
+  const [showJobDetails, setShowJobDetails] = useState(false);
+  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">("FPN");
+  const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+
   const jobs = useStore((state) => state.jobs);
   const jigA = useStore((state) => state.jigA);
   const settings = useStore((state) => state.settings);
   const invSeq = useStore((state) => state.invSeq);
   const handleDispatch = useStore((state) => state.handleDispatch);
+  const handleSendBackJob = useStore((state) => state.handleSendBackJob);
+  const handleUpdateJob = useStore((state) => state.handleUpdateJob);
   const showToast = useStore((state) => state.showToast);
 
   const readyJobs = jobs.filter((j) => isReady(j, jigA) && !j.dispatchedAt);
@@ -21,14 +46,33 @@ export default function DispatchPage() {
     .filter((j) => j.dispatchedAt && !j.fpnHidden)
     .sort((a, b) => (b.dispatchedAt || 0) - (a.dispatchedAt || 0));
 
-  const handleDispatchJob = (job: IJob) => {
+  const openDispatchModal = (job: IJob) => {
+    setJobToDispatch(job);
+    setEditedJob({ ...job });
+    setPriceOverride("");
+    setFreightCost("0.00");
+    setShowJobDetails(false);
+  };
+
+  const applyJobChanges = () => {
+    if (editedJob) {
+      setJobToDispatch(editedJob);
+      handleUpdateJob(editedJob);
+      setShowJobDetails(false);
+      showToast("Job details updated");
+    }
+  };
+
+  const handleDispatchJob = () => {
+    if (!jobToDispatch) return;
+
     const invoiceNumber =
-      job.isInternal || job.isRework
+      jobToDispatch.isInternal || jobToDispatch.isRework
         ? "INTERNAL"
         : `${INV_PREFIX}-${new Date().getFullYear()}-${String(invSeq).padStart(4, "0")}`;
 
     const dispatchedJob = {
-      ...job,
+      ...jobToDispatch,
       dispatchedAt: Date.now(),
       invoiceNumber,
       fpnDownloaded: false,
@@ -37,27 +81,57 @@ export default function DispatchPage() {
 
     handleDispatch(dispatchedJob, invoiceNumber);
 
-    genFPN(dispatchedJob);
+    showToast(`Dispatched: ${jobToDispatch.po_number}`);
+    setJobToDispatch(null);
+  };
 
-    if (!job.isInternal && !job.isRework) {
-      genCSV(dispatchedJob, settings);
+  const confirmSendBack = () => {
+    if (jobToSendBack) {
+      handleSendBackJob(jobToSendBack.id);
+      showToast(`${jobToSendBack.po_number} sent back for re-jigging`);
+      setJobToSendBack(null);
     }
-
-    showToast(`Dispatched: ${job.po_number}`);
   };
 
-  const handleDownloadFPN = (job: IJob) => {
-    genFPN(job);
-    showToast("FPN downloaded");
+  const toggleSelectAll = () => {
+    if (selectedDownloads.length === dispatchedJobs.length) {
+      setSelectedDownloads([]);
+    } else {
+      setSelectedDownloads(dispatchedJobs.map((j) => j.id));
+    }
   };
 
-  const handleDownloadCSV = (job: IJob) => {
-    if (job.isInternal || job.isRework) {
-      showToast("Internal jobs do not generate CSV");
+  const toggleSelectJob = (jobId: string) => {
+    setSelectedDownloads((prev) =>
+      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+    );
+  };
+
+  const handleBatchDownload = () => {
+    if (selectedDownloads.length === 0) {
+      showToast("No jobs selected");
       return;
     }
-    genCSV(job, settings);
-    showToast("CSV downloaded");
+
+    if (activeDownloadTab === "FPN") {
+      selectedDownloads.forEach((jobId) => {
+        const job = dispatchedJobs.find((j) => j.id === jobId);
+        if (job) genFPN(job);
+      });
+      showToast(`Downloaded ${selectedDownloads.length} FPN${selectedDownloads.length > 1 ? "s" : ""}`);
+    } else {
+      genBatchCSV(jobs, selectedDownloads, settings, jigA);
+      showToast("Batch CSV downloaded");
+    }
+  };
+
+  const handleDeleteDispatchedJob = (jobId: string) => {
+    const job = jobs.find((j) => j.id === jobId);
+    if (job && window.confirm(`Delete ${job.po_number} from downloads?`)) {
+      const updatedJob = { ...job, fpnHidden: true };
+      handleUpdateJob(updatedJob);
+      showToast("Job removed from downloads");
+    }
   };
 
   return (
@@ -72,101 +146,427 @@ export default function DispatchPage() {
           {readyJobs.map((j) => (
             <div
               key={j.id}
-              className="bg-white border-2 border-primary rounded-xl p-3.5 mb-2.5 active:bg-primary-bg"
+              onClick={() => openDispatchModal(j)}
+              className="bg-white border-2 border-primary rounded-xl p-4 mb-2.5 active:bg-primary-bg cursor-pointer hover:shadow-md transition-shadow"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div className="font-bold text-base">{j.po_number}</div>
-                  <div className="text-[13px] text-gray-600">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <div className="font-bold text-lg mb-1">{j.po_number}</div>
+                  <div className="text-[15px] text-gray-700">
                     {j.customer_name}
                   </div>
                 </div>
-                <div className="text-sm text-gray-500">
-                  ${calcPrice(j, settings).toFixed(2)}
-                </div>
+                <span className="px-3 py-1 rounded-full bg-blue-500 text-white text-sm font-medium">
+                  Ready
+                </span>
               </div>
 
-              <div className="flex gap-1.5 flex-wrap mb-2">
-                {j.plating === "gold" && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-800">
-                    Gold
+              <div className="flex gap-2 mb-3">
+                {j.plating && (
+                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-gray-100 text-gray-700 capitalize">
+                    {j.plating}
                   </span>
                 )}
                 {j.urgent && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-red-100 text-red-800">
                     Urgent
                   </span>
                 )}
                 {j.isInternal && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-sky-100 text-sky-800">
                     Internal
                   </span>
                 )}
               </div>
 
               <Button
-                onClick={() => handleDispatchJob(j)}
-                className="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setJobToSendBack(j);
+                }}
+                className="w-full bg-white border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm font-normal hover:bg-gray-50"
                 variant="outline"
               >
-                🚚 Dispatch & Generate Invoice
+                ↻ Send back for another run
               </Button>
             </div>
           ))}
         </div>
       )}
 
+      {readyJobs.length === 0 && (
+        <EmptyState
+          icon="🚚"
+          title="Nothing to dispatch"
+          message="Jobs appear here once all JIG runs are complete and PO is marked done"
+        />
+      )}
+
+      {/* Downloads Section */}
       {dispatchedJobs.length > 0 && (
-        <div>
-          <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Recently Dispatched ({dispatchedJobs.length})
+        <div className="mt-8">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            DOWNLOADS
           </h3>
-          {dispatchedJobs.map((j) => (
-            <div
-              key={j.id}
-              className="bg-white border border-gray-200 rounded-xl p-3.5 mb-2.5"
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setActiveDownloadTab("FPN")}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeDownloadTab === "FPN"
+                  ? "text-emerald-600 border-b-2 border-emerald-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
             >
-              <div className="flex justify-between items-start mb-1">
-                <div>
-                  <div className="font-bold text-sm">{j.po_number}</div>
-                  <div className="text-xs text-gray-600">{j.customer_name}</div>
-                </div>
-                <div className="text-xs text-gray-500">
-                  Invoice: {j.invoiceNumber}
-                </div>
-              </div>
+              📄 FPN
+            </button>
+            <button
+              onClick={() => setActiveDownloadTab("CSV")}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeDownloadTab === "CSV"
+                  ? "text-emerald-600 border-b-2 border-emerald-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              📊 Xero CSV
+            </button>
+          </div>
 
-              <div className="text-xs text-gray-500 mb-2">
-                {new Date(j.dispatchedAt!).toLocaleDateString("en-NZ")}
-              </div>
+          {/* Select All */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-t-lg border-x border-t">
+            <input
+              type="checkbox"
+              checked={selectedDownloads.length === dispatchedJobs.length}
+              onChange={toggleSelectAll}
+              className="w-5 h-5 rounded border-gray-300"
+            />
+            <span className="font-medium text-gray-700">Select all</span>
+          </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDownloadFPN(j)}
-                  className="flex-1 bg-blue-50 border border-blue-300 text-blue-700 rounded-lg py-1.5 text-xs font-medium"
-                >
-                  📄 FPN
-                </button>
-                {!j.isInternal && !j.isRework && (
-                  <button
-                    onClick={() => handleDownloadCSV(j)}
-                    className="flex-1 bg-green-50 border border-green-300 text-green-700 rounded-lg py-1.5 text-xs font-medium"
-                  >
-                    📊 CSV
-                  </button>
+          {/* Job List */}
+          <div className="border border-gray-200 rounded-b-lg divide-y">
+            {dispatchedJobs.map((job) => (
+              <div key={job.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={selectedDownloads.includes(job.id)}
+                  onChange={() => toggleSelectJob(job.id)}
+                  className="w-5 h-5 rounded border-gray-300"
+                />
+                <div className="flex-1">
+                  <div className="font-bold text-base mb-1">
+                    {job.po_number}...
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {job.invoiceNumber} · {new Date(job.dispatchedAt!).toLocaleDateString("en-NZ", {
+                      day: "numeric",
+                      month: "short"
+                    })}
+                  </div>
+                </div>
+                {job.plating && (
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded capitalize">
+                    {job.plating}
+                  </span>
                 )}
+                <button
+                  onClick={() => handleDeleteDispatchedJob(job.id)}
+                  className="px-3 py-1 border-2 border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50"
+                >
+                  Delete
+                </button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Download Button */}
+          <Button
+            onClick={handleBatchDownload}
+            disabled={selectedDownloads.length === 0}
+            className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mt-4"
+          >
+            ⬇ Download {activeDownloadTab}(s)
+          </Button>
+
+          <p className="text-center text-sm text-gray-500 mt-3">
+            Dispatched jobs are in Search history
+          </p>
         </div>
       )}
 
-      {readyJobs.length === 0 && dispatchedJobs.length === 0 && (
-        <EmptyState
-          icon="🚚"
-          title="No jobs to dispatch"
-          message="Complete jobs in the JIG tab to make them ready"
-        />
+      <AlertDialog open={!!jobToSendBack} onOpenChange={(open) => !open && setJobToSendBack(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-semibold">
+              Send back — {jobToSendBack?.po_number}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-gray-600">
+              JIG links will be cleared. Job returns to active jobs for re-jigging.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              onClick={confirmSendBack}
+              className="w-full bg-primary hover:bg-primary/90 text-white py-3 text-base"
+            >
+              ↻ Send back for another run
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full py-3 text-base">
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dispatch Modal */}
+      {jobToDispatch && (
+        <Overlay onClose={() => setJobToDispatch(null)}>
+          <div className="p-6">
+            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">
+              Dispatch — {jobToDispatch.po_number}
+            </h2>
+
+            {/* Job Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="font-bold text-xl mb-1">{jobToDispatch.po_number}</div>
+              <div className="text-gray-600">{jobToDispatch.customer_name}</div>
+            </div>
+
+            {/* Parts List */}
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                PARTS
+              </h3>
+              <div className="space-y-3">
+                {jobToDispatch.parts.map((part, idx) => (
+                  <div key={idx} className="bg-white border border-gray-200 rounded-lg p-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="font-medium">{part.desc}</div>
+                      <div className="font-semibold">×{part.qty}</div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-500">{part.code}</div>
+                      <div className="text-gray-700">${(part.price * part.qty).toFixed(2)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Check & Edit Job Details - Collapsible */}
+            <div className="mb-4 border-2 border-emerald-500 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setShowJobDetails(!showJobDetails)}
+                className="w-full p-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2 text-emerald-600 font-medium">
+                  <span>🔗</span>
+                  <span>Check & edit job details</span>
+                </div>
+                <span className="text-gray-400">{showJobDetails ? "▲" : "▼"}</span>
+              </button>
+
+              {showJobDetails && editedJob && (
+                <div className="p-4 pt-0 border-t space-y-4">
+                  {/* PO Number */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      PO number
+                    </label>
+                    <Input
+                      type="text"
+                      value={editedJob.po_number}
+                      onChange={(e) =>
+                        setEditedJob({ ...editedJob, po_number: e.target.value })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Contact Number */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Contact number <span className="text-gray-400">(optional)</span>
+                    </label>
+                    <Input
+                      type="text"
+                      value={editedJob.customer_contact || ""}
+                      onChange={(e) =>
+                        setEditedJob({ ...editedJob, customer_contact: e.target.value })
+                      }
+                      placeholder="e.g. 021 123 4567"
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Plating */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Plating
+                    </label>
+                    <Input
+                      type="text"
+                      value={editedJob.plating || ""}
+                      onChange={(e) =>
+                        setEditedJob({ ...editedJob, plating: e.target.value as TPlating })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Notes
+                    </label>
+                    <textarea
+                      value={editedJob.notes || ""}
+                      onChange={(e) =>
+                        setEditedJob({ ...editedJob, notes: e.target.value })
+                      }
+                      placeholder="Collection instructions or special notes"
+                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Parts */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                      PARTS
+                    </h4>
+                    <div className="space-y-4">
+                      {editedJob.parts.map((part, idx) => (
+                        <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                          <div className="font-medium">{part.code}</div>
+                          <div className="text-sm text-gray-600 mb-2">{part.desc}</div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">Qty</label>
+                              <Input
+                                type="number"
+                                value={part.qty}
+                                onChange={(e) => {
+                                  const newParts = [...editedJob.parts];
+                                  newParts[idx] = {
+                                    ...part,
+                                    qty: parseInt(e.target.value) || 0,
+                                  };
+                                  setEditedJob({ ...editedJob, parts: newParts });
+                                }}
+                                min="0"
+                                className="w-full"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">
+                                Price per part
+                              </label>
+                              <Input
+                                type="number"
+                                value={part.price}
+                                onChange={(e) => {
+                                  const newParts = [...editedJob.parts];
+                                  newParts[idx] = {
+                                    ...part,
+                                    price: parseFloat(e.target.value) || 0,
+                                  };
+                                  setEditedJob({ ...editedJob, parts: newParts });
+                                }}
+                                step="0.01"
+                                min="0"
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Apply Changes Button */}
+                  <Button
+                    onClick={applyJobChanges}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3"
+                  >
+                    Apply changes
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Pricing */}
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                PRICING
+              </h3>
+
+              {/* Parts Total */}
+              <div className="bg-green-50 rounded-lg p-4 mb-3 flex justify-between items-center">
+                <div className="font-medium">Parts total</div>
+                <div className="font-bold text-lg">${calcPrice(jobToDispatch, settings).toFixed(2)}</div>
+              </div>
+
+              {/* Price Override */}
+              <div className="mb-3">
+                <label className="text-sm text-gray-600 mb-2 block">
+                  Price override ($) <span className="text-gray-400">optional</span>
+                </label>
+                <Input
+                  type="text"
+                  value={priceOverride}
+                  onChange={(e) => setPriceOverride(e.target.value)}
+                  placeholder="Leave blank to use calculated"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Freight Cost */}
+              <div className="mb-3">
+                <label className="text-sm text-gray-600 mb-2 block">
+                  Freight cost ($)
+                </label>
+                <Input
+                  type="number"
+                  value={freightCost}
+                  onChange={(e) => setFreightCost(e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Invoice Total */}
+              <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
+                <div className="font-semibold">Invoice total (incl. freight)</div>
+                <div className="font-bold text-xl">
+                  ${(
+                    (priceOverride ? parseFloat(priceOverride) : calcPrice(jobToDispatch, settings)) +
+                    parseFloat(freightCost || "0")
+                  ).toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <Button
+              onClick={handleDispatchJob}
+              className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mb-3"
+            >
+              Confirm & Dispatch — Generate FPN + CSV
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setJobToDispatch(null)}
+              className="w-full h-12 text-base"
+            >
+              Cancel
+            </Button>
+          </div>
+        </Overlay>
       )}
     </div>
   );

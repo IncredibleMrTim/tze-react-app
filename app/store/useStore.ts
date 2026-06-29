@@ -35,6 +35,7 @@ interface AppState {
   // JIG actions
   handleAssignJobToJig: (jigName: string, jobId: string, pct: number) => void
   handleCompleteJig: (jigName: string) => void
+  handleSendBackJob: (jobId: string) => void
 
   // Dispatch actions
   handleDispatch: (job: IJob, invoiceNumber: string) => void
@@ -122,6 +123,17 @@ export const useStore = create<AppState>()(
           jigJobIds.includes(j.id) ? { ...j, poComplete: true } : j
         )
 
+        set({ jigA: updatedJigA, jobs: updatedJobs })
+      },
+
+      handleSendBackJob: (jobId) => {
+        const { jigA, jobs } = get()
+        // Remove all JIG assignments for this job
+        const updatedJigA = jigA.filter(g => g.jobId !== jobId)
+        // Reset poComplete status
+        const updatedJobs = jobs.map(j =>
+          j.id === jobId ? { ...j, poComplete: false } : j
+        )
         set({ jigA: updatedJigA, jobs: updatedJobs })
       },
 

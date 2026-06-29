@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -39,10 +40,10 @@ export default function JIGPage() {
     useState<IJob | null>(null);
   const [assignmentPercentage, setAssignmentPercentage] = useState("25");
   const [poComplete, setPoComplete] = useState(false);
-  const [jigPhoto, setJigPhoto] = useState<string | null>(null);
   const [uploadedJigPhoto, setUploadedJigPhoto] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [incompleteJigInfo, setIncompleteJigInfo] = useState({
     name: "",
     percent: 0,
@@ -52,16 +53,12 @@ export default function JIGPage() {
     job: IJob;
   } | null>(null);
   const [editPercentage, setEditPercentage] = useState("");
-  const [editJigPhoto, setEditJigPhoto] = useState<string | null>(null);
   const [editPoComplete, setEditPoComplete] = useState(false);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(
     null,
   );
 
-  const editJigPhotoInputRef = useRef<HTMLInputElement>(null);
-
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const jigPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const availableJobs = jobs.filter((j) => {
     if (j.dispatchedAt) return false;
@@ -83,7 +80,6 @@ export default function JIGPage() {
     setSelectedJobForAssignment(null);
     setAssignmentPercentage("25");
     setPoComplete(false);
-    setJigPhoto(null);
   };
 
   const handleJobClick = (job: IJob) => {
@@ -113,13 +109,13 @@ export default function JIGPage() {
       handleUpdateJob({ ...selectedJobForAssignment, poComplete });
     }
 
-    // Create assignment with photo
+    // Create assignment without photo (photos are per JIG, not per job)
     const assignment: IJigAssignment = {
       id: Date.now().toString(),
       jobId: selectedJobForAssignment.id,
       jigName: selectedJig,
       pct,
-      pic: jigPhoto,
+      pic: null,
       completedAt: null,
       loadedAt: Date.now(),
     };
@@ -130,16 +126,6 @@ export default function JIGPage() {
     showToast(`Job assigned to ${selectedJig}`);
     setShowJobSelector(false);
     setSelectedJobForAssignment(null);
-    setJigPhoto(null);
-  };
-
-  const handleJigPhotoUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setJigPhoto(reader.result as string);
-      showToast("JIG photo added");
-    };
-    reader.readAsDataURL(file);
   };
 
   const handlePhotoUpload = (file: File) => {
@@ -182,16 +168,19 @@ export default function JIGPage() {
       return;
     }
 
-    if (window.confirm(`Mark ${selectedJig} as complete and move to tank?`)) {
-      handleCompleteJig(selectedJig);
-      showToast(`${selectedJig} marked complete`);
-    }
+    setShowCompleteDialog(true);
+  };
+
+  const handleConfirmComplete = () => {
+    if (!selectedJig) return;
+    handleCompleteJig(selectedJig);
+    showToast(`${selectedJig} marked complete`);
+    setShowCompleteDialog(false);
   };
 
   const handleEditJobClick = (assignment: IJigAssignment, job: IJob) => {
     setEditingAssignment({ assignment, job });
     setEditPercentage(assignment.pct.toString());
-    setEditJigPhoto(assignment.pic || null);
     setEditPoComplete(job.poComplete);
     setShowEditModal(true);
   };
@@ -208,7 +197,7 @@ export default function JIGPage() {
     // Update assignment
     const updatedJigA = jigA.map((g) =>
       g.id === editingAssignment.assignment.id
-        ? { ...g, pct: newPct, pic: editJigPhoto }
+        ? { ...g, pct: newPct }
         : g,
     );
     setJigA(updatedJigA);
@@ -221,15 +210,6 @@ export default function JIGPage() {
     showToast("Changes saved");
     setShowEditModal(false);
     setEditingAssignment(null);
-  };
-
-  const handleEditJigPhotoUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setEditJigPhoto(reader.result as string);
-      showToast("Photo added");
-    };
-    reader.readAsDataURL(file);
   };
 
   const filteredJobs = availableJobs.filter((j) => {
@@ -413,6 +393,7 @@ export default function JIGPage() {
 
           <Button
             onClick={handleAddJobClick}
+            disabled={jigUsed(selectedJig, jigA) >= 100}
             className="w-full h-12 md:h-14 text-sm md:text-lg font-semibold"
             size="lg"
           >
@@ -564,46 +545,6 @@ export default function JIGPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-                    JIG PHOTO (OPTIONAL)
-                  </label>
-                  <div
-                    onClick={() => jigPhotoInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-                  >
-                    <input
-                      ref={jigPhotoInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleJigPhotoUpload(file);
-                      }}
-                    />
-                    {jigPhoto ? (
-                      <div className="relative w-full aspect-video">
-                        <Image
-                          src={jigPhoto}
-                          alt="JIG"
-                          fill
-                          className="object-cover rounded"
-                          unoptimized
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <LuCamera className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-                        <p className="text-gray-500">
-                          Tap to photograph loaded JIG
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -683,45 +624,6 @@ export default function JIGPage() {
               />
             </div>
 
-            {/* JIG Photo */}
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-                JIG PHOTO
-              </label>
-              <div
-                onClick={() => editJigPhotoInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-              >
-                <input
-                  ref={editJigPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleEditJigPhotoUpload(file);
-                  }}
-                />
-                {editJigPhoto ? (
-                  <div className="relative w-full aspect-video">
-                    <Image
-                      src={editJigPhoto}
-                      alt="JIG"
-                      fill
-                      className="object-cover rounded"
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <LuCamera className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-                    <p className="text-gray-500">Tap to add photo</p>
-                  </>
-                )}
-              </div>
-            </div>
-
             {/* PO Complete Toggle */}
             <div className="border border-gray-200 rounded-lg p-4 mb-4">
               <div className="flex items-start justify-between">
@@ -781,6 +683,34 @@ export default function JIGPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete JIG Confirmation Dialog */}
+      <AlertDialog
+        open={showCompleteDialog}
+        onOpenChange={setShowCompleteDialog}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Mark {selectedJig} as complete?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-2">
+              <p>
+                This will mark the JIG as complete and move it out of the tank.
+              </p>
+              <p className="font-medium">
+                Are you sure you want to continue?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmComplete}>
+              Yes, mark complete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

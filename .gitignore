@@ -12,7 +12,11 @@ dist
 dist-ssr
 *.local
 .next
+
+
+# Local Files
 POs
+output
 
 # Environment variables
 .env
