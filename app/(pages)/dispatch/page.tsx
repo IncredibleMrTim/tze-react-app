@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useStore } from "@/store/useStore";
 import type { IJob } from "@/types/interfaces";
+import type { TPlating } from "@/types/types";
 import { isReady, calcPrice } from "@/lib/helpers";
 import { genFPN, genBatchCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
@@ -33,7 +34,6 @@ export default function DispatchPage() {
 
   const jobs = useStore((state) => state.jobs);
   const jigA = useStore((state) => state.jigA);
-  const jigPhotos = useStore((state) => state.jigPhotos);
   const settings = useStore((state) => state.settings);
   const invSeq = useStore((state) => state.invSeq);
   const handleDispatch = useStore((state) => state.handleDispatch);
@@ -392,9 +392,9 @@ export default function DispatchPage() {
                     </label>
                     <Input
                       type="text"
-                      value={editedJob.contact_number || ""}
+                      value={editedJob.customer_contact || ""}
                       onChange={(e) =>
-                        setEditedJob({ ...editedJob, contact_number: e.target.value })
+                        setEditedJob({ ...editedJob, customer_contact: e.target.value })
                       }
                       placeholder="e.g. 021 123 4567"
                       className="w-full"
@@ -410,7 +410,7 @@ export default function DispatchPage() {
                       type="text"
                       value={editedJob.plating || ""}
                       onChange={(e) =>
-                        setEditedJob({ ...editedJob, plating: e.target.value })
+                        setEditedJob({ ...editedJob, plating: e.target.value as TPlating })
                       }
                       className="w-full"
                     />
