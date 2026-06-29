@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -42,6 +43,7 @@ export default function JIGPage() {
   const [uploadedJigPhoto, setUploadedJigPhoto] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [incompleteJigInfo, setIncompleteJigInfo] = useState({
     name: "",
     percent: 0,
@@ -166,10 +168,14 @@ export default function JIGPage() {
       return;
     }
 
-    if (window.confirm(`Mark ${selectedJig} as complete and move to tank?`)) {
-      handleCompleteJig(selectedJig);
-      showToast(`${selectedJig} marked complete`);
-    }
+    setShowCompleteDialog(true);
+  };
+
+  const handleConfirmComplete = () => {
+    if (!selectedJig) return;
+    handleCompleteJig(selectedJig);
+    showToast(`${selectedJig} marked complete`);
+    setShowCompleteDialog(false);
   };
 
   const handleEditJobClick = (assignment: IJigAssignment, job: IJob) => {
@@ -677,6 +683,34 @@ export default function JIGPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete JIG Confirmation Dialog */}
+      <AlertDialog
+        open={showCompleteDialog}
+        onOpenChange={setShowCompleteDialog}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Mark {selectedJig} as complete?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-2">
+              <p>
+                This will mark the JIG as complete and move it out of the tank.
+              </p>
+              <p className="font-medium">
+                Are you sure you want to continue?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmComplete}>
+              Yes, mark complete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
