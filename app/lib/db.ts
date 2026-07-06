@@ -292,7 +292,7 @@ export async function setJigPhoto(jigName: string, photoData: string) {
 
 export async function getAllJigPhotos() {
   const photos = await prisma.jigPhoto.findMany()
-  return photos.reduce((acc, photo) => {
+  return photos.reduce((acc: Record<string, string>, photo) => {
     acc[photo.jigName] = photo.photoData
     return acc
   }, {} as Record<string, string>)
