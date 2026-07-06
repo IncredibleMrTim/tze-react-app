@@ -10,7 +10,7 @@ import type {
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
-import { fixOrientation, trafficLight, resolveCustomer } from "@/lib/helpers";
+import { fixOrientation, trafficLight } from "@/lib/helpers";
 import { scanPODocument } from "@/actions/scan-po";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";

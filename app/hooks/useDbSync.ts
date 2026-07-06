@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useStore } from '@/store/useStore'
 import type { IJob, IJigAssignment } from '@/types/interfaces'
 

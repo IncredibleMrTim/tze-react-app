@@ -1,5 +1,5 @@
 import { prisma } from './prisma'
-import type { IJob, IJigAssignment, IContact, IItem } from '@/types/interfaces'
+import type { IJob, IJigAssignment } from '@/types/interfaces'
 
 // ============ BIGINT CONVERSION HELPERS ============
 

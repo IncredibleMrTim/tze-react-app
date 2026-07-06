@@ -1,23 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady, stageLabel } from "@/lib/helpers";
 import { genFPN } from "@/lib/exports";
 import type { IJob } from "@/types/interfaces";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import { Overlay } from "@/components/Overlay";
 
 export default function JobsPage() {
