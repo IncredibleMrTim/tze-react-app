@@ -9,11 +9,11 @@ import {
   calculateRates,
   calculateMinCharges,
 } from "@/constants/settings.const";
-import contactsData from "@/data/contacts.json";
-import itemsData from "@/data/items.json";
 
-export const CONTACTS: IContact[] = contactsData as IContact[];
-export const ITEMS: IItem[] = itemsData as IItem[];
+// Helper function to get contacts from store
+// Note: These will be loaded from the database on app startup
+export const CONTACTS: IContact[] = [];
+export const ITEMS: IItem[] = [];
 
 // ================ TZE ID Generator ================ //
 
@@ -91,13 +91,13 @@ export const jigsOf = (
 
 export const jigUsed = (nm: string, jigA: IJigAssignment[]): number => {
   return jigA
-    .filter((g) => g.jigName === nm && !g.completedAt)
+    .filter((g) => g.jigName === nm && g.status === 'ACTIVE')
     .reduce((s, g) => s + g.pct, 0);
 };
 
 export const allDone = (jid: string, jigA: IJigAssignment[]): boolean => {
   const gs = jigsOf(jid, jigA);
-  return gs.length > 0 && gs.every((g) => g.completedAt);
+  return gs.length > 0 && gs.every((g) => g.status === 'CLEARED');
 };
 
 // ================ Job Status Helpers ================ //
@@ -133,28 +133,29 @@ export const trafficLight = (j: IJob) => {
 export const isReady = (j: IJob, jigA: IJigAssignment[]): boolean => {
   if (j.dispatchedAt || !j.poComplete) return false;
   const gs = jigA.filter((g) => g.jobId === j.id);
-  if (!gs.length) return true;
-  return gs.every((g) => !!g.completedAt);
+  // Job must have at least one jig assignment to be ready for dispatch
+  if (!gs.length) return false;
+  return gs.every((g) => g.status === 'CLEARED');
 };
 
 export const stageLabel = (j: IJob, jigA: IJigAssignment[]): string => {
   if (j.dispatchedAt) return "Dispatched";
   if (isReady(j, jigA)) return "Ready to dispatch";
-  if (jigsOf(j.id, jigA).length) return "WIP";
+  if (jigsOf(j.id, jigA).some((g) => g.status === 'ACTIVE')) return "WIP";
   return "Intake";
 };
 
 export const stageBadge = (j: IJob, jigA: IJigAssignment[]): string => {
   if (j.dispatchedAt) return "b-done";
   if (isReady(j, jigA)) return "b-dispatch";
-  if (jigsOf(j.id, jigA).length) return "b-jig";
+  if (jigsOf(j.id, jigA).some((g) => g.status === 'ACTIVE')) return "b-jig";
   return "b-intake";
 };
 
 // ================ Customer Resolution ================ //
 
-export const resolveCustomer = (n: string): IContact | null => {
-  if (!n) return null;
+export const resolveCustomer = (n: string, contacts: IContact[]): IContact | null => {
+  if (!n || !contacts.length) return null;
   const trimmedName = n.trim();
   const searchTerm = trimmedName.toLowerCase();
 
@@ -163,14 +164,14 @@ export const resolveCustomer = (n: string): IContact | null => {
 
   // Aliases
   if (searchTerm.includes("sokoza"))
-    return CONTACTS.find((c) => c.account === "SOKO") || null;
+    return contacts.find((c) => c.account === "SOKO") || null;
   if (searchTerm.includes("nz manufacturing"))
-    return CONTACTS.find((c) => c.account === "NZMFG") || null;
+    return contacts.find((c) => c.account === "NZMFG") || null;
   if (searchTerm.includes("baytex"))
-    return CONTACTS.find((c) => c.account === "BAYT") || null;
+    return contacts.find((c) => c.account === "BAYT") || null;
 
   // Exact match (name or alias)
-  let c = CONTACTS.find(
+  let c = contacts.find(
     (x) =>
       x.name.toLowerCase() === searchTerm ||
       x.alias?.some((n) => n === searchTerm),
@@ -181,7 +182,7 @@ export const resolveCustomer = (n: string): IContact | null => {
   }
 
   // Fuzzy match (fallback) - check name and aliases
-  c = CONTACTS.find(
+  c = contacts.find(
     (x) =>
       searchTerm.includes(x.name.toLowerCase()) ||
       x.name.toLowerCase().includes(searchTerm) ||
@@ -195,7 +196,7 @@ export const resolveCustomer = (n: string): IContact | null => {
   }
 
   // Account code match
-  c = CONTACTS.find((x) => x.account.toLowerCase() === searchTerm);
+  c = contacts.find((x) => x.account.toLowerCase() === searchTerm);
   if (c) {
     console.log("✅ Found by account code:", c.name);
     return c;
