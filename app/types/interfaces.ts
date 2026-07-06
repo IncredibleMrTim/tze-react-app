@@ -64,6 +64,7 @@ export interface IJigAssignment {
   pic: string | null;
   completedAt: number | null;
   loadedAt: number;
+  status: 'ACTIVE' | 'CLEARED';
 }
 
 export interface ISettings {

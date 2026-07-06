@@ -7,9 +7,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@radix-ui/react-alert-dialog": "^1.1.16",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-progress": "^1.1.9",
@@ -17,10 +28,15 @@
     "@radix-ui/react-slot": "^1.2.5",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-toggle": "^1.1.10",
+    "@types/nodemailer": "^8.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
     "lucide-react": "^1.17.0",
     "next": "^16.2.6",
+    "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
+    "prisma": "^7.8.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -43,7 +59,9 @@
     "globals": "^17.6.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
