@@ -28,18 +28,28 @@ function normalizeCode(code: string): string {
 /**
  * Attempts to find an exact match for the part code
  */
-function findExactMatch(code: string): ReturnType<typeof ITEMS.find> {
-  return ITEMS.find(x => x.code === code);
+function findExactMatch(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+  return ITEMS.find(x => {
+    if (x.code !== code) return false;
+    // If item has a customer restriction, it must match
+    if (x.customer && x.customer !== customer.account) return false;
+    return true;
+  });
 }
 
 /**
  * Attempts to find a match without the ticker suffix
  */
-function findWithoutTicker(code: string): ReturnType<typeof ITEMS.find> {
+function findWithoutTicker(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
   const match = code.match(/^(.+?)_[A-Z0-9]{2,6}$/);
   if (match) {
     const base = match[1];
-    return ITEMS.find(x => x.code.startsWith(base + '_'));
+    return ITEMS.find(x => {
+      if (!x.code.startsWith(base + '_')) return false;
+      // If item has a customer restriction, it must match
+      if (x.customer && x.customer !== customer.account) return false;
+      return true;
+    });
   }
   return undefined;
 }
@@ -52,7 +62,12 @@ function findWithTicker(code: string, customer: IContact): ReturnType<typeof ITE
 
   const tickers = ['AGP', 'ASE', 'PATI', customer.account];
   for (const ticker of tickers) {
-    const item = ITEMS.find(x => x.code === `${code}_${ticker}`);
+    const item = ITEMS.find(x => {
+      if (x.code !== `${code}_${ticker}`) return false;
+      // If item has a customer restriction, it must match
+      if (x.customer && x.customer !== customer.account) return false;
+      return true;
+    });
     if (item) return item;
   }
   return undefined;
@@ -84,6 +99,47 @@ function findBySubstring(code: string, customer: IContact): ReturnType<typeof IT
   }
 
   return bestLength >= 4 ? bestMatch : undefined;
+}
+
+/**
+ * Fuzzy match code similarity - ONLY within customer's items
+ */
+function findByCodeFuzzy(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+  if (code.length < 3) return undefined;
+
+  const normalizedCode = code.toLowerCase().replace(/[\s\-_]/g, '');
+  let bestMatch: IItem | undefined = undefined;
+  let bestScore = 0;
+
+  for (const item of ITEMS) {
+    // CRITICAL: Only match items for this customer or generic items
+    if (item.customer && item.customer !== customer.account) continue;
+
+    const itemCode = item.code.toLowerCase().replace(/[\s\-_]/g, '');
+
+    // Calculate similarity score
+    let score = 0;
+
+    // Check if codes are very similar (allow 1-2 char difference)
+    const minLen = Math.min(normalizedCode.length, itemCode.length);
+    const maxLen = Math.max(normalizedCode.length, itemCode.length);
+
+    if (maxLen - minLen > 2) continue; // Too different in length
+
+    // Count matching characters in order
+    for (let i = 0; i < minLen; i++) {
+      if (normalizedCode[i] === itemCode[i]) score++;
+    }
+
+    // Require at least 90% match
+    const similarity = score / maxLen;
+    if (similarity >= 0.9 && score > bestScore) {
+      bestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  return bestMatch;
 }
 
 /**
@@ -125,15 +181,35 @@ export function matchScannedParts(
 
     // Try matching strategies in order of specificity
     const item =
-      findExactMatch(code) ||
-      findWithoutTicker(code) ||
+      findExactMatch(code, customer) ||
+      findWithoutTicker(code, customer) ||
       findWithTicker(code, customer) ||
       findBySubstring(code, customer) ||
-      findByDescription(description, customer) ||
-      ITEMS.find(x => x.code === 'ZINC MISCELLANEOUS');
+      findByCodeFuzzy(code, customer) ||
+      findByDescription(description, customer);
+
+    // If no match found, use ZINC MISCELLANEOUS but keep the scanned data
+    if (!item) {
+      const zincMisc = ITEMS.find(x => x.code === 'ZINC MISCELLANEOUS');
+
+      // Build description from scanned PO data
+      let fallbackDesc = description;
+      if (code && description) {
+        fallbackDesc = `${code} - ${description}`;
+      } else if (code) {
+        fallbackDesc = code;
+      }
+
+      return {
+        code: code || '',
+        desc: fallbackDesc,
+        price: zincMisc?.price || 0,
+        qty: quantity,
+      };
+    }
 
     return {
-      code: item?.code || code,
+      code: code || item?.code || '',
       desc: item?.desc || description,
       price: item?.price || 0,
       qty: quantity,
