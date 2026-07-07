@@ -28,7 +28,9 @@ export default function JIGPage() {
   const jigsList = useStore((state) => state.jigsList);
   const jobs = useStore((state) => state.jobs);
   const jigA = useStore((state) => state.jigA);
-  const setJigA = useStore((state) => state.setJigA);
+  const handleAssignJobToJig = useStore((state) => state.handleAssignJobToJig);
+  const handleUpdateJigAssignment = useStore((state) => state.handleUpdateJigAssignment);
+  const handleSendBackJob = useStore((state) => state.handleSendBackJob);
   const handleUpdateJob = useStore((state) => state.handleUpdateJob);
   const handleCompleteJig = useStore((state) => state.handleCompleteJig);
   const showToast = useStore((state) => state.showToast);
@@ -62,12 +64,12 @@ export default function JIGPage() {
 
   const availableJobs = jobs.filter((j) => {
     if (j.dispatchedAt) return false;
-    const isOnJig = jigA.some((g) => g.jobId === j.id && !g.completedAt);
+    const isOnJig = jigA.some((g) => g.jobId === j.id && g.status === 'ACTIVE');
     return !isOnJig;
   });
 
   const getJigJobs = (jigName: string) => {
-    return jigA.filter((g) => g.jigName === jigName && !g.completedAt);
+    return jigA.filter((g) => g.jigName === jigName && g.status === 'ACTIVE');
   };
 
   const handleSelectJig = (jigName: string) => {
@@ -109,19 +111,8 @@ export default function JIGPage() {
       handleUpdateJob({ ...selectedJobForAssignment, poComplete });
     }
 
-    // Create assignment without photo (photos are per JIG, not per job)
-    const assignment: IJigAssignment = {
-      id: Date.now().toString(),
-      jobId: selectedJobForAssignment.id,
-      jigName: selectedJig,
-      pct,
-      pic: null,
-      completedAt: null,
-      loadedAt: Date.now(),
-    };
-
-    const updatedJigA = [...jigA, assignment];
-    setJigA(updatedJigA);
+    // Assign job to jig (saves to database)
+    handleAssignJobToJig(selectedJig, selectedJobForAssignment.id, pct);
 
     showToast(`Job assigned to ${selectedJig}`);
     setShowJobSelector(false);
@@ -144,8 +135,11 @@ export default function JIGPage() {
 
   const handleConfirmRemove = (assignmentId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updatedJigA = jigA.filter((g) => g.id !== assignmentId);
-    setJigA(updatedJigA);
+    // Find the job ID from the assignment
+    const assignment = jigA.find((g) => g.id === assignmentId);
+    if (assignment) {
+      handleSendBackJob(assignment.jobId);
+    }
     showToast("Job removed from JIG");
     setConfirmingRemoveId(null);
   };
@@ -185,7 +179,7 @@ export default function JIGPage() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingAssignment) return;
 
     const newPct = parseInt(editPercentage) || 20;
@@ -194,17 +188,12 @@ export default function JIGPage() {
       return;
     }
 
-    // Update assignment
-    const updatedJigA = jigA.map((g) =>
-      g.id === editingAssignment.assignment.id
-        ? { ...g, pct: newPct }
-        : g,
-    );
-    setJigA(updatedJigA);
+    // Update assignment percentage
+    await handleUpdateJigAssignment(editingAssignment.assignment.id, { pct: newPct });
 
     // Update job if PO complete changed
     if (editPoComplete !== editingAssignment.job.poComplete) {
-      handleUpdateJob({ ...editingAssignment.job, poComplete: editPoComplete });
+      await handleUpdateJob({ ...editingAssignment.job, poComplete: editPoComplete });
     }
 
     showToast("Changes saved");

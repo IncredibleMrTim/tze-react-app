@@ -5,6 +5,7 @@ import { resolveCustomer } from "@/lib/helpers";
 import { callClaudeWithImage } from "@/lib/claude-api";
 import { matchScannedParts, type ScannedPart } from "@/lib/part-matcher";
 import { PO_SCAN_SYSTEM_PROMPT } from "@/constants/prompts";
+import { getContacts } from "@/lib/db";
 
 interface POScanResult {
   po_number: string;
@@ -59,8 +60,9 @@ export async function scanPODocument(
 
   console.log("T2 - Scanned parts from Claude:", scannedParts);
 
-  // Resolve customer from name
-  const customer = customer_name ? resolveCustomer(customer_name) : null;
+  // Fetch contacts from database and resolve customer
+  const contacts = await getContacts();
+  const customer = customer_name ? resolveCustomer(customer_name, contacts) : null;
   console.log("T2 - Customer resolved:", customer?.name || "NOT FOUND");
 
   // Match scanned parts to inventory

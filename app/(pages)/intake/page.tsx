@@ -10,9 +10,8 @@ import type {
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
-import { CONTACTS, fixOrientation, trafficLight } from "@/lib/helpers";
+import { fixOrientation, trafficLight } from "@/lib/helpers";
 import { scanPODocument } from "@/actions/scan-po";
-import ITEMS from "@/data/items.json";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,8 @@ export default function IntakePage() {
   const handleUpdateJob = useStore((state) => state.handleUpdateJob);
   const handleDeleteJob = useStore((state) => state.handleDeleteJob);
   const showToast = useStore((state) => state.showToast);
+  const ITEMS = useStore((state) => state.items);
+  const CONTACTS = useStore((state) => state.contacts);
 
   const [showSheet, setShowSheet] = useState(false);
   const [selectedJob, setSelectedJob] = useState<IJob | null>(null);

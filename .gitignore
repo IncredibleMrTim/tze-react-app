@@ -33,3 +33,5 @@ output
 *.njsproj
 *.sln
 *.sw?
+
+/generated/prisma

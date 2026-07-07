@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Items catalog
+model Item {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  desc      String
+  price     Float
+  customer  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customer])
+  @@index([code])
+}
+
+// Contacts/Customers
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  account   String   @unique
+  email     String
+  alias     String[] // Array of alias strings for fuzzy matching
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([account])
+}
+
+// Jobs/Purchase Orders
+model Job {
+  id                String   @id
+  po_number         String   @unique
+  customer_name     String
+  customer_account  String
+  customer_email    String
+  customer_contact  String
+  parts             Json     // Array of IPart objects
+  plating           String
+  weightKg          Float
+  stringCount       Int
+  stringsRequired   Boolean
+  requiresWeighing  Boolean
+  freightRequested  Boolean
+  minCharge         Boolean
+  flagged           Boolean
+  notes             String
+  poPic             String?
+  partsPic          String?
+  manualPO          Boolean
+  urgent            Boolean
+  isInternal        Boolean
+  isRework          Boolean
+  partDescription   String
+  createdAt         BigInt   // Storing as timestamp in ms
+  priceOverride     Float?
+  freightCost       Float
+  dispatchedAt      BigInt?
+  invoiceNumber     String?
+  poComplete        Boolean  @default(false)
+  fpnDownloaded     Boolean  @default(false)
+  fpnHidden         Boolean  @default(false)
+  csvDownloaded     Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+
+  jigAssignments    JigAssignment[]
+
+  @@index([po_number])
+  @@index([customer_account])
+  @@index([poComplete])
+  @@index([dispatchedAt])
+}
+
+// Jig Assignment Status
+enum JigAssignmentStatus {
+  ACTIVE    // Currently on the jig
+  CLEARED   // Completed and cleared from jig
+}
+
+// Jig Assignments
+model JigAssignment {
+  id          String              @id
+  jobId       String
+  jigName     String
+  pct         Float
+  pic         String?
+  completedAt BigInt?             // Timestamp in ms when cleared
+  loadedAt    BigInt              // Timestamp in ms when loaded
+  status      JigAssignmentStatus @default(ACTIVE)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  job         Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([jigName])
+  @@index([status])
+}
+
+// Settings (singleton table)
+model Settings {
+  id           Int    @id @default(1)
+  apiKey       String
+  silverKg     Float
+  goldKg       Float
+  silverJig    Float
+  goldJig      Float
+  dueDays      Int
+  jigCount     Int
+  invSeqStart  Int
+  stringRate   Float
+  invSeq       Int    @default(1) // Current invoice sequence
+  updatedAt    DateTime @updatedAt
+}
+
+// Jig Photos (storing jig images)
+model JigPhoto {
+  id        String   @id @default(cuid())
+  jigName   String   @unique
+  photoData String   // Base64 or URL
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jigName])
+}

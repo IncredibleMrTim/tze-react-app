@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navigation } from "./navigation";
 import { GlobalUI } from "./global-ui";
+import { DbInit } from "./components/DbInit";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +95,7 @@ export default function RootLayout({
 
         {/* Global UI Components */}
         <GlobalUI />
+        <DbInit />
       </body>
     </html>
   );
