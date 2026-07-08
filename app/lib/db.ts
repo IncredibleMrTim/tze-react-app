@@ -173,6 +173,74 @@ export async function deleteJigAssignmentsByJobId(jobId: string) {
   })
 }
 
+export async function getActiveJigAssignments(jobId: string) {
+  const assignments = await prisma.jigAssignment.findMany({
+    where: {
+      jobId,
+      status: 'ACTIVE',
+    },
+  })
+
+  return assignments.map(serializeJigAssignment)
+}
+
+export async function getJobWithJigs(jobId: string) {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      jigAssignments: {
+        where: {
+          status: 'ACTIVE',
+        },
+      },
+    },
+  })
+
+  if (!job) return null
+
+  return serializeJob(job)
+}
+
+// Simple helpers to check jig status
+export async function isJobOnJig(jobId: string): Promise<boolean> {
+  const count = await prisma.jigAssignment.count({
+    where: {
+      jobId,
+      status: 'ACTIVE',
+    },
+  })
+
+  return count > 0
+}
+
+export async function getJobJigName(jobId: string): Promise<string | null> {
+  const assignment = await prisma.jigAssignment.findFirst({
+    where: {
+      jobId,
+      status: 'ACTIVE',
+    },
+    select: {
+      jigName: true,
+    },
+  })
+
+  return assignment?.jigName || null
+}
+
+export async function getJobJigNames(jobId: string): Promise<string[]> {
+  const assignments = await prisma.jigAssignment.findMany({
+    where: {
+      jobId,
+      status: 'ACTIVE',
+    },
+    select: {
+      jigName: true,
+    },
+  })
+
+  return assignments.map(a => a.jigName)
+}
+
 // ============ ITEMS ============
 
 export async function getItems() {

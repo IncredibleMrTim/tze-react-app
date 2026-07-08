@@ -1,71 +1,109 @@
 'use client'
 
 import type { IJob, IJigAssignment } from "@/types/interfaces";
-import { jigsOf, stageBadge, stageLabel } from "@/lib/helpers";
+import { stageLabel, trafficLight, isOnJig, getJobJigName } from "@/lib/helpers";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface JobCardProps {
   job: IJob;
-  jigA: IJigAssignment[];
+  jigAssignments: IJigAssignment[];
   onClick: () => void;
+  showArrivalTime?: boolean;
+  showJigStatus?: boolean;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, jigA, onClick }) => {
-  const jigs = jigsOf(job.id, jigA);
-  const badge = stageBadge(job, jigA);
-  const label = stageLabel(job, jigA);
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  jigAssignments,
+  onClick,
+  showArrivalTime = false,
+  showJigStatus = false,
+}) => {
+  const label = stageLabel(job, jigAssignments);
+  const hasJig = isOnJig(job.id, jigAssignments);
+  const jigName = getJobJigName(job.id, jigAssignments);
 
-  const badgeColors: Record<string, string> = {
-    'b-intake': 'bg-gray-100 text-gray-700',
-    'b-jig': 'bg-emerald-100 text-emerald-900',
-    'b-dispatch': 'bg-blue-100 text-blue-900',
-    'b-done': 'bg-green-100 text-green-900',
-  };
+  // Traffic light colors based on age and status
+  const ageColors = trafficLight(job);
+  const cardColors = job.urgent
+    ? "border-red-400 bg-red-50"
+    : job.flagged
+      ? "border-orange-400 bg-orange-50"
+      : ageColors.label === "On time"
+        ? "border-green-400 bg-green-50"
+        : ageColors.label === "Due soon"
+          ? "border-orange-400 bg-orange-50"
+          : "border-red-400 bg-red-50";
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className={`bg-white border rounded-xl p-3.5 mb-2.5 cursor-pointer transition-colors active:border-primary ${
-        label === 'Ready to dispatch' ? 'border-l-4 border-primary' : 'border-gray-200'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <div className="font-bold text-[15px]">{job.po_number}</div>
-      </div>
-      <div className="text-[13px] text-gray-600 mb-1">{job.customer_name}</div>
-
-      <div className="flex gap-1.5 flex-wrap mt-1.5">
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${badgeColors[badge] || 'bg-gray-100 text-gray-700'}`}>
-          {label}
-        </span>
-        {job.plating === 'gold' && (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-800">
-            Gold
-          </span>
-        )}
-        {job.urgent && (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-800">
-            Urgent
-          </span>
-        )}
-        {job.isInternal && (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
-            Internal
-          </span>
-        )}
-      </div>
-
-      {jigs.length > 0 && (
-        <div className="text-[12px] text-gray-500 mt-1.5 flex items-center gap-1 flex-wrap">
-          {jigs.map((g) => (
-            <span
-              key={g.id}
-              className={`inline-block w-2 h-2 rounded-full ${
-                g.completedAt ? 'bg-primary' : 'bg-yellow-400'
-              }`}
-            />
-          ))}
-        </div>
+      className={cn(
+        "border-2 mb-2.5 cursor-pointer active:scale-[0.98] transition-all hover:opacity-90",
+        cardColors
       )}
-    </div>
+    >
+      <CardContent className="p-3.5">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-bold text-base">{job.po_number}</span>
+              {job.urgent && (
+                <span className="flex items-center gap-1 text-xs font-medium text-red-700">
+                  <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                  URGENT
+                </span>
+              )}
+            </div>
+            <div className="text-[13px] text-gray-600 mb-1">{job.customer_name}</div>
+
+            {showArrivalTime && (
+              <div className="text-xs text-gray-500">
+                Arrived:{" "}
+                {new Date(job.createdAt).toLocaleDateString("en-NZ", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}{" "}
+                {new Date(job.createdAt).toLocaleTimeString("en-NZ", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </div>
+            )}
+
+            {job.partDescription && (
+              <div className="text-sm text-gray-700 italic mt-1">
+                {job.partDescription}
+              </div>
+            )}
+
+            {showJigStatus && (
+              <div className="text-xs text-gray-500 mt-1">
+                {hasJig ? `On JIG ${jigName}` : "No JIG"}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="w-2 h-2 rounded-full bg-green-600"></span>
+            <span className="text-gray-600">{label}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-gray-700">
+            {job.plating === "gold" ? "Gold" : "Silver"}
+          </span>
+          {job.stringsRequired && (
+            <span className="text-blue-700 flex items-center gap-1">
+              🎗️ Strings needed
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

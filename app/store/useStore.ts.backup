@@ -9,7 +9,7 @@ import { loadApiKey } from "@/lib/storage"
 interface AppState {
   // State
   jobs: IJob[]
-  jigA: IJigAssignment[]
+  jigAssignments: IJigAssignment[]
   jigPhotos: Record<string, string>
   invSeq: number
   settings: ISettings
@@ -21,7 +21,7 @@ interface AppState {
 
   // Actions
   setJobs: (jobs: IJob[]) => void
-  setJigA: (jigA: IJigAssignment[]) => void
+  setJigAssignments: (jigAssignments: IJigAssignment[]) => void
   setJigPhotos: (jigPhotos: Record<string, string>) => void
   setInvSeq: (invSeq: number) => void
   setSettings: (settings: ISettings) => void
@@ -61,7 +61,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       // Initial state
       jobs: [],
-      jigA: [],
+      jigAssignments: [],
       jigPhotos: {},
       invSeq: 1,
       settings: { ...DEFAULT_SETTINGS, apiKey: loadApiKey() },
@@ -73,7 +73,7 @@ export const useStore = create<AppState>()(
 
       // Basic setters
       setJobs: (jobs) => set({ jobs }),
-      setJigA: (jigA) => set({ jigA }),
+      setJigAssignments: (jigAssignments) => set({ jigAssignments }),
       setJigPhotos: (jigPhotos) => set({ jigPhotos }),
       setInvSeq: (invSeq) => set({ invSeq }),
       setSettings: (settings) => set({
@@ -121,11 +121,11 @@ export const useStore = create<AppState>()(
       },
 
       handleDeleteJob: async (jobId) => {
-        const { jobs, jigA } = get()
+        const { jobs, jigAssignments } = get()
         // Update local state immediately
         set({
           jobs: jobs.filter(j => j.id !== jobId),
-          jigA: jigA.filter(g => g.jobId !== jobId)
+          jigAssignments: jigAssignments.filter(g => g.jobId !== jobId)
         })
 
         // Sync to database
@@ -142,7 +142,7 @@ export const useStore = create<AppState>()(
       handleAssignJobToJig: async (jigName, jobId, pct) => {
         console.log('🔧 handleAssignJobToJig called:', { jigName, jobId, pct })
 
-        const { jigA } = get()
+        const { jigAssignments } = get()
         const now = Date.now()
         const assignment: IJigAssignment = {
           id: now.toString(),
@@ -158,7 +158,7 @@ export const useStore = create<AppState>()(
         console.log('📝 Creating assignment:', assignment)
 
         // Update local state immediately
-        set({ jigA: [...jigA, assignment] })
+        set({ jigAssignments: [...jigAssignments, assignment] })
         console.log('✓ Local state updated')
 
         // Sync to database
@@ -186,13 +186,13 @@ export const useStore = create<AppState>()(
       },
 
       handleUpdateJigAssignment: async (assignmentId, updates) => {
-        const { jigA } = get()
+        const { jigAssignments } = get()
 
         // Update local state immediately
-        const updatedJigA = jigA.map(g =>
+        const updatedJigA = jigAssignments.map(g =>
           g.id === assignmentId ? { ...g, ...updates } : g
         )
-        set({ jigA: updatedJigA })
+        set({ jigAssignments: updatedJigA })
 
         // Sync to database
         try {
@@ -212,15 +212,15 @@ export const useStore = create<AppState>()(
       },
 
       handleCompleteJig: async (jigName) => {
-        const { jigA, jobs } = get()
+        const { jigAssignments, jobs } = get()
         const now = Date.now()
 
         // Get all active assignments for this jig
-        const activeAssignments = jigA.filter(g => g.jigName === jigName && g.status === 'ACTIVE')
+        const activeAssignments = jigAssignments.filter(g => g.jigName === jigName && g.status === 'ACTIVE')
         const jigJobIds = activeAssignments.map(g => g.jobId)
 
         // Mark assignments as CLEARED in local state
-        const updatedJigA = jigA.map(g =>
+        const updatedJigA = jigAssignments.map(g =>
           g.jigName === jigName && g.status === 'ACTIVE'
             ? { ...g, status: 'CLEARED' as const, completedAt: now }
             : g
@@ -231,7 +231,7 @@ export const useStore = create<AppState>()(
           jigJobIds.includes(j.id) ? { ...j, poComplete: true } : j
         )
 
-        set({ jigA: updatedJigA, jobs: updatedJobs })
+        set({ jigAssignments: updatedJigA, jobs: updatedJobs })
 
         // Sync to database
         try {
@@ -258,16 +258,16 @@ export const useStore = create<AppState>()(
       },
 
       handleSendBackJob: async (jobId) => {
-        const { jigA, jobs } = get()
-        const assignmentsToDelete = jigA.filter(g => g.jobId === jobId)
+        const { jigAssignments, jobs } = get()
+        const assignmentsToDelete = jigAssignments.filter(g => g.jobId === jobId)
 
         // Remove all JIG assignments for this job
-        const updatedJigA = jigA.filter(g => g.jobId !== jobId)
+        const updatedJigA = jigAssignments.filter(g => g.jobId !== jobId)
         // Reset poComplete status
         const updatedJobs = jobs.map(j =>
           j.id === jobId ? { ...j, poComplete: false } : j
         )
-        set({ jigA: updatedJigA, jobs: updatedJobs })
+        set({ jigAssignments: updatedJigA, jobs: updatedJobs })
 
         // Sync to database
         try {
@@ -351,7 +351,7 @@ export const useStore = create<AppState>()(
     //   name: 'tze-storage',
     //   partialize: (state) => ({
     //     jobs: state.jobs,
-    //     jigA: state.jigA,
+    //     jigAssignments: state.jigAssignments,
     //     jigPhotos: state.jigPhotos,
     //     invSeq: state.invSeq,
     //     nextTZE: getNextTZE(),
