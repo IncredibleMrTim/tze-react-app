@@ -84,20 +84,43 @@ export const due20th = (ts?: number): string => {
 
 export const jigsOf = (
   jid: string,
-  jigA: IJigAssignment[],
+  jigAssignments: IJigAssignment[],
 ): IJigAssignment[] => {
-  return jigA.filter((g) => g.jobId === jid);
+  return jigAssignments.filter((g) => g.jobId === jid);
 };
 
-export const jigUsed = (nm: string, jigA: IJigAssignment[]): number => {
-  return jigA
+export const jigUsed = (nm: string, jigAssignments: IJigAssignment[]): number => {
+  return jigAssignments
     .filter((g) => g.jigName === nm && g.status === 'ACTIVE')
     .reduce((s, g) => s + g.pct, 0);
 };
 
-export const allDone = (jid: string, jigA: IJigAssignment[]): boolean => {
-  const gs = jigsOf(jid, jigA);
+export const allDone = (jid: string, jigAssignments: IJigAssignment[]): boolean => {
+  const gs = jigsOf(jid, jigAssignments);
   return gs.length > 0 && gs.every((g) => g.status === 'CLEARED');
+};
+
+// Check if a job is currently on any jig
+export const isOnJig = (jid: string, jigAssignments: IJigAssignment[]): boolean => {
+  return jigAssignments.some((g) => g.jobId === jid && g.status === 'ACTIVE');
+};
+
+// Get the active jig name(s) for a job
+export const getJobJigNames = (jid: string, jigAssignments: IJigAssignment[]): string[] => {
+  return jigAssignments
+    .filter((g) => g.jobId === jid && g.status === 'ACTIVE')
+    .map((g) => g.jigName);
+};
+
+// Get the first active jig name for a job (for single jig scenarios)
+export const getJobJigName = (jid: string, jigAssignments: IJigAssignment[]): string | null => {
+  const jig = jigAssignments.find((g) => g.jobId === jid && g.status === 'ACTIVE');
+  return jig?.jigName || null;
+};
+
+// Get all active jig assignments for a job
+export const getActiveJigs = (jid: string, jigAssignments: IJigAssignment[]): IJigAssignment[] => {
+  return jigAssignments.filter((g) => g.jobId === jid && g.status === 'ACTIVE');
 };
 
 // ================ Job Status Helpers ================ //
@@ -130,25 +153,25 @@ export const trafficLight = (j: IJob) => {
   };
 };
 
-export const isReady = (j: IJob, jigA: IJigAssignment[]): boolean => {
+export const isReady = (j: IJob, jigAssignments: IJigAssignment[]): boolean => {
   if (j.dispatchedAt || !j.poComplete) return false;
-  const gs = jigA.filter((g) => g.jobId === j.id);
+  const gs = jigAssignments.filter((g) => g.jobId === j.id);
   // Job must have at least one jig assignment to be ready for dispatch
   if (!gs.length) return false;
   return gs.every((g) => g.status === 'CLEARED');
 };
 
-export const stageLabel = (j: IJob, jigA: IJigAssignment[]): string => {
+export const stageLabel = (j: IJob, jigAssignments: IJigAssignment[]): string => {
   if (j.dispatchedAt) return "Dispatched";
-  if (isReady(j, jigA)) return "Ready to dispatch";
-  if (jigsOf(j.id, jigA).some((g) => g.status === 'ACTIVE')) return "WIP";
+  if (isReady(j, jigAssignments)) return "Ready to dispatch";
+  if (jigsOf(j.id, jigAssignments).some((g) => g.status === 'ACTIVE')) return "WIP";
   return "Intake";
 };
 
-export const stageBadge = (j: IJob, jigA: IJigAssignment[]): string => {
+export const stageBadge = (j: IJob, jigAssignments: IJigAssignment[]): string => {
   if (j.dispatchedAt) return "b-done";
-  if (isReady(j, jigA)) return "b-dispatch";
-  if (jigsOf(j.id, jigA).some((g) => g.status === 'ACTIVE')) return "b-jig";
+  if (isReady(j, jigAssignments)) return "b-dispatch";
+  if (jigsOf(j.id, jigAssignments).some((g) => g.status === 'ACTIVE')) return "b-jig";
   return "b-intake";
 };
 
