@@ -1,29 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
-import { updateJobAction } from "@/actions/jobs";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
+import { useJobs, useUpdateJob } from "@/hooks/useJobs";
+import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady, stageLabel } from "@/lib/helpers";
 import { genFPN } from "@/lib/exports";
-import type { IJob, IJigAssignment } from "@/types/interfaces";
+import type { IJob } from "@/types/interfaces";
 import { Overlay } from "@/components/Overlay";
 
-interface JobsClientProps {
-  initialJobs: IJob[];
-  initialJigAssignments: IJigAssignment[];
-}
-
-export default function JobsClient({
-  initialJobs,
-  initialJigAssignments,
-}: JobsClientProps) {
-  const [isPending, startTransition] = useTransition();
+export default function JobsClient() {
   const { showToast } = useToast();
 
-  const [jobs, setJobs] = useState(initialJobs);
-  const jigAssignments = initialJigAssignments;
+  // React Query hooks - auto-refresh for real-time updates
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs(10000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const updateJobMutation = useUpdateJob();
+
+  const isLoading = jobsLoading || jigsLoading;
 
   const [viewingJob, setViewingJob] = useState<IJob | null>(null);
 
@@ -134,6 +130,18 @@ export default function JobsClient({
   const intake = filtered.filter(
     (j) => !j.dispatchedAt && !jigAssignments.some((g) => g.jobId === j.id),
   );
+
+  // Show loading state on initial load
+  if (isLoading) {
+    return (
+      <div className="relative h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <div className="text-lg text-gray-600">Loading jobs...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -542,29 +550,29 @@ export default function JobsClient({
                   </button>
 
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       if (window.confirm(`Remove ${viewingJob.po_number} from dispatch? This will move it back to Ready to Dispatch.`)) {
-                        startTransition(async () => {
-                          setJobs(jobs.map(j =>
-                            j.id === viewingJob.id
-                              ? { ...j, dispatchedAt: null, invoiceNumber: null }
-                              : j
-                          ));
-                          const result = await updateJobAction(viewingJob.id, {
-                            dispatchedAt: null,
-                            invoiceNumber: null,
-                          });
-                          if (result.success) {
-                            setViewingJob(null);
-                            showToast("Job removed from dispatch");
-                          } else {
-                            setJobs(initialJobs);
-                            showToast("Failed to remove from dispatch");
+                        updateJobMutation.mutate(
+                          {
+                            jobId: viewingJob.id,
+                            job: {
+                              dispatchedAt: null,
+                              invoiceNumber: null,
+                            },
+                          },
+                          {
+                            onSuccess: () => {
+                              setViewingJob(null);
+                              showToast("Job removed from dispatch");
+                            },
+                            onError: () => {
+                              showToast("Failed to remove from dispatch");
+                            },
                           }
-                        });
+                        );
                       }
                     }}
-                    disabled={isPending}
+                    disabled={updateJobMutation.isPending}
                     className="w-full bg-orange-600 text-white rounded-lg py-3 text-base font-semibold hover:bg-orange-700 disabled:opacity-50"
                   >
                     ↩️ Remove from Dispatch
