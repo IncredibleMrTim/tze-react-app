@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { updateSettings, getSettings } from '@/lib/db'
+import type { ISettings } from '@/types/interfaces'
 
-export async function updateSettingsAction(updates: any) {
+export async function updateSettingsAction(updates: Partial<ISettings>) {
   try {
     const result = await updateSettings(updates)
     revalidatePath('/settings')

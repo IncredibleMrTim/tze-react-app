@@ -1,37 +1,56 @@
 "use client";
-
-import { useState, useRef, useTransition } from "react";
-import { createJobAction, updateJobAction, deleteJobAction } from "@/actions/jobs";
+import { HiOutlineCamera, HiOutlineSparkles } from "react-icons/hi";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/useToast";
-import type { IJob, IContact, IPart, IItem, IJigAssignment } from "@/types/interfaces";
+import {
+  useJobs,
+  useCreateJob,
+  useUpdateJob,
+  useDeleteJob,
+} from "@/hooks/useJobs";
+import type {
+  IJob,
+  IContact,
+  IPart,
+  IItem,
+  IJigAssignment,
+} from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
 import { fixOrientation, isOnJig } from "@/lib/helpers";
-import { scanPODocument } from "@/actions/scan-po";
+import { scanPODocument, type ScanPOResponse } from "@/actions/scan-po";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { JobCard } from "@/components/JobCard";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface IntakeClientProps {
-  initialJobs: IJob[];
   initialJigAssignments: IJigAssignment[];
   items: IItem[];
   contacts: IContact[];
 }
 
 export default function IntakeClient({
-  initialJobs,
   initialJigAssignments,
   items: ITEMS,
   contacts: CONTACTS,
 }: IntakeClientProps) {
-  const [isPending, startTransition] = useTransition();
   const { showToast } = useToast();
 
-  // Optimistic local state
-  const [jobs, setJobs] = useState(initialJobs);
+  // React Query hooks - auto-refresh every 10 seconds
+  const { data: jobs = [], isLoading, error } = useJobs(10000);
+  const createJobMutation = useCreateJob();
+  const updateJobMutation = useUpdateJob();
+  const deleteJobMutation = useDeleteJob();
+
   const jigAssignments = initialJigAssignments;
 
   const [showSheet, setShowSheet] = useState(false);
@@ -55,10 +74,11 @@ export default function IntakeClient({
   const [freightRequested, setFreightRequested] = useState(false);
   const [minCharge, setMinCharge] = useState(false);
   const [poPic, setPoPic] = useState<string | null>(null);
+  const [poPages, setPoPages] = useState<string[]>([]); // Staged PO pages before scanning
   const [partsPic, setPartsPic] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState("");
-  const [scanData, setScanData] = useState<any>(null);
+  const [scanData, setScanData] = useState<ScanPOResponse | null>(null);
   const [showRawData, setShowRawData] = useState(false);
   const [partSearchIndex, setPartSearchIndex] = useState<number | null>(null);
   const [partSearchTerm, setPartSearchTerm] = useState("");
@@ -72,24 +92,59 @@ export default function IntakeClient({
       c.account.toLowerCase().includes(customerInput.toLowerCase()),
   ).slice(0, 10);
 
-  const handleScanPO = async (file: File) => {
+  // Add pages to staging area (don't scan yet)
+  const handleAddPages = async (files: FileList) => {
+    try {
+      const newPages: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            fixOrientation(result, resolve);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        newPages.push(dataUrl);
+      }
+
+      setPoPages([...poPages, ...newPages]);
+      if (poPages.length === 0 && newPages.length > 0) {
+        setPoPic(newPages[0]); // Set first page as preview
+      }
+    } catch (error) {
+      showToast("Failed to load images");
+      console.error("Error loading images:", error);
+    }
+  };
+
+  // Remove a staged page
+  const handleRemovePage = (index: number) => {
+    const newPages = poPages.filter((_, i) => i !== index);
+    setPoPages(newPages);
+    if (newPages.length > 0) {
+      setPoPic(newPages[0]);
+    } else {
+      setPoPic(null);
+    }
+  };
+
+  // Trigger actual scan of all staged pages
+  const handleScanAllPages = async () => {
+    if (poPages.length === 0) return;
+
     setScanning(true);
     setScanResult("");
 
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          fixOrientation(result, resolve);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Extract base64 data from all pages
+      const base64DataArray = poPages.map((dataUrl) => dataUrl.split(",")[1]);
 
-      setPoPic(dataUrl);
-      const base64Data = dataUrl.split(",")[1];
-      const result = await scanPODocument(base64Data);
+      // Scan all pages
+      const result = await scanPODocument(base64DataArray);
 
       if (result.po_number) {
         setPoNumber(result.po_number);
@@ -112,16 +167,19 @@ export default function IntakeClient({
       setScanData(result);
 
       // Count parts matched to inventory
-      const matchedCount = result.parts.filter((p: any) => p.price > 0).length;
+      const matchedCount = result.parts.filter(
+        (part: IPart) => part.price > 0,
+      ).length;
 
       setScanResult(
         `✓ Customer: ${result.customer?.name || result.customer_name || "Unknown"} → ${result.customer?.account || ""}\n${matchedCount} parts matched to inventory`,
       );
       showToast("PO scanned successfully");
-    } catch (err: any) {
-      setScanResult(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setScanResult(`Error: ${errorMessage}`);
       setScanData(null);
-      showToast("Scan failed: " + err.message);
+      showToast("Scan failed: " + errorMessage);
     } finally {
       setScanning(false);
     }
@@ -156,8 +214,7 @@ export default function IntakeClient({
       const existingJob = jobs.find((j) => j.id === editingJobId);
       if (!existingJob) return;
 
-      const updatedJob: IJob = {
-        ...existingJob,
+      const updatedJob: Partial<IJob> = {
         po_number,
         customer_name: customer?.name || "Internal",
         customer_account: customer?.account || "",
@@ -179,19 +236,20 @@ export default function IntakeClient({
         partDescription: partsDescription,
       };
 
-      // Optimistic update then server action
-      startTransition(async () => {
-        setJobs(jobs.map(j => j.id === editingJobId ? updatedJob : j));
-        const result = await updateJobAction(editingJobId, updatedJob);
-        if (result.success) {
-          resetForm();
-          setShowSheet(false);
-          showToast("Job updated: " + po_number);
-        } else {
-          setJobs(initialJobs);
-          showToast("Failed to update job");
-        }
-      });
+      // Use React Query mutation with optimistic updates
+      updateJobMutation.mutate(
+        { jobId: editingJobId, job: updatedJob },
+        {
+          onSuccess: () => {
+            resetForm();
+            setShowSheet(false);
+            showToast("Job updated: " + po_number);
+          },
+          onError: () => {
+            showToast("Failed to update job");
+          },
+        },
+      );
     } else {
       const now = Date.now();
       const job: IJob = {
@@ -229,18 +287,16 @@ export default function IntakeClient({
         csvDownloaded: false,
       };
 
-      // Optimistic update then server action
-      startTransition(async () => {
-        setJobs([...jobs, job]);
-        const result = await createJobAction(job);
-        if (result.success) {
+      // Use React Query mutation with optimistic updates
+      createJobMutation.mutate(job, {
+        onSuccess: () => {
           resetForm();
           setShowSheet(false);
           showToast("Job created: " + po_number);
-        } else {
-          setJobs(initialJobs);
+        },
+        onError: () => {
           showToast("Failed to create job");
-        }
+        },
       });
     }
   };
@@ -263,6 +319,7 @@ export default function IntakeClient({
     setFreightRequested(false);
     setMinCharge(false);
     setPoPic(null);
+    setPoPages([]);
     setPartsPic(null);
     setScanResult("");
     setScanData(null);
@@ -274,7 +331,11 @@ export default function IntakeClient({
     setParts([...parts, { code: "", desc: "", qty: 1, price: 0 }]);
   };
 
-  const updatePart = (index: number, field: keyof IPart, value: any) => {
+  const updatePart = (
+    index: number,
+    field: keyof IPart,
+    value: IPart[keyof IPart],
+  ) => {
     const updated = [...parts];
     updated[index] = { ...updated[index], [field]: value };
     setParts(updated);
@@ -354,6 +415,33 @@ export default function IntakeClient({
     return groups;
   };
 
+  // Show loading state on initial load
+  if (isLoading) {
+    return (
+      <div className="relative h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <div className="text-lg text-gray-600">Loading jobs...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if query failed
+  if (error) {
+    return (
+      <div className="relative h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <div className="text-lg text-red-600">Failed to load jobs</div>
+          <div className="text-sm text-gray-500 mt-2">
+            {(error as Error).message}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full">
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
@@ -418,20 +506,18 @@ export default function IntakeClient({
               <button
                 onClick={() => {
                   if (window.confirm(`Delete job ${selectedJob.po_number}?`)) {
-                    startTransition(async () => {
-                      setJobs(jobs.filter(j => j.id !== selectedJob.id));
-                      const result = await deleteJobAction(selectedJob.id);
-                      if (result.success) {
+                    deleteJobMutation.mutate(selectedJob.id, {
+                      onSuccess: () => {
                         setSelectedJob(null);
                         showToast("Job deleted");
-                      } else {
-                        setJobs(initialJobs);
+                      },
+                      onError: () => {
                         showToast("Failed to delete job");
-                      }
+                      },
                     });
                   }
                 }}
-                disabled={isPending}
+                disabled={deleteJobMutation.isPending}
                 className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
               >
                 Delete
@@ -609,24 +695,110 @@ export default function IntakeClient({
                 capture="environment"
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleScanPO(file);
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    handleAddPages(files);
+                    // Reset input so same file can be selected again
+                    e.target.value = "";
+                  }
                 }}
               />
-              {poPic ? (
-                <div className="relative w-full">
-                  <img
-                    src={poPic}
-                    alt="PO Document"
-                    className="w-full rounded-lg border-2 border-gray-300"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={scanning}
-                    className="absolute bottom-2 right-2 bg-white border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 shadow-md hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {scanning ? "Scanning..." : "Change Photo"}
-                  </button>
+              {poPages.length > 0 ? (
+                <div className="space-y-3">
+                  {/* Carousel for PO pages */}
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {poPages.map((page, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                            <img
+                              src={page}
+                              alt={`PO Page ${index + 1}`}
+                              className="w-full rounded-lg"
+                            />
+                            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                              Page {index + 1} of {poPages.length}
+                            </div>
+                            <button
+                              onClick={() => handleRemovePage(index)}
+                              disabled={scanning}
+                              className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {poPages.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-2" />
+                        <CarouselNext className="right-2" />
+                      </>
+                    )}
+                  </Carousel>
+
+                  {/* Action buttons - always visible */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={scanning}
+                      className="w-full border border-dashed border-teal-500 bg-emerald-50 rounded-lg py-3 text-gray-600 text-sm font-medium hover:bg-teal-50 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <HiOutlineCamera />
+                      Add page
+                    </Button>
+                    <Button
+                      onClick={handleScanAllPages}
+                      disabled={scanning}
+                      className="w-full py-3 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <HiOutlineSparkles />
+                      {scanning ? "Scanning..." : scanResult ? "Rescan PO" : "Scan PO"}
+                    </Button>
+                  </div>
+
+                  {/* Scan result display */}
+                  {scanResult && (
+                    <div
+                      className={`text-sm px-3 py-3 rounded-lg border ${
+                        scanResult.startsWith("✓")
+                          ? "bg-green-50 text-green-800 border-green-200"
+                          : "bg-red-50 text-red-800 border-red-200"
+                      }`}
+                    >
+                      {scanResult.startsWith("✓") ? (
+                        <div>
+                          {scanResult.split("\n").map((line, i) => (
+                            <div
+                              key={i}
+                              className={i === 0 ? "font-semibold mb-1" : "text-sm"}
+                            >
+                              {line}
+                            </div>
+                          ))}
+                          {scanData && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <button
+                                onClick={() => setShowRawData(!showRawData)}
+                                className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium"
+                              >
+                                <span>{showRawData ? "▼" : "▶"}</span>
+                                Show raw scan data
+                              </button>
+                              {showRawData && (
+                                <pre className="mt-2 text-xs bg-white/50 rounded p-2 overflow-x-auto text-gray-700 font-mono">
+                                  {JSON.stringify(scanData, null, 2)}
+                                </pre>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        scanResult
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <button
@@ -639,46 +811,10 @@ export default function IntakeClient({
                     {scanning ? "Scanning..." : "Tap to photograph PO"}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Claude reads customer, PO number & parts
+                    Add multiple pages one at a time · Claude reads customer, PO
+                    number & parts
                   </div>
                 </button>
-              )}
-              {scanResult && (
-                <div
-                  className={`text-sm mt-2 px-3 py-3 rounded-lg border ${
-                    scanResult.startsWith("✓")
-                      ? "bg-green-50 text-green-800 border-green-200"
-                      : "bg-red-50 text-red-800 border-red-200"
-                  }`}
-                >
-                  {scanResult.startsWith("✓") ? (
-                    <div>
-                      {scanResult.split('\n').map((line, i) => (
-                        <div key={i} className={i === 0 ? "font-semibold mb-1" : "text-sm"}>
-                          {line}
-                        </div>
-                      ))}
-                      {scanData && (
-                        <div className="mt-3 pt-3 border-t border-green-200">
-                          <button
-                            onClick={() => setShowRawData(!showRawData)}
-                            className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 font-medium"
-                          >
-                            <span>{showRawData ? '▼' : '▶'}</span>
-                            Show raw scan data
-                          </button>
-                          {showRawData && (
-                            <pre className="mt-2 text-xs bg-white/50 rounded p-2 overflow-x-auto text-gray-700 font-mono">
-                              {JSON.stringify(scanData, null, 2)}
-                            </pre>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    scanResult
-                  )}
-                </div>
               )}
             </div>
 
@@ -1147,7 +1283,7 @@ export default function IntakeClient({
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 pt-4 pb-4 border-t border-gray-200">
               <button
                 onClick={() => {
                   resetForm();
@@ -1159,10 +1295,16 @@ export default function IntakeClient({
               </button>
               <button
                 onClick={handleSave}
-                disabled={(!customer && !isInternal) || isPending}
+                disabled={
+                  (!customer && !isInternal) ||
+                  createJobMutation.isPending ||
+                  updateJobMutation.isPending
+                }
                 className="flex-1 bg-primary text-white rounded-lg py-3 text-base font-semibold hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {isPending ? "Saving..." : "Save Job"}
+                {createJobMutation.isPending || updateJobMutation.isPending
+                  ? "Saving..."
+                  : "Save Job"}
               </button>
             </div>
           </div>

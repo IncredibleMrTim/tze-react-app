@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
 import { jigUsed } from "@/lib/helpers";
+import { generateJigsList } from "@/constants/settings.const";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -23,24 +24,43 @@ import { Switch } from "@/components/ui/switch";
 import { Overlay } from "@/components/Overlay";
 import { LuTriangleAlert, LuCamera, LuWrench } from "react-icons/lu";
 import { useToast } from "@/hooks/useToast";
-import { createJigAssignmentAction, updateJigAssignmentAction, clearJobJigsAction, completeJigAction } from "@/actions/jigs";
-import { updateJobAction } from "@/actions/jobs";
+import { useJobs, useUpdateJob } from "@/hooks/useJobs";
+import {
+  useJigAssignments,
+  useCreateJigAssignment,
+  useUpdateJigAssignment,
+  useDeleteJigAssignment,
+  useCompleteJig
+} from "@/hooks/useJigAssignments";
+import { useSettings } from "@/hooks/useSettings";
 
-interface JigClientProps {
-  initialJobs: IJob[];
-  initialJigAssignments: IJigAssignment[];
-  jigsList: string[];
-}
-
-export default function JigClient({
-  initialJobs,
-  initialJigAssignments,
-  jigsList,
-}: JigClientProps) {
-  const [isPending, startTransition] = useTransition();
+export default function JigClient() {
   const { showToast } = useToast();
-  const [jobs, setJobs] = useState(initialJobs);
-  const [jigAssignments, setJigAssignments] = useState(initialJigAssignments);
+
+  // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const { data: settings, isLoading: settingsLoading } = useSettings();
+
+  // Mutation hooks
+  const createAssignmentMutation = useCreateJigAssignment();
+  const updateAssignmentMutation = useUpdateJigAssignment();
+  const deleteAssignmentMutation = useDeleteJigAssignment();
+  const completeJigMutation = useCompleteJig();
+  const updateJobMutation = useUpdateJob();
+
+  // Generate jigs list from settings
+  const jigsList = useMemo(() => {
+    return settings ? generateJigsList(settings.jigCount) : [];
+  }, [settings]);
+
+  const isLoading = jobsLoading || jigsLoading || settingsLoading;
+  const isPending =
+    createAssignmentMutation.isPending ||
+    updateAssignmentMutation.isPending ||
+    deleteAssignmentMutation.isPending ||
+    completeJigMutation.isPending ||
+    updateJobMutation.isPending;
 
   const [selectedJig, setSelectedJig] = useState<string | null>(null);
   const [showJobSelector, setShowJobSelector] = useState(false);
@@ -113,40 +133,54 @@ export default function JigClient({
       return;
     }
 
-    startTransition(async () => {
-      // Create new assignment
-      const newAssignment: IJigAssignment = {
-        id: crypto.randomUUID(),
-        jigName: selectedJig,
-        jobId: selectedJobForAssignment.id,
-        pct,
-        pic: null,
-        status: 'ACTIVE',
-        loadedAt: Date.now(),
-        completedAt: null,
-      };
+    // Create new assignment
+    const newAssignment: IJigAssignment = {
+      id: crypto.randomUUID(),
+      jigName: selectedJig,
+      jobId: selectedJobForAssignment.id,
+      pct,
+      pic: null,
+      status: 'ACTIVE',
+      loadedAt: Date.now(),
+      completedAt: null,
+    };
 
-      // Optimistic update
-      setJigAssignments([...jigAssignments, newAssignment]);
-
-      // Update job if PO complete status changed
-      if (poComplete !== selectedJobForAssignment.poComplete) {
-        await updateJobAction(selectedJobForAssignment.id, { poComplete });
-        setJobs(jobs.map(j => j.id === selectedJobForAssignment.id ? { ...j, poComplete } : j));
-      }
-
-      // Save to database
-      const result = await createJigAssignmentAction(newAssignment);
-      if (result.success) {
-        showToast(`Job assigned to ${selectedJig}`);
-        setShowJobSelector(false);
-        setSelectedJobForAssignment(null);
-      } else {
-        // Revert on error
-        setJigAssignments(initialJigAssignments);
-        showToast("Failed to assign job");
-      }
-    });
+    // Update job if PO complete status changed
+    if (poComplete !== selectedJobForAssignment.poComplete) {
+      updateJobMutation.mutate(
+        { jobId: selectedJobForAssignment.id, job: { poComplete } },
+        {
+          onSuccess: () => {
+            // After job update, create the assignment
+            createAssignmentMutation.mutate(newAssignment, {
+              onSuccess: () => {
+                showToast(`Job assigned to ${selectedJig}`);
+                setShowJobSelector(false);
+                setSelectedJobForAssignment(null);
+              },
+              onError: () => {
+                showToast("Failed to assign job");
+              },
+            });
+          },
+          onError: () => {
+            showToast("Failed to update job");
+          },
+        }
+      );
+    } else {
+      // Just create the assignment
+      createAssignmentMutation.mutate(newAssignment, {
+        onSuccess: () => {
+          showToast(`Job assigned to ${selectedJig}`);
+          setShowJobSelector(false);
+          setSelectedJobForAssignment(null);
+        },
+        onError: () => {
+          showToast("Failed to assign job");
+        },
+      });
+    }
   };
 
   const handlePhotoUpload = (file: File) => {
@@ -170,20 +204,15 @@ export default function JigClient({
     const assignment = jigAssignments.find((g) => g.id === assignmentId);
     if (!assignment) return;
 
-    startTransition(async () => {
-      // Optimistic update - remove assignment
-      setJigAssignments(jigAssignments.filter(g => g.id !== assignmentId));
-
-      // Save to database
-      const result = await clearJobJigsAction(assignment.jobId);
-      if (result.success) {
+    deleteAssignmentMutation.mutate(assignment.jobId, {
+      onSuccess: () => {
         showToast("Job removed from JIG");
-      } else {
-        // Revert on error
-        setJigAssignments(initialJigAssignments);
+        setConfirmingRemoveId(null);
+      },
+      onError: () => {
         showToast("Failed to remove job");
-      }
-      setConfirmingRemoveId(null);
+        setConfirmingRemoveId(null);
+      },
     });
   };
 
@@ -211,34 +240,15 @@ export default function JigClient({
   const handleConfirmComplete = () => {
     if (!selectedJig) return;
 
-    startTransition(async () => {
-      // Optimistic update - mark all assignments as CLEARED
-      const now = Date.now();
-      setJigAssignments(
-        jigAssignments.map(a =>
-          a.jigName === selectedJig && a.status === 'ACTIVE'
-            ? { ...a, status: 'CLEARED' as const, completedAt: now }
-            : a
-        )
-      );
-
-      // Also mark jobs as complete
-      const jigJobIds = jigAssignments
-        .filter(a => a.jigName === selectedJig && a.status === 'ACTIVE')
-        .map(a => a.jobId);
-      setJobs(jobs.map(j => jigJobIds.includes(j.id) ? { ...j, poComplete: true } : j));
-
-      // Save to database
-      const result = await completeJigAction(selectedJig);
-      if (result.success) {
+    completeJigMutation.mutate(selectedJig, {
+      onSuccess: () => {
         showToast(`${selectedJig} marked complete`);
-      } else {
-        // Revert on error
-        setJigAssignments(initialJigAssignments);
-        setJobs(initialJobs);
+        setShowCompleteDialog(false);
+      },
+      onError: () => {
         showToast("Failed to complete jig");
-      }
-      setShowCompleteDialog(false);
+        setShowCompleteDialog(false);
+      },
     });
   };
 
@@ -258,33 +268,37 @@ export default function JigClient({
       return;
     }
 
-    startTransition(async () => {
-      // Optimistic update - update assignment percentage
-      setJigAssignments(
-        jigAssignments.map(a =>
-          a.id === editingAssignment.assignment.id ? { ...a, pct: newPct } : a
-        )
-      );
-
-      // Update assignment percentage
-      const assignmentResult = await updateJigAssignmentAction(editingAssignment.assignment.id, { pct: newPct });
-
-      // Update job if PO complete changed
-      if (editPoComplete !== editingAssignment.job.poComplete) {
-        await updateJobAction(editingAssignment.job.id, { poComplete: editPoComplete });
-        setJobs(jobs.map(j => j.id === editingAssignment.job.id ? { ...j, poComplete: editPoComplete } : j));
+    // Update assignment percentage
+    updateAssignmentMutation.mutate(
+      { assignmentId: editingAssignment.assignment.id, assignment: { pct: newPct } },
+      {
+        onSuccess: () => {
+          // Update job if PO complete changed
+          if (editPoComplete !== editingAssignment.job.poComplete) {
+            updateJobMutation.mutate(
+              { jobId: editingAssignment.job.id, job: { poComplete: editPoComplete } },
+              {
+                onSuccess: () => {
+                  showToast("Changes saved");
+                  setShowEditModal(false);
+                  setEditingAssignment(null);
+                },
+                onError: () => {
+                  showToast("Failed to update job");
+                },
+              }
+            );
+          } else {
+            showToast("Changes saved");
+            setShowEditModal(false);
+            setEditingAssignment(null);
+          }
+        },
+        onError: () => {
+          showToast("Failed to save changes");
+        },
       }
-
-      if (assignmentResult.success) {
-        showToast("Changes saved");
-        setShowEditModal(false);
-        setEditingAssignment(null);
-      } else {
-        // Revert on error
-        setJigAssignments(initialJigAssignments);
-        showToast("Failed to save changes");
-      }
-    });
+    );
   };
 
   const filteredJobs = availableJobs.filter((j) => {
@@ -304,6 +318,18 @@ export default function JigClient({
   const spaceRemaining = selectedJig
     ? 100 - Math.round(jigUsed(selectedJig, jigAssignments))
     : 0;
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <div className="text-lg text-gray-600">Loading jigs...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

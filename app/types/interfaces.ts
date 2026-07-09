@@ -21,6 +21,12 @@ export interface IPart {
   price: number;
 }
 
+export interface IScannedPart {
+  code: string;
+  description: string;
+  quantity: number;
+}
+
 export interface IJob {
   id: string;
   po_number: string;
@@ -76,6 +82,7 @@ export interface ISettings {
   dueDays: number;
   jigCount: number;
   invSeqStart: number;
+  invSeq: number;
   stringRate: number;
 }
 
@@ -97,7 +104,7 @@ export interface IIntakeFormState {
   notes: string;
   poPic: string | null;
   partsPic: string | null;
-  scannedParts: any[];
+  scannedParts: IScannedPart[];
   editId: string | null;
   urgent: boolean;
   isInternal: boolean;

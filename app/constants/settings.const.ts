@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: ISettings = {
   dueDays: 20,
   jigCount: 6,
   invSeqStart: 1,
+  invSeq: 1,
   stringRate: 25,
 };
 
