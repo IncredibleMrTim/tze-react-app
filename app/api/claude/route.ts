@@ -16,8 +16,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Support both single image (string) and multiple images (array)
+    const base64DataArray = Array.isArray(b64data) ? b64data : [b64data];
+
     const result = await callClaudeWithImage({
-      base64Data: b64data,
+      base64DataArray,
       systemPrompt,
       maxTokens,
       apiKey,

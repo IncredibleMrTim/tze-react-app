@@ -19,19 +19,43 @@ interface ClaudeResponse {
 }
 
 /**
- * Calls the Claude API with an image and system prompt
+ * Calls the Claude API with one or more images and system prompt
+ * Supports multi-page PO documents
  */
 export async function callClaudeWithImage(params: {
-  base64Data: string;
+  base64DataArray: string[];
   systemPrompt: string;
   maxTokens: number;
   apiKey: string;
 }): Promise<string> {
-  const { base64Data, systemPrompt, maxTokens, apiKey } = params;
+  const { base64DataArray, systemPrompt, maxTokens, apiKey } = params;
 
-  console.log('📸 Image data length:', base64Data.length);
-  console.log('📸 Image data starts with:', base64Data.substring(0, 50));
+  console.log('📸 Processing', base64DataArray.length, 'page(s)');
   console.log('📸 Max tokens:', maxTokens);
+
+  // Build content array with all images
+  const content: Array<{ type: string; source?: { type: string; media_type: string; data: string }; text?: string }> = [];
+
+  // Add all images
+  base64DataArray.forEach((base64Data, index) => {
+    console.log(`📸 Page ${index + 1} data length:`, base64Data.length);
+    content.push({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: 'image/jpeg',
+        data: base64Data,
+      },
+    });
+  });
+
+  // Add text prompt at the end
+  content.push({
+    type: 'text',
+    text: base64DataArray.length > 1
+      ? 'These images are all pages from the same Purchase Order. Combine all parts from all pages. Return JSON only.'
+      : 'Return JSON only.'
+  });
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -46,17 +70,7 @@ export async function callClaudeWithImage(params: {
       system: systemPrompt,
       messages: [{
         role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: 'image/jpeg',
-              data: base64Data,
-            },
-          },
-          { type: 'text', text: 'Return JSON only.' },
-        ],
+        content,
       }] as ClaudeMessage[],
     }),
   });

@@ -5,7 +5,7 @@ import { resolveCustomer } from "@/lib/helpers";
 import { callClaudeWithImage } from "@/lib/claude-api";
 import { matchScannedParts, type ScannedPart } from "@/lib/part-matcher";
 import { PO_SCAN_SYSTEM_PROMPT } from "@/constants/prompts";
-import { getContacts } from "@/lib/db";
+import { getContacts, getItems } from "@/lib/db";
 
 interface POScanResult {
   po_number: string;
@@ -23,7 +23,7 @@ export interface ScanPOResponse {
 }
 
 export async function scanPODocument(
-  base64Data: string,
+  base64DataArray: string[],
 ): Promise<ScanPOResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -31,9 +31,9 @@ export async function scanPODocument(
     throw new Error("No API key configured");
   }
 
-  // Call Claude API to extract PO data
+  // Call Claude API to extract PO data (supports multi-page)
   const rawResponse = await callClaudeWithImage({
-    base64Data,
+    base64DataArray,
     systemPrompt: PO_SCAN_SYSTEM_PROMPT,
     maxTokens: 2500,
     apiKey,
@@ -60,13 +60,18 @@ export async function scanPODocument(
 
   console.log("T2 - Scanned parts from Claude:", scannedParts);
 
-  // Fetch contacts from database and resolve customer
-  const contacts = await getContacts();
+  // Fetch contacts and items from database
+  const [contacts, items] = await Promise.all([
+    getContacts(),
+    getItems()
+  ]);
+
+  // Resolve customer
   const customer = customer_name ? resolveCustomer(customer_name, contacts) : null;
   console.log("T2 - Customer resolved:", customer?.name || "NOT FOUND");
 
-  // Match scanned parts to inventory
-  const parts = matchScannedParts(scannedParts, customer);
+  // Match scanned parts to inventory using loaded items
+  const parts = matchScannedParts(scannedParts, customer, items);
   console.log("T2 - Matched parts:", parts);
 
   return {

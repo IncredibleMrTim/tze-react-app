@@ -1,4 +1,4 @@
-import type { IPart, IContact } from "@/types/interfaces";
+import type { IPart, IContact, IItem, IScannedPart } from "@/types/interfaces";
 import { resolveCustomer } from "@/lib/helpers";
 
 export const callClaudeAPI = async (
@@ -62,7 +62,7 @@ export const PO_SCAN_SYSTEM_PROMPT = 'This image is a Purchase Order (PO) docume
 export const scanPODocument = async (
   file: File,
   contacts: IContact[],
-  items: any[]
+  items: IItem[]
 ): Promise<{
   po_number: string;
   customer_name: string;
@@ -80,9 +80,15 @@ export const scanPODocument = async (
           const b64 = fixedData.split(',')[1];
           const raw = await callClaudeAPI(b64, PO_SCAN_SYSTEM_PROMPT, 1500);
 
-          let parsed: any = {};
+          interface POScanResult {
+            po_number?: string;
+            customer_name?: string;
+            parts?: IScannedPart[];
+          }
+
+          let parsed: POScanResult = {};
           try {
-            parsed = JSON.parse(raw);
+            parsed = JSON.parse(raw) as POScanResult;
           } catch (e) {
             reject(new Error('Could not parse JSON response'));
             return;
@@ -116,7 +122,7 @@ export const scanPODocument = async (
   });
 };
 
-const matchScannedParts = (scannedParts: any[], customer: IContact | null, ITEMS: any[]): IPart[] => {
+const matchScannedParts = (scannedParts: IScannedPart[], customer: IContact | null, ITEMS: IItem[]): IPart[] => {
   if (!scannedParts || !customer || !ITEMS) return [];
 
   const parts: IPart[] = [];
@@ -136,14 +142,14 @@ const matchScannedParts = (scannedParts: any[], customer: IContact | null, ITEMS
     code = code.replace(/\./g, '_');
 
     // Try matching
-    let item = ITEMS.find((x: any) => x.code === code);
+    let item = ITEMS.find((item: IItem) => item.code === code);
 
     // Try without ticker
     if (!item) {
       const m = code.match(/^(.+?)_[A-Z0-9]{2,6}$/);
       if (m) {
         const base = m[1];
-        item = ITEMS.find((x: any) => x.code.startsWith(base + '_'));
+        item = ITEMS.find((item: IItem) => item.code.startsWith(base + '_'));
       }
     }
 
@@ -151,7 +157,7 @@ const matchScannedParts = (scannedParts: any[], customer: IContact | null, ITEMS
     if (!item && !code.includes('_')) {
       const tickers = ['AGP', 'ASE', 'PATI', customer.account];
       for (const t of tickers) {
-        item = ITEMS.find((x: any) => x.code === code + '_' + t);
+        item = ITEMS.find((item: IItem) => item.code === code + '_' + t);
         if (item) break;
       }
     }
@@ -191,7 +197,7 @@ const matchScannedParts = (scannedParts: any[], customer: IContact | null, ITEMS
 
     // Fallback
     if (!item) {
-      item = ITEMS.find((x: any) => x.code === 'ZINC MISCELLANEOUS');
+      item = ITEMS.find((item: IItem) => item.code === 'ZINC MISCELLANEOUS');
     }
 
     parts.push({

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import type { IJob, IJigAssignment, ISettings } from "@/types/interfaces";
+import { useState } from "react";
+import type { IJob } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { isReady, calcPrice } from "@/lib/helpers";
 import { genFPN, genBatchCSV } from "@/lib/exports";
@@ -21,29 +21,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/useToast";
-import { dispatchJobAction } from "@/actions/dispatch";
-import { clearJobJigsAction } from "@/actions/jigs";
-import { updateJobAction } from "@/actions/jobs";
+import { useJobs, useUpdateJob, useDispatchJob } from "@/hooks/useJobs";
+import { useJigAssignments, useDeleteJigAssignment } from "@/hooks/useJigAssignments";
+import { useSettings } from "@/hooks/useSettings";
 
-interface DispatchClientProps {
-  initialJobs: IJob[];
-  initialJigAssignments: IJigAssignment[];
-  initialSettings: ISettings;
-  initialInvSeq: number;
-}
-
-export default function DispatchClient({
-  initialJobs,
-  initialJigAssignments,
-  initialSettings,
-  initialInvSeq,
-}: DispatchClientProps) {
-  const [isPending, startTransition] = useTransition();
+export default function DispatchClient() {
   const { showToast } = useToast();
-  const [jobs, setJobs] = useState(initialJobs);
-  const [jigAssignments] = useState(initialJigAssignments);
-  const [settings] = useState(initialSettings);
-  const [invSeq, setInvSeq] = useState(initialInvSeq);
+
+  // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const { data: settings, isLoading: settingsLoading } = useSettings();
+
+  // Mutation hooks
+  const updateJobMutation = useUpdateJob();
+  const dispatchJobMutation = useDispatchJob();
+  const deleteAssignmentMutation = useDeleteJigAssignment();
+
+  const isLoading = jobsLoading || jigsLoading || settingsLoading;
+  const isPending =
+    updateJobMutation.isPending ||
+    dispatchJobMutation.isPending ||
+    deleteAssignmentMutation.isPending;
 
   const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null);
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null);
@@ -53,6 +52,18 @@ export default function DispatchClient({
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">("FPN");
   const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
+
+  // Show loading state
+  if (isLoading || !settings) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <div className="text-lg text-gray-600">Loading dispatch...</div>
+        </div>
+      </div>
+    );
+  }
 
   const readyJobs = jobs.filter((j) => isReady(j, jigAssignments) && !j.dispatchedAt);
   const dispatchedJobs = jobs
@@ -71,16 +82,18 @@ export default function DispatchClient({
     if (editedJob) {
       setJobToDispatch(editedJob);
 
-      startTransition(async () => {
-        const result = await updateJobAction(editedJob.id, editedJob);
-        if (result.success) {
-          setJobs(jobs.map(j => j.id === editedJob.id ? editedJob : j));
-          setShowJobDetails(false);
-          showToast("Job details updated");
-        } else {
-          showToast("Failed to update job");
+      updateJobMutation.mutate(
+        { jobId: editedJob.id, job: editedJob },
+        {
+          onSuccess: () => {
+            setShowJobDetails(false);
+            showToast("Job details updated");
+          },
+          onError: () => {
+            showToast("Failed to update job");
+          },
         }
-      });
+      );
     }
   };
 
@@ -90,7 +103,7 @@ export default function DispatchClient({
     const invoiceNumber =
       jobToDispatch.isInternal || jobToDispatch.isRework
         ? "INTERNAL"
-        : `${INV_PREFIX}-${new Date().getFullYear()}-${String(invSeq).padStart(4, "0")}`;
+        : `${INV_PREFIX}-${new Date().getFullYear()}-${String(settings.invSeq).padStart(4, "0")}`;
 
     const dispatchedJob = {
       ...jobToDispatch,
@@ -100,39 +113,32 @@ export default function DispatchClient({
       csvDownloaded: false,
     };
 
-    startTransition(async () => {
-      // Optimistic update
-      setJobs(jobs.map(j => j.id === dispatchedJob.id ? dispatchedJob : j));
-      if (invoiceNumber !== 'INTERNAL') {
-        setInvSeq(invSeq + 1);
+    dispatchJobMutation.mutate(
+      { job: dispatchedJob, invoiceNumber },
+      {
+        onSuccess: () => {
+          showToast(`Dispatched: ${jobToDispatch.po_number}`);
+          setJobToDispatch(null);
+        },
+        onError: () => {
+          showToast("Failed to dispatch job");
+        },
       }
-
-      // Save to database
-      const result = await dispatchJobAction(dispatchedJob, invoiceNumber);
-      if (result.success) {
-        showToast(`Dispatched: ${jobToDispatch.po_number}`);
-        setJobToDispatch(null);
-      } else {
-        // Revert on error
-        setJobs(initialJobs);
-        setInvSeq(initialInvSeq);
-        showToast("Failed to dispatch job");
-      }
-    });
+    );
   };
 
   const confirmSendBack = () => {
     if (!jobToSendBack) return;
 
-    startTransition(async () => {
-      // Optimistic update - clear jig assignments
-      const result = await clearJobJigsAction(jobToSendBack.id);
-      if (result.success) {
+    deleteAssignmentMutation.mutate(jobToSendBack.id, {
+      onSuccess: () => {
         showToast(`${jobToSendBack.po_number} sent back for re-jigging`);
-      } else {
+        setJobToSendBack(null);
+      },
+      onError: () => {
         showToast("Failed to send back job");
-      }
-      setJobToSendBack(null);
+        setJobToSendBack(null);
+      },
     });
   };
 
@@ -173,20 +179,17 @@ export default function DispatchClient({
     if (!job) return;
 
     if (window.confirm(`Delete ${job.po_number} from downloads?`)) {
-      startTransition(async () => {
-        // Optimistic update
-        setJobs(jobs.map(j => j.id === jobId ? { ...j, fpnHidden: true } : j));
-
-        // Save to database
-        const result = await updateJobAction(jobId, { fpnHidden: true });
-        if (result.success) {
-          showToast("Job removed from downloads");
-        } else {
-          // Revert on error
-          setJobs(initialJobs);
-          showToast("Failed to remove job");
+      updateJobMutation.mutate(
+        { jobId, job: { fpnHidden: true } },
+        {
+          onSuccess: () => {
+            showToast("Job removed from downloads");
+          },
+          onError: () => {
+            showToast("Failed to remove job");
+          },
         }
-      });
+      );
     }
   };
 

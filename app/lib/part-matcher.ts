@@ -1,11 +1,7 @@
-import type { IContact, IPart, IItem } from "@/types/interfaces";
-import { ITEMS } from "@/lib/helpers";
+import type { IContact, IPart, IItem, IScannedPart } from "@/types/interfaces";
 
-export interface ScannedPart {
-  code: string;
-  description: string;
-  quantity: number;
-}
+// Re-export for backward compatibility
+export type ScannedPart = IScannedPart;
 
 /**
  * Normalizes a part code for matching by removing numeric prefixes and converting dots to underscores
@@ -28,11 +24,11 @@ function normalizeCode(code: string): string {
 /**
  * Attempts to find an exact match for the part code
  */
-function findExactMatch(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
-  return ITEMS.find(x => {
-    if (x.code !== code) return false;
+function findExactMatch(code: string, customer: IContact, items: IItem[]): IItem | undefined {
+  return items.find(item => {
+    if (item.code !== code) return false;
     // If item has a customer restriction, it must match
-    if (x.customer && x.customer !== customer.account) return false;
+    if (item.customer && item.customer !== customer.account) return false;
     return true;
   });
 }
@@ -40,14 +36,14 @@ function findExactMatch(code: string, customer: IContact): ReturnType<typeof ITE
 /**
  * Attempts to find a match without the ticker suffix
  */
-function findWithoutTicker(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+function findWithoutTicker(code: string, customer: IContact, items: IItem[]): IItem | undefined {
   const match = code.match(/^(.+?)_[A-Z0-9]{2,6}$/);
   if (match) {
     const base = match[1];
-    return ITEMS.find(x => {
-      if (!x.code.startsWith(base + '_')) return false;
+    return items.find(item => {
+      if (!item.code.startsWith(base + '_')) return false;
       // If item has a customer restriction, it must match
-      if (x.customer && x.customer !== customer.account) return false;
+      if (item.customer && item.customer !== customer.account) return false;
       return true;
     });
   }
@@ -57,12 +53,12 @@ function findWithoutTicker(code: string, customer: IContact): ReturnType<typeof 
 /**
  * Attempts to find a match by adding common tickers
  */
-function findWithTicker(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+function findWithTicker(code: string, customer: IContact, items: IItem[]): IItem | undefined {
   if (code.includes('_')) return undefined;
 
   const tickers = ['AGP', 'ASE', 'PATI', customer.account];
   for (const ticker of tickers) {
-    const item = ITEMS.find(x => {
+    const item = items.find(x => {
       if (x.code !== `${code}_${ticker}`) return false;
       // If item has a customer restriction, it must match
       if (x.customer && x.customer !== customer.account) return false;
@@ -76,13 +72,13 @@ function findWithTicker(code: string, customer: IContact): ReturnType<typeof ITE
 /**
  * Attempts to find a match using substring matching (sliding window)
  */
-function findBySubstring(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+function findBySubstring(code: string, customer: IContact, items: IItem[]): IItem | undefined {
   if (customer.account === 'PATI' || code.length < 4) return undefined;
 
   let bestMatch: IItem | undefined = undefined;
   let bestLength = 0;
 
-  for (const item of ITEMS) {
+  for (const item of items) {
     if (item.customer && item.customer !== customer.account) continue;
 
     const itemCode = item.code.replace(/_[A-Z0-9]{2,6}$/, '');
@@ -104,14 +100,14 @@ function findBySubstring(code: string, customer: IContact): ReturnType<typeof IT
 /**
  * Fuzzy match code similarity - ONLY within customer's items
  */
-function findByCodeFuzzy(code: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+function findByCodeFuzzy(code: string, customer: IContact, items: IItem[]): IItem | undefined {
   if (code.length < 3) return undefined;
 
   const normalizedCode = code.toLowerCase().replace(/[\s\-_]/g, '');
   let bestMatch: IItem | undefined = undefined;
   let bestScore = 0;
 
-  for (const item of ITEMS) {
+  for (const item of items) {
     // CRITICAL: Only match items for this customer or generic items
     if (item.customer && item.customer !== customer.account) continue;
 
@@ -145,7 +141,7 @@ function findByCodeFuzzy(code: string, customer: IContact): ReturnType<typeof IT
 /**
  * Attempts to find a match by description keywords
  */
-function findByDescription(description: string, customer: IContact): ReturnType<typeof ITEMS.find> {
+function findByDescription(description: string, customer: IContact, items: IItem[]): IItem | undefined {
   if (description.length <= 3) return undefined;
 
   const words = description
@@ -153,7 +149,7 @@ function findByDescription(description: string, customer: IContact): ReturnType<
     .split(/\s+/)
     .filter(w => w.length > 3);
 
-  for (const item of ITEMS) {
+  for (const item of items) {
     if (item.customer && item.customer !== customer.account) continue;
 
     const itemDesc = item.desc.toLowerCase();
@@ -167,10 +163,14 @@ function findByDescription(description: string, customer: IContact): ReturnType<
 
 /**
  * Matches scanned parts from a PO to inventory items
+ * @param scannedParts - Parts extracted from PO scan
+ * @param customer - Resolved customer contact
+ * @param items - All inventory items loaded from database
  */
 export function matchScannedParts(
   scannedParts: ScannedPart[],
-  customer: IContact | null
+  customer: IContact | null,
+  items: IItem[]
 ): IPart[] {
   if (!scannedParts || !customer) return [];
 
@@ -181,16 +181,16 @@ export function matchScannedParts(
 
     // Try matching strategies in order of specificity
     const item =
-      findExactMatch(code, customer) ||
-      findWithoutTicker(code, customer) ||
-      findWithTicker(code, customer) ||
-      findBySubstring(code, customer) ||
-      findByCodeFuzzy(code, customer) ||
-      findByDescription(description, customer);
+      findExactMatch(code, customer, items) ||
+      findWithoutTicker(code, customer, items) ||
+      findWithTicker(code, customer, items) ||
+      findBySubstring(code, customer, items) ||
+      findByCodeFuzzy(code, customer, items) ||
+      findByDescription(description, customer, items);
 
     // If no match found, use ZINC MISCELLANEOUS but keep the scanned data
     if (!item) {
-      const zincMisc = ITEMS.find(x => x.code === 'ZINC MISCELLANEOUS');
+      const zincMisc = items.find(x => x.code === 'ZINC MISCELLANEOUS');
 
       // Build description from scanned PO data
       let fallbackDesc = description;
