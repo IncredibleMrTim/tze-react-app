@@ -39,7 +39,7 @@ export const loadState = (): IStorageState | null => {
     const d = JSON.parse(raw);
     const state: IStorageState = {
       jobs: Array.isArray(d.jobs) ? d.jobs : [],
-      jigA: Array.isArray(d.jigA) ? d.jigA : [],
+      jigAssignments: Array.isArray(d.jigAssignments) ? d.jigAssignments : [],
       jigPhotos: d.jigPhotos || {},
       invSeq: typeof d.invSeq === 'number' ? d.invSeq : 1,
       nextTZE: typeof d.nextTZE === 'number' ? d.nextTZE : 1,

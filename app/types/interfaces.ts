@@ -108,7 +108,7 @@ export interface IIntakeFormState {
 
 export interface IStorageState {
   jobs: IJob[];
-  jigA: IJigAssignment[];
+  jigAssignments: IJigAssignment[];
   jigPhotos: Record<string, string>;
   invSeq: number;
   nextTZE: number;

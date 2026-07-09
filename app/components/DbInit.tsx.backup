@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 
 export function DbInit() {
-  const { setJobs, setJigA, setInvSeq, setSettings, setItems, setContacts } = useStore()
+  const { setJobs, setJigAssignments, setInvSeq, setSettings, setItems, setContacts } = useStore()
 
   useEffect(() => {
     let mounted = true
@@ -39,7 +39,7 @@ export function DbInit() {
         const jigsRes = await fetch('/api/jigs')
         if (jigsRes.ok && mounted) {
           const jigs = await jigsRes.json()
-          setJigA(jigs)
+          setJigAssignments(jigs)
           console.log(`✓ Loaded ${jigs.length} jig assignments from database`)
         }
 
@@ -74,7 +74,7 @@ export function DbInit() {
     return () => {
       mounted = false
     }
-  }, [setJobs, setJigA, setInvSeq, setSettings, setItems, setContacts])
+  }, [setJobs, setJigAssignments, setInvSeq, setSettings, setItems, setContacts])
 
   return null
 }

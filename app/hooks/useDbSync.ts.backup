@@ -5,7 +5,7 @@ import { useStore } from '@/store/useStore'
 import type { IJob, IJigAssignment } from '@/types/interfaces'
 
 export function useDbSync() {
-  const { setJobs, setJigA, setInvSeq, setSettings } = useStore()
+  const { setJobs, setJigAssignments, setInvSeq, setSettings } = useStore()
 
   // Load all data from database on mount
   const loadFromDb = useCallback(async () => {
@@ -21,7 +21,7 @@ export function useDbSync() {
       const jigsRes = await fetch('/api/jigs')
       if (jigsRes.ok) {
         const jigs = await jigsRes.json()
-        setJigA(jigs)
+        setJigAssignments(jigs)
       }
 
       // Load settings
@@ -46,7 +46,7 @@ export function useDbSync() {
     } catch (error) {
       console.error('Error loading data from database:', error)
     }
-  }, [setJobs, setJigA, setInvSeq, setSettings])
+  }, [setJobs, setJigAssignments, setInvSeq, setSettings])
 
   // Save job to database
   const saveJob = useCallback(async (job: IJob) => {

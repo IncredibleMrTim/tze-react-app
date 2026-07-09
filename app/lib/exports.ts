@@ -97,7 +97,7 @@ export const genBatchCSV = (
   jobs: IJob[],
   ids: string[],
   _settings: ISettings,
-  jigA: IJigAssignment[],
+  jigAssignments: IJigAssignment[],
 ): void => {
   const selected = jobs.filter(
     (j) =>
@@ -110,7 +110,7 @@ export const genBatchCSV = (
 
   const allRows: string[] = [];
   selected.forEach((j) => {
-    csvRows(j, jigA, _settings).forEach((r) => allRows.push(r));
+    csvRows(j, jigAssignments, _settings).forEach((r) => allRows.push(r));
   });
 
   const body = allRows.join("\n") + "\n";
@@ -120,7 +120,7 @@ export const genBatchCSV = (
 
 const csvRows = (
   j: IJob,
-  _jigA: IJigAssignment[],
+  _jigAssignments: IJigAssignment[],
   _settings: ISettings,
 ): string[] => {
   const dd = fmtDate(j.dispatchedAt || Date.now());
