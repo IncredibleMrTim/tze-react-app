@@ -8,12 +8,14 @@ import {
   useUpdateJob,
   useDeleteJob,
 } from "@/hooks/useJobs";
+import { useJigAssignments } from "@/hooks/useJigAssignments";
+import { useItems } from "@/hooks/useItems";
+import { useContacts } from "@/hooks/useContacts";
 import type {
   IJob,
   IContact,
   IPart,
   IItem,
-  IJigAssignment,
 } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
@@ -32,26 +34,21 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-interface IntakeClientProps {
-  initialJigAssignments: IJigAssignment[];
-  items: IItem[];
-  contacts: IContact[];
-}
-
-export default function IntakeClient({
-  initialJigAssignments,
-  items: ITEMS,
-  contacts: CONTACTS,
-}: IntakeClientProps) {
+export default function IntakeClient() {
   const { showToast } = useToast();
 
-  // React Query hooks - auto-refresh every 10 seconds
-  const { data: jobs = [], isLoading, error } = useJobs(10000);
+  // React Query hooks - auto-refresh for real-time updates
+  const { data: jobs = [], isLoading: jobsLoading, error: jobsError } = useJobs(10000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const { data: ITEMS = [], isLoading: itemsLoading } = useItems();
+  const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
+
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
   const deleteJobMutation = useDeleteJob();
 
-  const jigAssignments = initialJigAssignments;
+  const isLoading = jobsLoading || jigsLoading || itemsLoading || contactsLoading;
+  const error = jobsError;
 
   const [showSheet, setShowSheet] = useState(false);
   const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
