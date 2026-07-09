@@ -7,9 +7,10 @@ export const saveState = (state: IStorageState): void => {
 
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Quota exceeded - strip photos and retry
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
+    const error = e as DOMException;
+    if (error.name === 'QuotaExceededError' || error.code === 22) {
       try {
         const stripped = {
           ...state,

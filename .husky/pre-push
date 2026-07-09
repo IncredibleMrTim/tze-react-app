@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Get the current branch name
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+# Allow main/master branches
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  exit 0
+fi
+
+# Define valid branch name pattern (allows uppercase for ticket numbers like TZE-123)
+valid_branch_regex="^(feature|fix|chore|refactor|docs|test|hotfix)\/[a-zA-Z0-9._-]+$"
+
+# Validate branch name
+if ! echo "$branch" | grep -qE "$valid_branch_regex"; then
+  echo ""
+  echo "❌ Invalid branch name: '$branch'"
+  echo ""
+  echo "Branch names must follow the pattern:"
+  echo "  type/description"
+  echo ""
+  echo "Valid types: feature, fix, chore, refactor, docs, test, hotfix"
+  echo ""
+  echo "Examples:"
+  echo "  ✅ feature/add-po-scanner"
+  echo "  ✅ fix/TZE-123-items-empty"
+  echo "  ✅ chore/update-dependencies"
+  echo ""
+  exit 1
+fi
+
+exit 0

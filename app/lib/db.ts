@@ -1,25 +1,29 @@
 import { prisma } from './prisma'
-import type { IJob, IJigAssignment } from '@/types/interfaces'
+import type { Job, JigAssignment } from '@prisma/client'
+import type { IJob, IJigAssignment, ISettings } from '@/types/interfaces'
 
 // ============ BIGINT CONVERSION HELPERS ============
 
+type JobWithRelations = Job & { jigAssignments?: JigAssignment[] }
+type JigAssignmentWithRelations = JigAssignment & { job?: Job }
+
 // Convert BigInt fields to Number for JSON serialization
-function serializeJob(job: any): any {
+function serializeJob(job: JobWithRelations): IJob {
   return {
     ...job,
     createdAt: Number(job.createdAt),
     dispatchedAt: job.dispatchedAt ? Number(job.dispatchedAt) : null,
     jigAssignments: job.jigAssignments?.map(serializeJigAssignment) || undefined,
-  }
+  } as unknown as IJob
 }
 
-function serializeJigAssignment(assignment: any): any {
+function serializeJigAssignment(assignment: JigAssignmentWithRelations): IJigAssignment {
   return {
     ...assignment,
     completedAt: assignment.completedAt ? Number(assignment.completedAt) : null,
     loadedAt: Number(assignment.loadedAt),
     job: assignment.job ? serializeJob(assignment.job) : undefined,
-  }
+  } as unknown as IJigAssignment
 }
 
 // ============ JOBS ============
@@ -66,7 +70,8 @@ export async function createJob(job: IJob) {
 }
 
 export async function updateJob(jobId: string, job: Partial<IJob>) {
-  const updateData: any = { ...job }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = { ...job }
 
   // Convert timestamp fields to BigInt if present
   if (job.createdAt !== undefined) updateData.createdAt = BigInt(job.createdAt)
@@ -134,7 +139,8 @@ export async function createJigAssignment(assignment: IJigAssignment) {
 }
 
 export async function updateJigAssignment(assignmentId: string, assignment: Partial<IJigAssignment>) {
-  const updateData: any = { ...assignment }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = { ...assignment }
 
   if (assignment.completedAt !== undefined) {
     updateData.completedAt = assignment.completedAt ? BigInt(assignment.completedAt) : null
@@ -335,7 +341,7 @@ export async function getSettings() {
   return settings
 }
 
-export async function updateSettings(settings: Partial<any>) {
+export async function updateSettings(settings: Partial<ISettings>) {
   return await prisma.settings.update({
     where: { id: 1 },
     data: settings,
