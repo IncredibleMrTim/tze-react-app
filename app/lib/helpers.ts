@@ -283,8 +283,8 @@ export const fixOrientation = (
     canvas.height = h;
     ctx.drawImage(img, 0, 0);
 
-    // Cap dimension
-    const maxDim = 2400;
+    // Cap dimension (reduced for mobile compatibility and faster server action serialization)
+    const maxDim = 1600; // Reduced from 2400 - still excellent quality for OCR
     if (canvas.width > maxDim || canvas.height > maxDim) {
       const scale = maxDim / Math.max(canvas.width, canvas.height);
       const newW = Math.floor(canvas.width * scale);
@@ -297,12 +297,12 @@ export const fixOrientation = (
       canvas = canvas2;
     }
 
-    // Compress
-    let quality = 0.82;
+    // Compress (reduced for mobile - prevents RSC "Maximum array nesting" error)
+    let quality = 0.75; // Reduced from 0.82
     let result = canvas.toDataURL("image/jpeg", quality);
-    const maxSize = 5.4 * 1024 * 1024;
+    const maxSize = 1.5 * 1024 * 1024; // Reduced from 5.4MB to 1.5MB per image
 
-    while (result.length > maxSize && quality > 0.4) {
+    while (result.length > maxSize && quality > 0.3) {
       quality -= 0.05;
       result = canvas.toDataURL("image/jpeg", quality);
     }
