@@ -371,3 +371,22 @@ export async function getAllJigPhotos() {
     return acc
   }, {} as Record<string, string>)
 }
+
+// ============ PO RULES ============
+
+export async function getAllPoRules() {
+  return await prisma.poRule.findMany({
+    orderBy: {
+      priority: 'asc',
+    },
+  })
+}
+
+export async function getPoRulesByAccount(contactAccount: string) {
+  return await prisma.poRule.findMany({
+    where: { contactAccount },
+    orderBy: {
+      priority: 'asc',
+    },
+  })
+}
