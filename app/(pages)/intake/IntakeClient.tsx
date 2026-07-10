@@ -703,37 +703,57 @@ export default function IntakeClient() {
               {poPages.length > 0 ? (
                 <div className="space-y-3">
                   {/* Carousel for PO pages */}
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      {poPages.map((page, index) => (
-                        <CarouselItem key={index}>
-                          <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
-                            <img
-                              src={page}
-                              alt={`PO Page ${index + 1}`}
-                              className="w-full rounded-lg"
-                            />
-                            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                              Page {index + 1} of {poPages.length}
+                  {poPages.length === 1 ? (
+                    // Single image - no carousel needed
+                    <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                      <img
+                        src={poPages[0]}
+                        alt="PO Page"
+                        className="w-full rounded-lg"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                        Page 1 of 1
+                      </div>
+                      <button
+                        onClick={() => handleRemovePage(0)}
+                        disabled={scanning}
+                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    // Multiple images - use carousel
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {poPages.map((page, index) => (
+                          <CarouselItem key={index}>
+                            <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                              <img
+                                src={page}
+                                alt={`PO Page ${index + 1}`}
+                                className="w-full rounded-lg"
+                                loading="lazy"
+                              />
+                              <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                Page {index + 1} of {poPages.length}
+                              </div>
+                              <button
+                                onClick={() => handleRemovePage(index)}
+                                disabled={scanning}
+                                className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
+                              >
+                                ×
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleRemovePage(index)}
-                              disabled={scanning}
-                              className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    {poPages.length > 1 && (
-                      <>
-                        <CarouselPrevious className="left-2" />
-                        <CarouselNext className="right-2" />
-                      </>
-                    )}
-                  </Carousel>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </Carousel>
+                  )}
 
                   {/* Action buttons - always visible */}
                   <div className="flex gap-2">
