@@ -20,7 +20,67 @@
 npm run dev
 ```
 
-Visit http://localhost:5173
+Visit http://localhost:3000
+
+## 📱 Mobile USB Debugging (Android)
+
+For debugging mobile-specific issues (like the intake carousel):
+
+### 1. Enable Developer Mode on Android
+- Go to **Settings → About Phone**
+- Tap **Build Number** 7 times until it says "You are now a developer"
+- Go back to **Settings → System → Developer Options**
+- Enable **USB Debugging**
+
+### 2. Connect via USB
+- Plug your Android phone into your Mac via USB
+- On your phone, tap **Allow USB Debugging** when prompted
+- Select **File Transfer** or **PTP** mode (not just charging)
+
+### 3. Install Android Platform Tools (one-time setup)
+```bash
+brew install android-platform-tools
+```
+
+### 4. Set up port forwarding
+```bash
+# If you get "more than one device" error, kill any emulators first:
+adb kill-server && adb start-server
+
+# List connected devices
+adb devices
+
+# Forward port 3000 to your device (replace DEVICE_ID with your device ID from above)
+adb -s DEVICE_ID reverse tcp:3000 tcp:3000
+
+# Or if only one device is connected:
+adb reverse tcp:3000 tcp:3000
+```
+
+### 5. Start dev server and open on phone
+```bash
+npm run dev
+```
+
+On your Android phone, open Chrome and go to: `http://localhost:3000`
+
+### 6. Access Chrome DevTools on your Mac
+- Open Chrome on your Mac
+- Go to: `chrome://inspect/#devices`
+- You'll see your Android device listed with open tabs
+- Click **"inspect"** next to the localhost:3000 tab
+- Chrome DevTools will open showing Console, Network, Elements, etc.
+
+### 7. Debug in real-time
+- Keep DevTools open on your Mac
+- Use the app on your phone
+- All console.log, errors, and warnings appear in the Console tab
+- You can inspect elements, debug with breakpoints, and monitor network requests
+
+**Quick setup command:**
+```bash
+adb devices && adb reverse tcp:3000 tcp:3000 && npm run dev
+```
 
 ## 📝 First Steps
 
@@ -73,13 +133,13 @@ src/
 
 ## 🎨 Tech Stack
 
-- React 18 + TypeScript
+- Next.js 16 (App Router)
+- React 19 + TypeScript
 - Tailwind CSS
-- Vite
-- Claude AI (Haiku 4.5)
-- LocalStorage
+- Prisma (PostgreSQL)
+- Claude AI (Sonnet 3.5)
+- React Query
 
 ---
 
-**Version**: 0.5.97 React  
-**Dev Server**: http://localhost:5173
+**Dev Server**: http://localhost:3000
