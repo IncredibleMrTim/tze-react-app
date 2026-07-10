@@ -86,6 +86,22 @@ export interface ISettings {
   stringRate: number;
 }
 
+export interface IPoRule {
+  id: number;
+  contactAccount: string;
+  ruleType: string;
+  scanningRules: string;
+  priority: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IPoRulesResult {
+  success: boolean;
+  rules: IPoRule[];
+  error?: string;
+}
+
 export interface IIntakeFormState {
   manualPO: boolean;
   po_number: string;
