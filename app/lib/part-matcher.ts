@@ -209,7 +209,7 @@ export function matchScannedParts(
     }
 
     return {
-      code: code || item?.code || '',
+      code: item?.code || code || '',
       desc: item?.desc || description,
       price: item?.price || 0,
       qty: quantity,
