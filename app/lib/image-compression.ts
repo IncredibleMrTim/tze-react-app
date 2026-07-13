@@ -32,8 +32,8 @@ export const PO_COMPRESSION: CompressionOptions = {
  * Compress an image for parts photos (mobile viewing quality)
  */
 export const PARTS_COMPRESSION: CompressionOptions = {
-  maxWidth: 1000,
-  maxHeight: 1333,
+  maxWidth: 800,
+  maxHeight: 1067,
   quality: 0.7, // Mobile quality
   outputFormat: 'jpeg',
 };
