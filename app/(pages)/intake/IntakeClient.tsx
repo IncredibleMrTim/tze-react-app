@@ -7,6 +7,7 @@ import {
   useCreateJob,
   useUpdateJob,
   useDeleteJob,
+  useJobImages,
 } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useItems } from "@/hooks/useItems";
@@ -54,6 +55,9 @@ export default function IntakeClient() {
   const [showSheet, setShowSheet] = useState(false);
   const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
+
+  // Fetch images when viewing a job
+  const { data: jobImages } = useJobImages(selectedJob?.id || null);
   const [customer, setCustomer] = useState<IContact | null>(null);
   const [customerInput, setCustomerInput] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -587,8 +591,8 @@ export default function IntakeClient() {
                   setRequiresWeighing(selectedJob.requiresWeighing);
                   setFreightRequested(selectedJob.freightRequested);
                   setMinCharge(selectedJob.minCharge);
-                  setPoPages(selectedJob.poPages || []);
-                  setPartsOnArrivalPhotos(selectedJob.partsOnArrivalPhotos || []);
+                  setPoPages(jobImages?.poPages || []);
+                  setPartsOnArrivalPhotos(jobImages?.partsOnArrivalPhotos || []);
                   setSelectedJob(null);
                   setShowSheet(true);
                   showToast("Editing job");
@@ -657,21 +661,21 @@ export default function IntakeClient() {
             </div>
           )}
 
-          {selectedJob.poPages && selectedJob.poPages.length > 0 && (
+          {jobImages?.poPages && jobImages.poPages.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PO DOCUMENT {selectedJob.poPages.length > 1 && `(${selectedJob.poPages.length} PAGES)`}
+                PO DOCUMENT {jobImages.poPages.length > 1 && `(${jobImages.poPages.length} PAGES)`}
               </h3>
-              {selectedJob.poPages.length === 1 ? (
+              {jobImages.poPages.length === 1 ? (
                 <img
-                  src={selectedJob.poPages[0]}
+                  src={jobImages.poPages[0]}
                   alt="PO Document"
                   className="w-full rounded-lg border border-gray-200"
                 />
               ) : (
                 <Carousel className="w-full">
                   <CarouselContent>
-                    {selectedJob.poPages.map((page, index) => (
+                    {jobImages.poPages.map((page, index) => (
                       <CarouselItem key={index}>
                         <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
                           <img
@@ -680,7 +684,7 @@ export default function IntakeClient() {
                             className="w-full rounded-lg"
                           />
                           <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Page {index + 1} of {selectedJob.poPages?.length}
+                            Page {index + 1} of {jobImages.poPages.length}
                           </div>
                         </div>
                       </CarouselItem>
@@ -693,21 +697,21 @@ export default function IntakeClient() {
             </div>
           )}
 
-          {selectedJob.partsOnArrivalPhotos && selectedJob.partsOnArrivalPhotos.length > 0 && (
+          {jobImages?.partsOnArrivalPhotos && jobImages.partsOnArrivalPhotos.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PARTS ON ARRIVAL {selectedJob.partsOnArrivalPhotos.length > 1 && `(${selectedJob.partsOnArrivalPhotos.length} PHOTOS)`}
+                PARTS ON ARRIVAL {jobImages.partsOnArrivalPhotos.length > 1 && `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
               </h3>
-              {selectedJob.partsOnArrivalPhotos.length === 1 ? (
+              {jobImages.partsOnArrivalPhotos.length === 1 ? (
                 <img
-                  src={selectedJob.partsOnArrivalPhotos[0]}
+                  src={jobImages.partsOnArrivalPhotos[0]}
                   alt="Parts on arrival"
                   className="w-full rounded-lg border border-gray-200"
                 />
               ) : (
                 <Carousel className="w-full">
                   <CarouselContent>
-                    {selectedJob.partsOnArrivalPhotos.map((photo, index) => (
+                    {jobImages.partsOnArrivalPhotos.map((photo, index) => (
                       <CarouselItem key={index}>
                         <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
                           <img
@@ -716,7 +720,7 @@ export default function IntakeClient() {
                             className="w-full rounded-lg"
                           />
                           <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Photo {index + 1} of {selectedJob.partsOnArrivalPhotos?.length}
+                            Photo {index + 1} of {jobImages.partsOnArrivalPhotos.length}
                           </div>
                         </div>
                       </CarouselItem>
