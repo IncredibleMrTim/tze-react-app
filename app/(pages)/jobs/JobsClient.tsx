@@ -464,9 +464,9 @@ export default function JobsClient() {
                   />
                 ) : (
                   <div className="space-y-2">
-                    {viewingJob.partsOnArrivalPhotos.map((photo, index) => (
+                    {viewingJob.partsOnArrivalPhotos?.map((photo, index) => (
                       <div key={index}>
-                        {viewingJob.partsOnArrivalPhotos.length > 1 && (
+                        {(viewingJob.partsOnArrivalPhotos?.length ?? 0) > 1 && (
                           <div className="text-xs text-gray-500 mb-1">Photo {index + 1}</div>
                         )}
                         <img
