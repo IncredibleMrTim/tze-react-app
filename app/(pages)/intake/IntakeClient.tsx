@@ -21,6 +21,7 @@ import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
 import { fixOrientation, isOnJig } from "@/lib/helpers";
 import type { ScanPOResponse } from "@/api/scan-po/route";
+import { compressImage, PO_COMPRESSION, PARTS_COMPRESSION, getImageSizeKB } from "@/lib/image-compression";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,8 @@ export default function IntakeClient() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+
+        // Load and fix orientation
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -104,10 +107,17 @@ export default function IntakeClient() {
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        newPages.push(dataUrl);
+
+        // Compress for PO scanning (readable by Claude AI)
+        const compressed = await compressImage(dataUrl, PO_COMPRESSION);
+        const sizeKB = Math.round(getImageSizeKB(compressed));
+        console.log(`PO page ${i + 1} compressed to ${sizeKB}KB`);
+
+        newPages.push(compressed);
       }
 
       setPoPages([...poPages, ...newPages]);
+      showToast(`${newPages.length} page(s) added`);
     } catch (error) {
       showToast("Failed to load images");
       console.error("Error loading images:", error);
@@ -193,6 +203,8 @@ export default function IntakeClient() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+
+        // Load and fix orientation
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -202,7 +214,13 @@ export default function IntakeClient() {
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        newPhotos.push(dataUrl);
+
+        // Compress for mobile viewing
+        const compressed = await compressImage(dataUrl, PARTS_COMPRESSION);
+        const sizeKB = Math.round(getImageSizeKB(compressed));
+        console.log(`Parts photo ${i + 1} compressed to ${sizeKB}KB`);
+
+        newPhotos.push(compressed);
       }
 
       setPartsOnArrivalPhotos([...partsOnArrivalPhotos, ...newPhotos]);
@@ -569,8 +587,8 @@ export default function IntakeClient() {
                   setRequiresWeighing(selectedJob.requiresWeighing);
                   setFreightRequested(selectedJob.freightRequested);
                   setMinCharge(selectedJob.minCharge);
-                  setPoPages(selectedJob.poPages);
-                  setPartsOnArrivalPhotos(selectedJob.partsOnArrivalPhotos);
+                  setPoPages(selectedJob.poPages || []);
+                  setPartsOnArrivalPhotos(selectedJob.partsOnArrivalPhotos || []);
                   setSelectedJob(null);
                   setShowSheet(true);
                   showToast("Editing job");
@@ -662,7 +680,7 @@ export default function IntakeClient() {
                             className="w-full rounded-lg"
                           />
                           <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Page {index + 1} of {selectedJob.poPages.length}
+                            Page {index + 1} of {selectedJob.poPages?.length}
                           </div>
                         </div>
                       </CarouselItem>
@@ -698,7 +716,7 @@ export default function IntakeClient() {
                             className="w-full rounded-lg"
                           />
                           <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Photo {index + 1} of {selectedJob.partsOnArrivalPhotos.length}
+                            Photo {index + 1} of {selectedJob.partsOnArrivalPhotos?.length}
                           </div>
                         </div>
                       </CarouselItem>
