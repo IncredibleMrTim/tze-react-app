@@ -136,12 +136,12 @@ export async function getJobs() {
     },
   })
 
-  // Add excluded fields as undefined for optional photo arrays
+  // Photos excluded from list query for performance - added as empty arrays
   return jobs.map(job => serializeJob({
     ...job,
-    poPages: undefined,
-    partsOnArrivalPhotos: undefined,
-  } as JobWithRelations))
+    poPages: [],
+    partsOnArrivalPhotos: [],
+  } as unknown as JobWithRelations))
 }
 
 export async function getJobById(jobId: string) {
