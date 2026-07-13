@@ -20,7 +20,7 @@ import type {
 import type { TPlating } from "@/types/types";
 import { Overlay } from "@/components/Overlay";
 import { fixOrientation, isOnJig } from "@/lib/helpers";
-import { scanPODocument, type ScanPOResponse } from "@/actions/scan-po";
+import type { ScanPOResponse } from "@/api/scan-po/route";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,8 +140,21 @@ export default function IntakeClient() {
       // Extract base64 data from all pages
       const base64DataArray = poPages.map((dataUrl) => dataUrl.split(",")[1]);
 
-      // Scan all pages
-      const result = await scanPODocument(base64DataArray);
+      // Call API route to scan all pages
+      const response = await fetch("/api/scan-po", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ base64DataArray }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Scan failed");
+      }
+
+      const result: ScanPOResponse = await response.json();
 
       if (result.po_number) {
         setPoNumber(result.po_number);
