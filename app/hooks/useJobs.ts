@@ -13,6 +13,24 @@ async function fetchJobs(): Promise<IJob[]> {
 }
 
 /**
+ * Fetch a single job by ID with full data (including images)
+ */
+async function fetchJobById(jobId: string): Promise<IJob> {
+  const res = await fetch(`/api/jobs/${jobId}`)
+  if (!res.ok) throw new Error('Failed to fetch job')
+  return res.json()
+}
+
+/**
+ * Fetch only images for a job (poPages and partsOnArrivalPhotos)
+ */
+async function fetchJobImages(jobId: string): Promise<{ poPages: string[]; partsOnArrivalPhotos: string[] }> {
+  const res = await fetch(`/api/jobs/${jobId}/images`)
+  if (!res.ok) throw new Error('Failed to fetch job images')
+  return res.json()
+}
+
+/**
  * Hook to fetch all jobs with automatic refresh
  */
 export function useJobs(refetchInterval = 10000) {
@@ -21,6 +39,30 @@ export function useJobs(refetchInterval = 10000) {
     queryFn: fetchJobs,
     refetchInterval, // Auto-refresh every 10 seconds by default
     staleTime: 5000, // Consider fresh for 5 seconds
+  })
+}
+
+/**
+ * Hook to fetch a single job by ID with full data (including images)
+ */
+export function useJobById(jobId: string | null) {
+  return useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => fetchJobById(jobId!),
+    enabled: !!jobId, // Only fetch if jobId is provided
+    staleTime: 60000, // Cache for 1 minute (images don't change often)
+  })
+}
+
+/**
+ * Hook to fetch only images for a job
+ */
+export function useJobImages(jobId: string | null) {
+  return useQuery({
+    queryKey: ['job-images', jobId],
+    queryFn: () => fetchJobImages(jobId!),
+    enabled: !!jobId, // Only fetch if jobId is provided
+    staleTime: 60000, // Cache for 1 minute (images don't change often)
   })
 }
 
