@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
-import { useJobs, useUpdateJob } from "@/hooks/useJobs";
+import { useJobs, useUpdateJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -22,6 +22,9 @@ export default function JobsClient() {
   const isLoading = jobsLoading || jigsLoading;
 
   const [viewingJob, setViewingJob] = useState<IJob | null>(null);
+
+  // Fetch images when viewing a job
+  const { data: jobImages } = useJobImages(viewingJob?.id || null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -451,24 +454,54 @@ export default function JobsClient() {
               </div>
             )}
 
-            {viewingJob.partsOnArrivalPhotos && viewingJob.partsOnArrivalPhotos.length > 0 && (
+            {jobImages?.poPages && jobImages.poPages.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS ON ARRIVAL {viewingJob.partsOnArrivalPhotos.length > 1 && `(${viewingJob.partsOnArrivalPhotos.length} PHOTOS)`}
+                  PO DOCUMENT {jobImages.poPages.length > 1 && `(${jobImages.poPages.length} PAGES)`}
                 </h3>
-                {viewingJob.partsOnArrivalPhotos.length === 1 ? (
+                {jobImages.poPages.length === 1 ? (
                   <img
-                    src={viewingJob.partsOnArrivalPhotos[0]}
+                    src={jobImages.poPages[0]}
+                    alt="Purchase Order"
+                    className="w-full rounded-lg border border-gray-200"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {jobImages.poPages.map((page, index) => (
+                      <div key={index}>
+                        <div className="text-xs text-gray-500 mb-1">
+                          Page {index + 1} of {jobImages.poPages.length}
+                        </div>
+                        <img
+                          src={page}
+                          alt={`PO page ${index + 1}`}
+                          className="w-full rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {jobImages?.partsOnArrivalPhotos && jobImages.partsOnArrivalPhotos.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  PARTS ON ARRIVAL {jobImages.partsOnArrivalPhotos.length > 1 && `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
+                </h3>
+                {jobImages.partsOnArrivalPhotos.length === 1 ? (
+                  <img
+                    src={jobImages.partsOnArrivalPhotos[0]}
                     alt="Parts on arrival"
                     className="w-full rounded-lg border border-gray-200"
                   />
                 ) : (
                   <div className="space-y-2">
-                    {viewingJob.partsOnArrivalPhotos?.map((photo, index) => (
+                    {jobImages.partsOnArrivalPhotos.map((photo, index) => (
                       <div key={index}>
-                        {(viewingJob.partsOnArrivalPhotos?.length ?? 0) > 1 && (
-                          <div className="text-xs text-gray-500 mb-1">Photo {index + 1}</div>
-                        )}
+                        <div className="text-xs text-gray-500 mb-1">
+                          Photo {index + 1} of {jobImages.partsOnArrivalPhotos.length}
+                        </div>
                         <img
                           src={photo}
                           alt={`Parts photo ${index + 1}`}
