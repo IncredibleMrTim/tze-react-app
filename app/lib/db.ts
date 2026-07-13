@@ -95,7 +95,40 @@ export async function deleteJob(jobId: string) {
 
 export async function getJobs() {
   const jobs = await prisma.job.findMany({
-    include: {
+    select: {
+      id: true,
+      po_number: true,
+      customer_name: true,
+      customer_account: true,
+      customer_email: true,
+      customer_contact: true,
+      parts: true,
+      plating: true,
+      weightKg: true,
+      stringCount: true,
+      stringsRequired: true,
+      requiresWeighing: true,
+      freightRequested: true,
+      minCharge: true,
+      flagged: true,
+      notes: true,
+      // poPages excluded - too large for list view
+      // partsOnArrivalPhotos excluded - too large for list view
+      manualPO: true,
+      urgent: true,
+      isInternal: true,
+      isRework: true,
+      partDescription: true,
+      createdAt: true,
+      priceOverride: true,
+      freightCost: true,
+      dispatchedAt: true,
+      invoiceNumber: true,
+      poComplete: true,
+      fpnDownloaded: true,
+      fpnHidden: true,
+      csvDownloaded: true,
+      updatedAt: true,
       jigAssignments: true,
     },
     orderBy: {
@@ -103,7 +136,12 @@ export async function getJobs() {
     },
   })
 
-  return jobs.map(serializeJob)
+  // Photos excluded from list query for performance - added as empty arrays
+  return jobs.map(job => serializeJob({
+    ...job,
+    poPages: [],
+    partsOnArrivalPhotos: [],
+  } as unknown as JobWithRelations))
 }
 
 export async function getJobById(jobId: string) {
