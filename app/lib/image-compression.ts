@@ -18,13 +18,16 @@ const DEFAULT_OPTIONS: CompressionOptions = {
   outputFormat: 'jpeg',
 };
 
+// Detect if running on iOS/Safari
+const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 /**
  * Compress an image for PO scanning (readable by Claude AI)
  */
 export const PO_COMPRESSION: CompressionOptions = {
-  maxWidth: 1200,
-  maxHeight: 1600,
-  quality: 0.75, // Good enough for Claude to read text
+  maxWidth: isIOS ? 1000 : 1200, // Lower for iOS memory limits
+  maxHeight: isIOS ? 1333 : 1600,
+  quality: isIOS ? 0.65 : 0.75, // Lower quality for iOS
   outputFormat: 'jpeg',
 };
 
@@ -32,9 +35,9 @@ export const PO_COMPRESSION: CompressionOptions = {
  * Compress an image for parts photos (mobile viewing quality)
  */
 export const PARTS_COMPRESSION: CompressionOptions = {
-  maxWidth: 800,
-  maxHeight: 1067,
-  quality: 0.7, // Mobile quality
+  maxWidth: isIOS ? 600 : 800, // Lower for iOS
+  maxHeight: isIOS ? 800 : 1067,
+  quality: isIOS ? 0.6 : 0.7, // Lower quality for iOS
   outputFormat: 'jpeg',
 };
 
@@ -66,21 +69,41 @@ export async function compressImage(
   canvas.width = width;
   canvas.height = height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', {
+    willReadFrequently: false,
+    alpha: false // No transparency for JPEG
+  });
+
   if (!ctx) {
     throw new Error('Failed to get canvas context');
   }
 
-  // Use better image quality settings
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  try {
+    // Use better image quality settings (skip on iOS if causing issues)
+    if (!isIOS) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
 
-  // Draw image
-  ctx.drawImage(img, 0, 0, width, height);
+    // Draw image
+    ctx.drawImage(img, 0, 0, width, height);
 
-  // Convert to data URL with compression
-  const mimeType = opts.outputFormat === 'webp' ? 'image/webp' : 'image/jpeg';
-  return canvas.toDataURL(mimeType, opts.quality);
+    // Convert to data URL with compression
+    const mimeType = opts.outputFormat === 'webp' ? 'image/webp' : 'image/jpeg';
+    const dataUrl = canvas.toDataURL(mimeType, opts.quality);
+
+    // Verify the result isn't too large
+    const sizeMB = (dataUrl.length * 0.75) / (1024 * 1024);
+    if (sizeMB > 5) {
+      throw new Error(`Compressed image too large: ${sizeMB.toFixed(1)}MB`);
+    }
+
+    return dataUrl;
+  } finally {
+    // Clean up canvas to free memory (important for iOS)
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 }
 
 /**

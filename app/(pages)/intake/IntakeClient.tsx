@@ -101,6 +101,15 @@ export default function IntakeClient() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
+        // Check file size before processing
+        const fileSizeMB = file.size / (1024 * 1024);
+        console.log(`Loading PO page ${i + 1}: ${fileSizeMB.toFixed(1)}MB`);
+
+        if (fileSizeMB > 20) {
+          showToast(`Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`);
+          continue;
+        }
+
         // Load and fix orientation
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -120,10 +129,16 @@ export default function IntakeClient() {
         newPages.push(compressed);
       }
 
+      if (newPages.length === 0) {
+        showToast("No images could be processed");
+        return;
+      }
+
       setPoPages([...poPages, ...newPages]);
       showToast(`${newPages.length} page(s) added`);
     } catch (error) {
-      showToast("Failed to load images");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showToast(`Failed to load images: ${errorMessage}`);
       console.error("Error loading images:", error);
     }
   };
@@ -208,6 +223,15 @@ export default function IntakeClient() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
+        // Check file size before processing
+        const fileSizeMB = file.size / (1024 * 1024);
+        console.log(`Loading parts photo ${i + 1}: ${fileSizeMB.toFixed(1)}MB`);
+
+        if (fileSizeMB > 20) {
+          showToast(`Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`);
+          continue;
+        }
+
         // Load and fix orientation
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -227,10 +251,16 @@ export default function IntakeClient() {
         newPhotos.push(compressed);
       }
 
+      if (newPhotos.length === 0) {
+        showToast("No images could be processed");
+        return;
+      }
+
       setPartsOnArrivalPhotos([...partsOnArrivalPhotos, ...newPhotos]);
       showToast(`${newPhotos.length} photo(s) added`);
     } catch (error) {
-      showToast("Failed to load images");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showToast(`Failed to load images: ${errorMessage}`);
       console.error("Error loading images:", error);
     }
   };
@@ -256,6 +286,19 @@ export default function IntakeClient() {
       showToast("PO number already exists");
       return;
     }
+
+    // Validate data size to prevent mobile issues
+    const totalImages = [...poPages, ...partsOnArrivalPhotos];
+    const estimatedSizeMB = totalImages.reduce((total, img) => {
+      return total + (img.length * 0.75) / (1024 * 1024); // base64 to bytes to MB
+    }, 0);
+
+    if (estimatedSizeMB > 10) {
+      showToast(`Images too large (${estimatedSizeMB.toFixed(1)}MB). Please use fewer photos.`);
+      return;
+    }
+
+    console.log(`Job data size: ${estimatedSizeMB.toFixed(2)}MB, ${totalImages.length} images`);
 
     if (editingJobId) {
       const existingJob = jobs.find((j) => j.id === editingJobId);
@@ -292,15 +335,21 @@ export default function IntakeClient() {
             setShowSheet(false);
             showToast("Job updated: " + po_number);
           },
-          onError: () => {
-            showToast("Failed to update job");
+          onError: (error: Error) => {
+            console.error("Update job error:", error);
+            const message = error?.message || "Unknown error";
+            showToast(`Failed to update job: ${message}`);
           },
         },
       );
     } else {
       const now = Date.now();
+      // Generate unique ID with random suffix to prevent collisions
+      const randomSuffix = Math.random().toString(36).substring(2, 9);
+      const jobId = `${now}-${randomSuffix}`;
+
       const job: IJob = {
-        id: now.toString(),
+        id: jobId,
         po_number,
         customer_name: customer?.name || "Internal",
         customer_account: customer?.account || "",
@@ -341,8 +390,10 @@ export default function IntakeClient() {
           setShowSheet(false);
           showToast("Job created: " + po_number);
         },
-        onError: () => {
-          showToast("Failed to create job");
+        onError: (error: Error) => {
+          console.error("Create job error:", error);
+          const message = error?.message || "Unknown error";
+          showToast(`Failed to create job: ${message}`);
         },
       });
     }
@@ -557,8 +608,10 @@ export default function IntakeClient() {
                         setSelectedJob(null);
                         showToast("Job deleted");
                       },
-                      onError: () => {
-                        showToast("Failed to delete job");
+                      onError: (error: Error) => {
+                        console.error("Delete job error:", error);
+                        const message = error?.message || "Unknown error";
+                        showToast(`Failed to delete job: ${message}`);
                       },
                     });
                   }

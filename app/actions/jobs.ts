@@ -9,25 +9,23 @@ export async function createJobAction(job: IJob) {
     const result = await createJob(job)
     revalidatePath('/intake')
     revalidatePath('/jobs')
-    return { success: true, job: result }
+    return result
   } catch (error) {
     console.error('Failed to create job:', error)
-    return { success: false, error: 'Failed to create job' }
+    console.error('Job data size:', JSON.stringify(job).length, 'characters')
+    console.error('PO pages count:', job.poPages?.length || 0)
+    console.error('Parts photos count:', job.partsOnArrivalPhotos?.length || 0)
+    throw error
   }
 }
 
 export async function updateJobAction(jobId: string, updates: Partial<IJob>) {
-  try {
-    const result = await updateJob(jobId, updates)
-    revalidatePath('/intake')
-    revalidatePath('/jobs')
-    revalidatePath('/jig')
-    revalidatePath('/dispatch')
-    return { success: true, job: result }
-  } catch (error) {
-    console.error('Failed to update job:', error)
-    return { success: false, error: 'Failed to update job' }
-  }
+  const result = await updateJob(jobId, updates)
+  revalidatePath('/intake')
+  revalidatePath('/jobs')
+  revalidatePath('/jig')
+  revalidatePath('/dispatch')
+  return result
 }
 
 export async function deleteJobAction(jobId: string) {

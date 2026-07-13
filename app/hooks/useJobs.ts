@@ -7,9 +7,26 @@ import type { IJob } from '@/types/interfaces'
  * Fetch all jobs from the API
  */
 async function fetchJobs(): Promise<IJob[]> {
-  const res = await fetch('/api/jobs')
-  if (!res.ok) throw new Error('Failed to fetch jobs')
-  return res.json()
+  console.log('Fetching jobs from /api/jobs...')
+  try {
+    const res = await fetch('/api/jobs', {
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+    console.log('Jobs API response:', res.status, res.statusText)
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error('Jobs API error:', errorText)
+      throw new Error(`Failed to fetch jobs: ${res.status}`)
+    }
+    const data = await res.json()
+    console.log('Jobs fetched successfully:', data.length, 'jobs')
+    return data
+  } catch (error) {
+    console.error('Error in fetchJobs:', error)
+    throw error
+  }
 }
 
 /**
@@ -39,6 +56,8 @@ export function useJobs(refetchInterval = 10000) {
     queryFn: fetchJobs,
     refetchInterval, // Auto-refresh every 10 seconds by default
     staleTime: 5000, // Consider fresh for 5 seconds
+    retry: 2, // Only retry twice instead of default 3
+    retryDelay: 1000, // Wait 1 second between retries
   })
 }
 
