@@ -44,8 +44,8 @@ export interface IJob {
   minCharge: boolean;
   flagged: boolean;
   notes: string;
-  poPages: string[];
-  partsOnArrivalPhotos: string[];
+  poPages?: string[]; // Optional - excluded from list queries for performance
+  partsOnArrivalPhotos?: string[]; // Optional - excluded from list queries for performance
   manualPO: boolean;
   urgent: boolean;
   isInternal: boolean;
