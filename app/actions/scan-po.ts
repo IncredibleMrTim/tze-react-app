@@ -1,5 +1,9 @@
 "use server";
 
+// DEPRECATED: Use /api/scan-po API route instead
+// Server actions have array nesting limits that cause issues with large base64 arrays
+// This file is kept for backward compatibility but should not be used for new code
+
 import type { IContact, IPart } from "@/types/interfaces";
 import { resolveCustomer } from "@/lib/helpers";
 import { callClaudeWithImage } from "@/lib/claude-api";
