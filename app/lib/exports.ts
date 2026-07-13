@@ -60,11 +60,11 @@ export const genFPN = (j: IJob): void => {
     (ph
       ? `<div class="no-break" style="margin-bottom:20px"><div style="font-size:12px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts</div>${ph}</div>`
       : "") +
-    (j.poPic
-      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Original PO Document</div><img src="${j.poPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
+    (j.poPages && j.poPages.length > 0
+      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Original PO Document${j.poPages.length > 1 ? ` (${j.poPages.length} pages)` : ''}</div>${j.poPages.map((page: string) => `<img src="${page}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain;margin-bottom:10px">`).join('')}</div>`
       : "") +
-    (j.partsPic
-      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts on Arrival</div><img src="${j.partsPic}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain"></div>`
+    (j.partsOnArrivalPhotos && j.partsOnArrivalPhotos.length > 0
+      ? `<div class="no-break" style="margin:20px 0"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:8px">Parts on Arrival${j.partsOnArrivalPhotos.length > 1 ? ` (${j.partsOnArrivalPhotos.length} photos)` : ''}</div>${j.partsOnArrivalPhotos.map((photo: string) => `<img src="${photo}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;max-height:280px;object-fit:contain;margin-bottom:10px">`).join('')}</div>`
       : "") +
     (j.notes
       ? `<div class="no-break" style="margin-top:20px;padding:14px;background:#FFF9C4;border-left:4px solid ${go};border-radius:4px"><div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px">Collection Instructions</div><div style="font-size:14px">${j.notes}</div></div>`

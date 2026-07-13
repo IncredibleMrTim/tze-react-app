@@ -57,8 +57,8 @@ model Job {
   minCharge         Boolean
   flagged           Boolean
   notes             String
-  poPic             String?
-  partsPic          String?
+  poPages           String[] @default([])
+  partsOnArrivalPhotos String[] @default([])
   manualPO          Boolean
   urgent            Boolean
   isInternal        Boolean

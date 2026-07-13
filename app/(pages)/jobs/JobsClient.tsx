@@ -451,16 +451,33 @@ export default function JobsClient() {
               </div>
             )}
 
-            {viewingJob.partsPic && (
+            {viewingJob.partsOnArrivalPhotos && viewingJob.partsOnArrivalPhotos.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS ON ARRIVAL
+                  PARTS ON ARRIVAL {viewingJob.partsOnArrivalPhotos.length > 1 && `(${viewingJob.partsOnArrivalPhotos.length} PHOTOS)`}
                 </h3>
-                <img
-                  src={viewingJob.partsPic}
-                  alt="Parts on arrival"
-                  className="w-full rounded-lg"
-                />
+                {viewingJob.partsOnArrivalPhotos.length === 1 ? (
+                  <img
+                    src={viewingJob.partsOnArrivalPhotos[0]}
+                    alt="Parts on arrival"
+                    className="w-full rounded-lg border border-gray-200"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {viewingJob.partsOnArrivalPhotos.map((photo, index) => (
+                      <div key={index}>
+                        {viewingJob.partsOnArrivalPhotos.length > 1 && (
+                          <div className="text-xs text-gray-500 mb-1">Photo {index + 1}</div>
+                        )}
+                        <img
+                          src={photo}
+                          alt={`Parts photo ${index + 1}`}
+                          className="w-full rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
