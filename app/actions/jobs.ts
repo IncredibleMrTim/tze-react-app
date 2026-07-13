@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createJob, updateJob, deleteJob, getJobs } from '@/lib/db'
+import { broadcastEvent } from '@/lib/pusher-server'
 import type { IJob } from '@/types/interfaces'
 
 export async function createJobAction(job: IJob) {
@@ -9,6 +10,10 @@ export async function createJobAction(job: IJob) {
     const result = await createJob(job)
     revalidatePath('/intake')
     revalidatePath('/jobs')
+
+    // Broadcast to all connected clients
+    await broadcastEvent('jobs', 'job:created', result)
+
     return { success: true, job: result }
   } catch (error) {
     console.error('Failed to create job:', error)
@@ -23,6 +28,10 @@ export async function updateJobAction(jobId: string, updates: Partial<IJob>) {
     revalidatePath('/jobs')
     revalidatePath('/jig')
     revalidatePath('/dispatch')
+
+    // Broadcast to all connected clients
+    await broadcastEvent('jobs', 'job:updated', result)
+
     return { success: true, job: result }
   } catch (error) {
     console.error('Failed to update job:', error)
@@ -35,6 +44,10 @@ export async function deleteJobAction(jobId: string) {
     await deleteJob(jobId)
     revalidatePath('/intake')
     revalidatePath('/jobs')
+
+    // Broadcast to all connected clients
+    await broadcastEvent('jobs', 'job:deleted', { jobId })
+
     return { success: true }
   } catch (error) {
     console.error('Failed to delete job:', error)

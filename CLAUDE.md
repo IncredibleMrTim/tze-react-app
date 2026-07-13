@@ -126,6 +126,7 @@ const item = items.find(x => x.code === code);
 - Types: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`
 - Keep commits atomic and focused
 - commit messages should always been in lower case except scope
+
 - Reference ticket numbers in commit body if applicable
 
 ### Branches
