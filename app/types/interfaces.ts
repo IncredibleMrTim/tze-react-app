@@ -44,8 +44,8 @@ export interface IJob {
   minCharge: boolean;
   flagged: boolean;
   notes: string;
-  poPic: string | null;
-  partsPic: string | null;
+  poPages: string[];
+  partsOnArrivalPhotos: string[];
   manualPO: boolean;
   urgent: boolean;
   isInternal: boolean;
@@ -118,8 +118,8 @@ export interface IIntakeFormState {
   minCharge: boolean;
   flagged: boolean;
   notes: string;
-  poPic: string | null;
-  partsPic: string | null;
+  poPages: string[];
+  partsOnArrivalPhotos: string[];
   scannedParts: IScannedPart[];
   editId: string | null;
   urgent: boolean;
