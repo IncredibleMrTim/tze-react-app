@@ -16,8 +16,8 @@ export const saveState = (state: IStorageState): void => {
           ...state,
           jobs: state.jobs.map(j => ({
             ...j,
-            poPic: null,
-            partsPic: null,
+            poPages: [],
+            partsOnArrivalPhotos: [],
           })),
         };
         localStorage.setItem(STORE_KEY, JSON.stringify(stripped));

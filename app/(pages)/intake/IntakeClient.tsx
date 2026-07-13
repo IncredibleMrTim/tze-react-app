@@ -70,9 +70,8 @@ export default function IntakeClient() {
   const [requiresWeighing, setRequiresWeighing] = useState(false);
   const [freightRequested, setFreightRequested] = useState(false);
   const [minCharge, setMinCharge] = useState(false);
-  const [poPic, setPoPic] = useState<string | null>(null);
   const [poPages, setPoPages] = useState<string[]>([]); // Staged PO pages before scanning
-  const [partsPic, setPartsPic] = useState<string | null>(null);
+  const [partsOnArrivalPhotos, setPartsOnArrivalPhotos] = useState<string[]>([]); // Parts on arrival photos
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState("");
   const [scanData, setScanData] = useState<ScanPOResponse | null>(null);
@@ -109,9 +108,6 @@ export default function IntakeClient() {
       }
 
       setPoPages([...poPages, ...newPages]);
-      if (poPages.length === 0 && newPages.length > 0) {
-        setPoPic(newPages[0]); // Set first page as preview
-      }
     } catch (error) {
       showToast("Failed to load images");
       console.error("Error loading images:", error);
@@ -122,11 +118,6 @@ export default function IntakeClient() {
   const handleRemovePage = (index: number) => {
     const newPages = poPages.filter((_, i) => i !== index);
     setPoPages(newPages);
-    if (newPages.length > 0) {
-      setPoPic(newPages[0]);
-    } else {
-      setPoPic(null);
-    }
   };
 
   // Trigger actual scan of all staged pages
@@ -195,13 +186,37 @@ export default function IntakeClient() {
     }
   };
 
-  const handlePartsPhoto = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPartsPic(reader.result as string);
-      showToast("Parts photo added");
-    };
-    reader.readAsDataURL(file);
+  // Add parts photos to array
+  const handleAddPartsPhotos = async (files: FileList) => {
+    try {
+      const newPhotos: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            fixOrientation(result, resolve);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        newPhotos.push(dataUrl);
+      }
+
+      setPartsOnArrivalPhotos([...partsOnArrivalPhotos, ...newPhotos]);
+      showToast(`${newPhotos.length} photo(s) added`);
+    } catch (error) {
+      showToast("Failed to load images");
+      console.error("Error loading images:", error);
+    }
+  };
+
+  // Remove a parts photo
+  const handleRemovePartsPhoto = (index: number) => {
+    const newPhotos = partsOnArrivalPhotos.filter((_, i) => i !== index);
+    setPartsOnArrivalPhotos(newPhotos);
   };
 
   const handleSave = () => {
@@ -239,8 +254,8 @@ export default function IntakeClient() {
         minCharge,
         flagged,
         notes,
-        poPic,
-        partsPic,
+        poPages,
+        partsOnArrivalPhotos,
         urgent,
         isInternal,
         partDescription: partsDescription,
@@ -279,8 +294,8 @@ export default function IntakeClient() {
         minCharge,
         flagged,
         notes,
-        poPic,
-        partsPic,
+        poPages,
+        partsOnArrivalPhotos,
         manualPO: false,
         urgent,
         isInternal,
@@ -328,9 +343,8 @@ export default function IntakeClient() {
     setRequiresWeighing(false);
     setFreightRequested(false);
     setMinCharge(false);
-    setPoPic(null);
     setPoPages([]);
-    setPartsPic(null);
+    setPartsOnArrivalPhotos([]);
     setScanResult("");
     setScanData(null);
     setShowRawData(false);
@@ -555,8 +569,8 @@ export default function IntakeClient() {
                   setRequiresWeighing(selectedJob.requiresWeighing);
                   setFreightRequested(selectedJob.freightRequested);
                   setMinCharge(selectedJob.minCharge);
-                  setPoPic(selectedJob.poPic);
-                  setPartsPic(selectedJob.partsPic);
+                  setPoPages(selectedJob.poPages);
+                  setPartsOnArrivalPhotos(selectedJob.partsOnArrivalPhotos);
                   setSelectedJob(null);
                   setShowSheet(true);
                   showToast("Editing job");
@@ -625,16 +639,75 @@ export default function IntakeClient() {
             </div>
           )}
 
-          {selectedJob.partsPic && (
+          {selectedJob.poPages && selectedJob.poPages.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PARTS ON ARRIVAL
+                PO DOCUMENT {selectedJob.poPages.length > 1 && `(${selectedJob.poPages.length} PAGES)`}
               </h3>
-              <img
-                src={selectedJob.partsPic}
-                alt="Parts on arrival"
-                className="w-full rounded-lg"
-              />
+              {selectedJob.poPages.length === 1 ? (
+                <img
+                  src={selectedJob.poPages[0]}
+                  alt="PO Document"
+                  className="w-full rounded-lg border border-gray-200"
+                />
+              ) : (
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {selectedJob.poPages.map((page, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                          <img
+                            src={page}
+                            alt={`PO Page ${index + 1}`}
+                            className="w-full rounded-lg"
+                          />
+                          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                            Page {index + 1} of {selectedJob.poPages.length}
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </Carousel>
+              )}
+            </div>
+          )}
+
+          {selectedJob.partsOnArrivalPhotos && selectedJob.partsOnArrivalPhotos.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                PARTS ON ARRIVAL {selectedJob.partsOnArrivalPhotos.length > 1 && `(${selectedJob.partsOnArrivalPhotos.length} PHOTOS)`}
+              </h3>
+              {selectedJob.partsOnArrivalPhotos.length === 1 ? (
+                <img
+                  src={selectedJob.partsOnArrivalPhotos[0]}
+                  alt="Parts on arrival"
+                  className="w-full rounded-lg border border-gray-200"
+                />
+              ) : (
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {selectedJob.partsOnArrivalPhotos.map((photo, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                          <img
+                            src={photo}
+                            alt={`Parts photo ${index + 1}`}
+                            className="w-full rounded-lg"
+                          />
+                          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                            Photo {index + 1} of {selectedJob.partsOnArrivalPhotos.length}
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </Carousel>
+              )}
             </div>
           )}
 
@@ -1156,7 +1229,7 @@ export default function IntakeClient() {
 
             <div className="mb-5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-                PARTS / ARRIVAL PHOTO{" "}
+                PARTS ON ARRIVAL PHOTOS{" "}
                 <span className="text-gray-400 font-normal normal-case">
                   (optional)
                 </span>
@@ -1166,13 +1239,73 @@ export default function IntakeClient() {
                 type="file"
                 accept="image/*"
                 capture="environment"
+                multiple
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handlePartsPhoto(file);
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    handleAddPartsPhotos(files);
+                    e.target.value = "";
+                  }
                 }}
               />
-              {!partsPic ? (
+              {partsOnArrivalPhotos.length > 0 ? (
+                <div className="space-y-3">
+                  {partsOnArrivalPhotos.length === 1 ? (
+                    <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                      <img
+                        src={partsOnArrivalPhotos[0]}
+                        alt="Parts Photo"
+                        className="w-full rounded-lg"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                        Photo 1 of 1
+                      </div>
+                      <button
+                        onClick={() => handleRemovePartsPhoto(0)}
+                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 shadow-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {partsOnArrivalPhotos.map((photo, index) => (
+                          <CarouselItem key={index}>
+                            <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                              <img
+                                src={photo}
+                                alt={`Parts Photo ${index + 1}`}
+                                className="w-full rounded-lg"
+                                loading="lazy"
+                              />
+                              <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                Photo {index + 1} of {partsOnArrivalPhotos.length}
+                              </div>
+                              <button
+                                onClick={() => handleRemovePartsPhoto(index)}
+                                className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 shadow-lg"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </Carousel>
+                  )}
+                  <Button
+                    onClick={() => partsPhotoInputRef.current?.click()}
+                    className="w-full border border-dashed border-teal-500 bg-emerald-50 rounded-lg py-3 text-gray-600 text-sm font-medium hover:bg-teal-50 flex items-center justify-center gap-2"
+                  >
+                    📦 Add more photos
+                  </Button>
+                </div>
+              ) : (
                 <button
                   onClick={() => partsPhotoInputRef.current?.click()}
                   className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-6 text-gray-500 text-sm flex flex-col items-center gap-2 hover:border-gray-400 transition-colors"
@@ -1185,20 +1318,6 @@ export default function IntakeClient() {
                     Condition record — pallet, box or loose parts
                   </div>
                 </button>
-              ) : (
-                <div className="relative">
-                  <img
-                    src={partsPic}
-                    alt="Parts photo"
-                    className="w-full rounded-lg border-2 border-gray-300"
-                  />
-                  <button
-                    onClick={() => setPartsPic(null)}
-                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-700"
-                  >
-                    ×
-                  </button>
-                </div>
               )}
             </div>
 
