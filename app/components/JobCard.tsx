@@ -43,6 +43,13 @@ export const JobCard: React.FC<JobCardProps> = ({
           ? "border-orange-400 bg-orange-50"
           : "border-red-400 bg-red-50";
 
+  const showPills =
+    job.isInternal ||
+    job.freightRequested ||
+    job.minCharge ||
+    job.stringsRequired ||
+    job.requiresWeighing;
+
   return (
     <Card
       onClick={onClick}
@@ -113,18 +120,14 @@ export const JobCard: React.FC<JobCardProps> = ({
         </div>
 
         <div className="flex gap-2 text-xs justify-between">
-          <div className="flex border-r pr-2">
+          <div className={`flex pr-2 ${showPills ? "border-r" : "w-20"}`}>
             <span
-              className={`flex items-center shadow border rounded px-4 text-center border-r ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"}`}
+              className={`flex items-center shadow border rounded px-4 text-center ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"} ${showPills ? "border-r" : "w-20 py-1"}`}
             >
               {job.plating === "gold" ? "Gold Plating" : "Silver Plating"}
             </span>
           </div>
-          {(job.isInternal ||
-            job.freightRequested ||
-            job.minCharge ||
-            job.stringsRequired ||
-            job.requiresWeighing) && (
+          {showPills && (
             <div className="flex gap-2 flex-wrap">
               {job.isInternal && (
                 <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow">
