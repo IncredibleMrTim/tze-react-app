@@ -1,6 +1,6 @@
 "use client";
 import { HiOutlineCamera, HiOutlineSparkles } from "react-icons/hi";
-import { useState, useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useToast } from "@/hooks/useToast";
 import {
   useJobs,
@@ -12,17 +12,17 @@ import {
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useItems } from "@/hooks/useItems";
 import { useContacts } from "@/hooks/useContacts";
-import type {
-  IJob,
-  IContact,
-  IPart,
-  IItem,
-} from "@/types/interfaces";
-import type { TPlating } from "@/types/types";
+import { useIntakeStore } from "@/hooks/useIntakeStore";
+import type { IJob, IItem } from "@/types/interfaces";
 import { Overlay } from "@/components/Overlay";
 import { fixOrientation, isOnJig } from "@/lib/helpers";
 import type { ScanPOResponse } from "@/api/scan-po/route";
-import { compressImage, PO_COMPRESSION, PARTS_COMPRESSION, getImageSizeKB } from "@/lib/image-compression";
+import {
+  compressImage,
+  PO_COMPRESSION,
+  PARTS_COMPRESSION,
+  getImageSizeKB,
+} from "@/lib/image-compression";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,58 +40,111 @@ export default function IntakeClient() {
   const { showToast } = useToast();
 
   // React Query hooks - auto-refresh for real-time updates
-  const { data: jobs = [], isLoading: jobsLoading, error: jobsError } = useJobs(10000);
-  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
-  const { data: ITEMS = [], isLoading: itemsLoading } = useItems();
+  const {
+    data: jobs = [],
+    isLoading: jobsLoading,
+    error: jobsError,
+  } = useJobs(10000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } =
+    useJigAssignments(5000);
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
 
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
   const deleteJobMutation = useDeleteJob();
 
-  const isLoading = jobsLoading || jigsLoading || itemsLoading || contactsLoading;
   const error = jobsError;
 
-  const [showSheet, setShowSheet] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
-  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  // Zustand store - all state
+  const {
+    showSheet,
+    currentJob,
+    editingJobId,
+    setShowSheet,
+    setCurrentJob,
+    setEditingJobId,
+    closeSheet,
+    customer,
+    customerInput,
+    showCustomerDropdown,
+    po_number,
+    contactNumber,
+    partsDescription,
+    parts,
+    plating,
+    notes,
+    urgent,
+    isInternal,
+    flagged,
+    stringsRequired,
+    stringCount,
+    requiresWeighing,
+    freightRequested,
+    minCharge,
+    poPages,
+    partsOnArrivalPhotos,
+    scanning,
+    scanResult,
+    scanData,
+    showRawData,
+    partSearchIndex,
+    partSearchTerm,
+    setCustomer,
+    setCustomerInput,
+    setShowCustomerDropdown,
+    setPoNumber,
+    setContactNumber,
+    setPartsDescription,
+    setParts,
+    setPlating,
+    setNotes,
+    setUrgent,
+    setIsInternal,
+    setFlagged,
+    setStringsRequired,
+    setStringCount,
+    setRequiresWeighing,
+    setFreightRequested,
+    setMinCharge,
+    setPoPages,
+    addPoPages,
+    removePoPage,
+    setPartsOnArrivalPhotos,
+    addPartsPhotos,
+    removePartsPhoto,
+    setScanning,
+    setScanResult,
+    setScanData,
+    setShowRawData,
+    applyScanResult,
+    setPartSearchIndex,
+    setPartSearchTerm,
+    updatePart,
+    addPart,
+    removePart,
+  } = useIntakeStore();
 
   // Fetch images when viewing a job
-  const { data: jobImages } = useJobImages(selectedJob?.id || null);
-  const [customer, setCustomer] = useState<IContact | null>(null);
-  const [customerInput, setCustomerInput] = useState("");
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [po_number, setPoNumber] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [partsDescription, setPartsDescription] = useState("");
-  const [parts, setParts] = useState<IPart[]>([]);
-  const [plating, setPlating] = useState<TPlating>("silver");
-  const [notes, setNotes] = useState("");
-  const [urgent, setUrgent] = useState(false);
-  const [isInternal, setIsInternal] = useState(false);
-  const [flagged, setFlagged] = useState(false);
-  const [stringsRequired, setStringsRequired] = useState(false);
-  const [stringCount, setStringCount] = useState(0);
-  const [requiresWeighing, setRequiresWeighing] = useState(false);
-  const [freightRequested, setFreightRequested] = useState(false);
-  const [minCharge, setMinCharge] = useState(false);
-  const [poPages, setPoPages] = useState<string[]>([]); // Staged PO pages before scanning
-  const [partsOnArrivalPhotos, setPartsOnArrivalPhotos] = useState<string[]>([]); // Parts on arrival photos
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState("");
-  const [scanData, setScanData] = useState<ScanPOResponse | null>(null);
-  const [showRawData, setShowRawData] = useState(false);
-  const [partSearchIndex, setPartSearchIndex] = useState<number | null>(null);
-  const [partSearchTerm, setPartSearchTerm] = useState("");
+  const { data: jobImages } = useJobImages(currentJob?.id || null);
+
+  const { data: ITEMS = [], isLoading: itemsLoading } = useItems(
+    customer?.account ?? "",
+  );
+  const isLoading =
+    jobsLoading || jigsLoading || itemsLoading || contactsLoading;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const partsPhotoInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredCustomers = CONTACTS.filter(
-    (c) =>
-      c.name.toLowerCase().includes(customerInput.toLowerCase()) ||
-      c.account.toLowerCase().includes(customerInput.toLowerCase()),
-  ).slice(0, 10);
+  const filteredCustomers = useMemo(
+    () =>
+      CONTACTS.filter(
+        (c) =>
+          c.name.toLowerCase().includes(customerInput.toLowerCase()) ||
+          c.account.toLowerCase().includes(customerInput.toLowerCase()),
+      ),
+    [CONTACTS, customerInput],
+  );
 
   // Add pages to staging area (don't scan yet)
   const handleAddPages = async (files: FileList) => {
@@ -106,7 +159,9 @@ export default function IntakeClient() {
         console.log(`Loading PO page ${i + 1}: ${fileSizeMB.toFixed(1)}MB`);
 
         if (fileSizeMB > 20) {
-          showToast(`Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`);
+          showToast(
+            `Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`,
+          );
           continue;
         }
 
@@ -134,19 +189,14 @@ export default function IntakeClient() {
         return;
       }
 
-      setPoPages([...poPages, ...newPages]);
+      addPoPages(newPages);
       showToast(`${newPages.length} page(s) added`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       showToast(`Failed to load images: ${errorMessage}`);
       console.error("Error loading images:", error);
     }
-  };
-
-  // Remove a staged page
-  const handleRemovePage = (index: number) => {
-    const newPages = poPages.filter((_, i) => i !== index);
-    setPoPages(newPages);
   };
 
   // Trigger actual scan of all staged pages
@@ -176,34 +226,8 @@ export default function IntakeClient() {
 
       const result: ScanPOResponse = await response.json();
 
-      if (result.po_number) {
-        setPoNumber(result.po_number);
-      }
-
-      if (result.customer) {
-        setCustomer(result.customer);
-        setCustomerInput(result.customer.name);
-      }
-
-      if (result.parts.length > 0) {
-        setParts(result.parts);
-      }
-
-      if (result.urgent) {
-        setUrgent(true);
-      }
-
-      // Store full scan data for detailed display
-      setScanData(result);
-
-      // Count parts matched to inventory
-      const matchedCount = result.parts.filter(
-        (part: IPart) => part.price > 0,
-      ).length;
-
-      setScanResult(
-        `✓ Customer: ${result.customer?.name || result.customer_name || "Unknown"} → ${result.customer?.account || ""}\n${matchedCount} parts matched to inventory`,
-      );
+      // Apply all scan results at once (reduces re-renders)
+      applyScanResult(result);
       showToast("PO scanned successfully");
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -228,7 +252,9 @@ export default function IntakeClient() {
         console.log(`Loading parts photo ${i + 1}: ${fileSizeMB.toFixed(1)}MB`);
 
         if (fileSizeMB > 20) {
-          showToast(`Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`);
+          showToast(
+            `Image ${i + 1} too large (${fileSizeMB.toFixed(1)}MB). Max 20MB.`,
+          );
           continue;
         }
 
@@ -256,19 +282,14 @@ export default function IntakeClient() {
         return;
       }
 
-      setPartsOnArrivalPhotos([...partsOnArrivalPhotos, ...newPhotos]);
+      addPartsPhotos(newPhotos);
       showToast(`${newPhotos.length} photo(s) added`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       showToast(`Failed to load images: ${errorMessage}`);
       console.error("Error loading images:", error);
     }
-  };
-
-  // Remove a parts photo
-  const handleRemovePartsPhoto = (index: number) => {
-    const newPhotos = partsOnArrivalPhotos.filter((_, i) => i !== index);
-    setPartsOnArrivalPhotos(newPhotos);
   };
 
   const handleSave = () => {
@@ -294,11 +315,15 @@ export default function IntakeClient() {
     }, 0);
 
     if (estimatedSizeMB > 10) {
-      showToast(`Images too large (${estimatedSizeMB.toFixed(1)}MB). Please use fewer photos.`);
+      showToast(
+        `Images too large (${estimatedSizeMB.toFixed(1)}MB). Please use fewer photos.`,
+      );
       return;
     }
 
-    console.log(`Job data size: ${estimatedSizeMB.toFixed(2)}MB, ${totalImages.length} images`);
+    console.log(
+      `Job data size: ${estimatedSizeMB.toFixed(2)}MB, ${totalImages.length} images`,
+    );
 
     if (editingJobId) {
       const existingJob = jobs.find((j) => j.id === editingJobId);
@@ -331,7 +356,7 @@ export default function IntakeClient() {
         { jobId: editingJobId, job: updatedJob },
         {
           onSuccess: () => {
-            resetForm();
+            handleResetForm();
             setShowSheet(false);
             showToast("Job updated: " + po_number);
           },
@@ -386,7 +411,7 @@ export default function IntakeClient() {
       // Use React Query mutation with optimistic updates
       createJobMutation.mutate(job, {
         onSuccess: () => {
-          resetForm();
+          handleResetForm();
           setShowSheet(false);
           showToast("Job created: " + po_number);
         },
@@ -399,47 +424,8 @@ export default function IntakeClient() {
     }
   };
 
-  const resetForm = () => {
-    setCustomer(null);
-    setCustomerInput("");
-    setPoNumber("");
-    setContactNumber("");
-    setPartsDescription("");
-    setParts([]);
-    setPlating("silver");
-    setNotes("");
-    setUrgent(false);
-    setIsInternal(false);
-    setFlagged(false);
-    setStringsRequired(false);
-    setStringCount(0);
-    setRequiresWeighing(false);
-    setFreightRequested(false);
-    setMinCharge(false);
-    setPoPages([]);
-    setPartsOnArrivalPhotos([]);
-    setScanResult("");
-    setScanData(null);
-    setShowRawData(false);
-    setEditingJobId(null);
-  };
-
-  const addPart = () => {
-    setParts([...parts, { code: "", desc: "", qty: 1, price: 0 }]);
-  };
-
-  const updatePart = (
-    index: number,
-    field: keyof IPart,
-    value: IPart[keyof IPart],
-  ) => {
-    const updated = [...parts];
-    updated[index] = { ...updated[index], [field]: value };
-    setParts(updated);
-  };
-
-  const removePart = (index: number) => {
-    setParts(parts.filter((_, i) => i !== index));
+  const handleResetForm = () => {
+    closeSheet();
   };
 
   const handlePartCodeChange = (index: number, value: string) => {
@@ -456,7 +442,7 @@ export default function IntakeClient() {
     setPartSearchTerm("");
   };
 
-  const getFilteredItems = () => {
+  const getFilteredItems = useMemo(() => {
     if (!partSearchTerm || partSearchTerm.length < 2) return [];
 
     const term = partSearchTerm.toLowerCase();
@@ -469,8 +455,8 @@ export default function IntakeClient() {
         !customer || isInternal || item.customer === customer.account;
 
       return matchesTerm && matchesCustomer;
-    }).slice(0, 10);
-  };
+    });
+  }, [partSearchTerm, ITEMS, customer, isInternal]);
 
   const getJobStatus = (job: IJob) => {
     if (isOnJig(job.id, jigAssignments)) return "WIP";
@@ -499,7 +485,7 @@ export default function IntakeClient() {
       .toUpperCase();
   };
 
-  const groupJobsByDate = () => {
+  const groupJobsByDate = useMemo(() => {
     const groups: Record<string, IJob[]> = {};
     const undispatchedJobs = jobs.filter((j) => !j.dispatchedAt);
 
@@ -510,7 +496,7 @@ export default function IntakeClient() {
     });
 
     return groups;
-  };
+  }, [jobs]);
 
   // Show loading state on initial load
   if (isLoading) {
@@ -568,9 +554,9 @@ export default function IntakeClient() {
         </div>
       )}
 
-      {jobs.length > 0 && !selectedJob && (
+      {jobs.length > 0 && !currentJob && (
         <div className="space-y-4">
-          {Object.entries(groupJobsByDate()).map(([dateLabel, dateJobs]) => (
+          {Object.entries(groupJobsByDate).map(([dateLabel, dateJobs]) => (
             <div key={dateLabel}>
               <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 {dateLabel}
@@ -580,7 +566,7 @@ export default function IntakeClient() {
                   key={job.id}
                   job={job}
                   jigAssignments={jigAssignments}
-                  onClick={() => setSelectedJob(job)}
+                  onClick={() => setCurrentJob(job)}
                   showArrivalTime={true}
                   showJigStatus={true}
                 />
@@ -590,11 +576,11 @@ export default function IntakeClient() {
         </div>
       )}
 
-      {selectedJob && (
+      {currentJob && (
         <div className="pb-20">
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setSelectedJob(null)}
+              onClick={() => setCurrentJob(null)}
               className="flex items-center gap-1 text-primary font-medium text-sm"
             >
               ← New Job
@@ -602,10 +588,10 @@ export default function IntakeClient() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  if (window.confirm(`Delete job ${selectedJob.po_number}?`)) {
-                    deleteJobMutation.mutate(selectedJob.id, {
+                  if (window.confirm(`Delete job ${currentJob.po_number}?`)) {
+                    deleteJobMutation.mutate(currentJob.id, {
                       onSuccess: () => {
-                        setSelectedJob(null);
+                        setCurrentJob(null);
                         showToast("Job deleted");
                       },
                       onError: (error: Error) => {
@@ -623,30 +609,32 @@ export default function IntakeClient() {
               </button>
               <button
                 onClick={() => {
-                  setEditingJobId(selectedJob.id);
+                  setEditingJobId(currentJob.id);
                   setCustomer(
                     CONTACTS.find(
-                      (c) => c.name === selectedJob.customer_name,
+                      (c) => c.name === currentJob.customer_name,
                     ) || null,
                   );
-                  setCustomerInput(selectedJob.customer_name);
-                  setPoNumber(selectedJob.po_number);
-                  setContactNumber(selectedJob.customer_contact || "");
-                  setPartsDescription(selectedJob.partDescription || "");
-                  setParts(selectedJob.parts);
-                  setPlating(selectedJob.plating);
-                  setNotes(selectedJob.notes);
-                  setUrgent(selectedJob.urgent);
-                  setIsInternal(selectedJob.isInternal);
-                  setFlagged(selectedJob.flagged);
-                  setStringsRequired(selectedJob.stringsRequired);
-                  setStringCount(selectedJob.stringCount);
-                  setRequiresWeighing(selectedJob.requiresWeighing);
-                  setFreightRequested(selectedJob.freightRequested);
-                  setMinCharge(selectedJob.minCharge);
+                  setCustomerInput(currentJob.customer_name);
+                  setPoNumber(currentJob.po_number);
+                  setContactNumber(currentJob.customer_contact || "");
+                  setPartsDescription(currentJob.partDescription || "");
+                  setParts(currentJob.parts);
+                  setPlating(currentJob.plating);
+                  setNotes(currentJob.notes);
+                  setUrgent(currentJob.urgent);
+                  setIsInternal(currentJob.isInternal);
+                  setFlagged(currentJob.flagged);
+                  setStringsRequired(currentJob.stringsRequired);
+                  setStringCount(currentJob.stringCount);
+                  setRequiresWeighing(currentJob.requiresWeighing);
+                  setFreightRequested(currentJob.freightRequested);
+                  setMinCharge(currentJob.minCharge);
                   setPoPages(jobImages?.poPages || []);
-                  setPartsOnArrivalPhotos(jobImages?.partsOnArrivalPhotos || []);
-                  setSelectedJob(null);
+                  setPartsOnArrivalPhotos(
+                    jobImages?.partsOnArrivalPhotos || [],
+                  );
+                  setCurrentJob(null);
                   setShowSheet(true);
                   showToast("Editing job");
                 }}
@@ -659,8 +647,8 @@ export default function IntakeClient() {
 
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-bold text-xl">{selectedJob.po_number}</span>
-              {selectedJob.urgent && (
+              <span className="font-bold text-xl">{currentJob.po_number}</span>
+              {currentJob.urgent && (
                 <span className="flex items-center gap-1 text-sm font-medium text-red-700">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
                   URGENT
@@ -668,29 +656,29 @@ export default function IntakeClient() {
               )}
             </div>
             <div className="text-base text-gray-700 mb-1">
-              {selectedJob.customer_name}
+              {currentJob.customer_name}
             </div>
-            {selectedJob.customer_contact && (
+            {currentJob.customer_contact && (
               <div className="flex items-center gap-1.5 text-gray-600 text-sm">
-                📞 {selectedJob.customer_contact}
+                📞 {currentJob.customer_contact}
               </div>
             )}
             <div className="flex gap-2 mt-3">
               <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
-                {getJobStatus(selectedJob)}
+                {getJobStatus(currentJob)}
               </span>
               <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
-                {selectedJob.plating === "gold" ? "Gold" : "Silver"}
+                {currentJob.plating === "gold" ? "Gold" : "Silver"}
               </span>
             </div>
           </div>
 
-          {selectedJob.parts.length > 0 && (
+          {currentJob.parts.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 PARTS
               </h3>
-              {selectedJob.parts.map((part, idx) => (
+              {currentJob.parts.map((part, idx) => (
                 <div
                   key={idx}
                   className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
@@ -717,7 +705,9 @@ export default function IntakeClient() {
           {jobImages?.poPages && jobImages.poPages.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PO DOCUMENT {jobImages.poPages.length > 1 && `(${jobImages.poPages.length} PAGES)`}
+                PO DOCUMENT{" "}
+                {jobImages.poPages.length > 1 &&
+                  `(${jobImages.poPages.length} PAGES)`}
               </h3>
               {jobImages.poPages.length === 1 ? (
                 <img
@@ -750,41 +740,45 @@ export default function IntakeClient() {
             </div>
           )}
 
-          {jobImages?.partsOnArrivalPhotos && jobImages.partsOnArrivalPhotos.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PARTS ON ARRIVAL {jobImages.partsOnArrivalPhotos.length > 1 && `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
-              </h3>
-              {jobImages.partsOnArrivalPhotos.length === 1 ? (
-                <img
-                  src={jobImages.partsOnArrivalPhotos[0]}
-                  alt="Parts on arrival"
-                  className="w-full rounded-lg border border-gray-200"
-                />
-              ) : (
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {jobImages.partsOnArrivalPhotos.map((photo, index) => (
-                      <CarouselItem key={index}>
-                        <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
-                          <img
-                            src={photo}
-                            alt={`Parts photo ${index + 1}`}
-                            className="w-full rounded-lg"
-                          />
-                          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Photo {index + 1} of {jobImages.partsOnArrivalPhotos.length}
+          {jobImages?.partsOnArrivalPhotos &&
+            jobImages.partsOnArrivalPhotos.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  PARTS ON ARRIVAL{" "}
+                  {jobImages.partsOnArrivalPhotos.length > 1 &&
+                    `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
+                </h3>
+                {jobImages.partsOnArrivalPhotos.length === 1 ? (
+                  <img
+                    src={jobImages.partsOnArrivalPhotos[0]}
+                    alt="Parts on arrival"
+                    className="w-full rounded-lg border border-gray-200"
+                  />
+                ) : (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {jobImages.partsOnArrivalPhotos.map((photo, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                            <img
+                              src={photo}
+                              alt={`Parts photo ${index + 1}`}
+                              className="w-full rounded-lg"
+                            />
+                            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                              Photo {index + 1} of{" "}
+                              {jobImages.partsOnArrivalPhotos.length}
+                            </div>
                           </div>
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-2" />
-                  <CarouselNext className="right-2" />
-                </Carousel>
-              )}
-            </div>
-          )}
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </Carousel>
+                )}
+              </div>
+            )}
 
           <div className="mb-4">
             <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -795,13 +789,13 @@ export default function IntakeClient() {
             </div>
           </div>
 
-          {selectedJob.partDescription && (
+          {currentJob.partDescription && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 PARTS DESCRIPTION
               </h3>
               <div className="text-sm text-gray-700">
-                {selectedJob.partDescription}
+                {currentJob.partDescription}
               </div>
             </div>
           )}
@@ -817,11 +811,11 @@ export default function IntakeClient() {
                   Arrived
                 </div>
                 <div className="text-xs text-gray-600">
-                  {new Date(selectedJob.createdAt).toLocaleDateString("en-NZ", {
+                  {new Date(currentJob.createdAt).toLocaleDateString("en-NZ", {
                     day: "numeric",
                     month: "short",
                   })}{" "}
-                  {new Date(selectedJob.createdAt).toLocaleTimeString("en-NZ", {
+                  {new Date(currentJob.createdAt).toLocaleTimeString("en-NZ", {
                     hour: "numeric",
                     minute: "2-digit",
                     hour12: true,
@@ -877,7 +871,7 @@ export default function IntakeClient() {
                         Page 1 of 1
                       </div>
                       <button
-                        onClick={() => handleRemovePage(0)}
+                        onClick={() => removePoPage(0)}
                         disabled={scanning}
                         className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
                       >
@@ -901,7 +895,7 @@ export default function IntakeClient() {
                                 Page {index + 1} of {poPages.length}
                               </div>
                               <button
-                                onClick={() => handleRemovePage(index)}
+                                onClick={() => removePoPage(index)}
                                 disabled={scanning}
                                 className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 disabled:opacity-50 shadow-lg"
                               >
@@ -932,7 +926,11 @@ export default function IntakeClient() {
                       className="w-full py-3 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       <HiOutlineSparkles />
-                      {scanning ? "Scanning..." : scanResult ? "Rescan PO" : "Scan PO"}
+                      {scanning
+                        ? "Scanning..."
+                        : scanResult
+                          ? "Rescan PO"
+                          : "Scan PO"}
                     </Button>
                   </div>
 
@@ -950,7 +948,9 @@ export default function IntakeClient() {
                           {scanResult.split("\n").map((line, i) => (
                             <div
                               key={i}
-                              className={i === 0 ? "font-semibold mb-1" : "text-sm"}
+                              className={
+                                i === 0 ? "font-semibold mb-1" : "text-sm"
+                              }
                             >
                               {line}
                             </div>
@@ -1220,9 +1220,9 @@ export default function IntakeClient() {
                         />
 
                         {partSearchIndex === i &&
-                          getFilteredItems().length > 0 && (
+                          getFilteredItems.length > 0 && (
                             <div className="absolute top-full left-0 right-0 bg-white border-2 border-primary border-t-0 rounded-b-lg max-h-[300px] overflow-y-auto z-[500] shadow-lg">
-                              {getFilteredItems().map((item, idx) => (
+                              {getFilteredItems.map((item, idx) => (
                                 <div
                                   key={idx}
                                   onClick={() => selectItem(i, item)}
@@ -1338,7 +1338,7 @@ export default function IntakeClient() {
                         Photo 1 of 1
                       </div>
                       <button
-                        onClick={() => handleRemovePartsPhoto(0)}
+                        onClick={() => removePartsPhoto(0)}
                         className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 shadow-lg"
                       >
                         ×
@@ -1357,10 +1357,11 @@ export default function IntakeClient() {
                                 loading="lazy"
                               />
                               <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                                Photo {index + 1} of {partsOnArrivalPhotos.length}
+                                Photo {index + 1} of{" "}
+                                {partsOnArrivalPhotos.length}
                               </div>
                               <button
-                                onClick={() => handleRemovePartsPhoto(index)}
+                                onClick={() => removePartsPhoto(index)}
                                 className="absolute top-3 right-3 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold hover:bg-red-600 shadow-lg"
                               >
                                 ×
@@ -1510,7 +1511,7 @@ export default function IntakeClient() {
             <div className="flex gap-3 pt-4 pb-4 border-t border-gray-200">
               <button
                 onClick={() => {
-                  resetForm();
+                  handleResetForm();
                   setShowSheet(false);
                 }}
                 className="flex-1 bg-gray-100 text-gray-700 rounded-lg py-3 text-base font-medium hover:bg-gray-200"
