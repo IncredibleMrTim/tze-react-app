@@ -123,7 +123,8 @@ export const JobCard: React.FC<JobCardProps> = ({
           {(job.isInternal ||
             job.freightRequested ||
             job.minCharge ||
-            job.stringsRequired) && (
+            job.stringsRequired ||
+            job.requiresWeighing) && (
             <div className="flex gap-2 flex-wrap">
               {job.isInternal && (
                 <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow">
@@ -133,6 +134,11 @@ export const JobCard: React.FC<JobCardProps> = ({
               {job.freightRequested && (
                 <span className="px-4 border rounded-full bg-orange-200 text-[10px] md:text-xs shadow">
                   Freight
+                </span>
+              )}
+              {job.requiresWeighing && (
+                <span className="px-4 border rounded-full bg-green-200 text-[10px] md:text-xs shadow">
+                  Requires Weighing
                 </span>
               )}
               {job.minCharge && (
