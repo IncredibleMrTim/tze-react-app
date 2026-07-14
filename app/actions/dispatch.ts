@@ -6,14 +6,12 @@ import type { IJob } from '@/types/interfaces'
 
 export async function dispatchJobAction(job: IJob, invoiceNumber: string) {
   try {
+    // Exclude any relation fields that might be attached (from query cache)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { jigAssignments, ...jobData } = job as IJob & { jigAssignments?: unknown }
+
     // Update job with dispatch info
-    await updateJob(job.id, {
-      ...job,
-      dispatchedAt: job.dispatchedAt,
-      invoiceNumber: job.invoiceNumber,
-      fpnDownloaded: job.fpnDownloaded,
-      csvDownloaded: job.csvDownloaded,
-    })
+    await updateJob(job.id, jobData)
 
     // Increment invoice sequence if not INTERNAL
     if (invoiceNumber !== 'INTERNAL') {
@@ -27,6 +25,6 @@ export async function dispatchJobAction(job: IJob, invoiceNumber: string) {
     return { success: true }
   } catch (error) {
     console.error('Failed to dispatch job:', error)
-    return { success: false, error: 'Failed to dispatch job' }
+    throw new Error('Failed to dispatch job', { cause: error })
   }
 }

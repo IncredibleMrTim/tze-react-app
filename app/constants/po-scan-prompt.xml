@@ -16,7 +16,7 @@
   </instruction>
 
   <parts_extraction>
-    <rule>For each line item row in the parts table:</rule>
+    <rule>For each line item row in the parts table</rule>
     <code>exact text from the Stockcode/Part No column only (empty string if that column is blank or missing)</code>
     <description>text from the Description column only — do not include codes, prices, or order references in description</description>
     <quantity>the NUMBER from the Quantity column ONLY — this is how many pieces are ordered</quantity>
@@ -39,52 +39,26 @@
   <customer_name>
     <role>You are a business name standardizer for a zinc electroplating company's customer database.</role>
 
-    <task>Extract and standardize the customer company name from the PO header to match how it appears in our internal database.</task>
+    <task>Extract the customer company name from the PO header EXACTLY as shown. Do not standardize or abbreviate.</task>
 
     <context>
       <item>Customers often use different legal names on POs than their registered business/account names</item>
       <item>Our database uses simplified, core business names without verbose legal descriptions</item>
       <item>The goal is matching accuracy, not legal precision</item>
-      <example input="Gamman Industrial Componentry Limited" output="Gamman Engineering"/>
+      <!-- Removed: customer name matching now handled by Contact.alias in database -->
       <example input="Baytex a division of Structurflex" output="Baytex"/>
     </context>
 
     <output>
       Return the standardized customer_name by:
-      1. Keeping the core business/trading name (e.g., "Fraser Gear", "High Duty Plastics")</step>
+      1. Keeping the core business/trading name (e.g., "Fraser Gear", "High Duty Plastics")
       2. Removing verbose legal descriptions and subsidiary information
-      <step>3. Applying these specific mappings if found:
-        - "Sokoza Engineering" or variations → "Sokoza Ltd"
-        - "NZ Manufacturing" or variations → "NZ MANUFACTURING"
-      </step>
+      3. Applying customer-specific standardization rules (see special_rules section)
     </output>
-  </customer_name>
+</customer_name>
 
-  <special_rules>
-    <rule name="PATCHELL">
-      For Patchell Industries POs, the code column is labelled "Our ref" and contains codes like G0125-007P3 or G0319-001P3. Use these exactly as written. Ignore any "Your Part No" references in the description area.
-
-      CRITICAL: Patchell codes always start with a capital letter followed immediately by 4 digits then a dash. The most common starting letters are G, D, C, J, SLB, T. The letter I (capital i) almost NEVER starts a Patchell code.
-
-      Read the first character of each code very carefully — the letter G (which has a curved body and a horizontal bar inside) is extremely commonly misread as I (a straight vertical line).
-
-      RULE: If a scanned code starts with I followed by 4 digits and a dash (e.g. I0125-007P3, I0319-001P3), you MUST correct it to G (e.g. G0125-007P3, G0319-001P3). Apply this correction before returning the code.
-    </rule>
-
-    <rule name="HDP">
-      For High Duty Plastics (HDP) POs, the Stockcode column on the far left shows codes starting with a numeric prefix like "8.088." or "8.068." or similar "8.XXX." pattern, followed by the real part code (e.g. 8.088.005040_MAC_003_1A or 8.068.006024_MAC_001_1A).
-
-      Always strip everything up to and including the second dot to get the real code (e.g. "005040_MAC_003_1A" or "006024_MAC_001_1A").
-
-      The Description column for HDP shows text like "ZINC PLATE 006024_MAC_001_1A" — do NOT use the description as the code, always use the Stockcode column value with the numeric prefix stripped.
-    </rule>
-
-    <rule name="BAYTEX">
-      If the customer is Baytex (or "Baytex a division of Structurflex"), the Code column will show "227004" for every row — this is NOT the part code.
-
-      For Baytex POs, the real part code is the reference number starting with # (e.g. #330332, #228174) that appears on the second line of the Description column.
-
-      Extract that number without the # symbol as the code (e.g. "330332"), and use only the first line of the description text (e.g. "Electro Galv Cast Bronze Bottom Plate") as the description.
-    </rule>
-  </special_rules>
+<special_rules>
+  <!-- Customer-specific rules are dynamically loaded from the PoRule database table -->
+  <!-- This section is replaced at runtime by buildPOScanPrompt() -->
+</special_rules>
 </prompt>
