@@ -16,7 +16,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/hooks/useIntakeStore";
 import type { IJob, IItem } from "@/types/interfaces";
 import { Overlay } from "@/components/Overlay";
-import { fixOrientation, isOnJig } from "@/lib/helpers";
+import { fixOrientation } from "@/lib/helpers";
 import type { ScanPOResponse } from "@/api/scan-po/route";
 import {
   compressImage,
@@ -469,25 +469,6 @@ export default function IntakeClient() {
       return matchesTerm && matchesCustomer;
     });
   }, [partSearchTerm, ITEMS, customer, isInternal]);
-
-  /**
-   * Determine the current status of a job
-   *
-   * Status priority (highest to lowest):
-   * 1. "WIP" - Job is currently on a jig
-   * 2. "Dispatched" - Job has been sent to customer
-   * 3. "Ready" - Job is complete and ready for dispatch
-   * 4. "Intake" - Job is newly received (default)
-   *
-   * @param job - The job to check status for
-   * @returns Status string: "WIP" | "Dispatched" | "Ready" | "Intake"
-   */
-  const getJobStatus = (job: IJob) => {
-    if (isOnJig(job.id, jigAssignments)) return "WIP";
-    if (job.dispatchedAt) return "Dispatched";
-    if (job.poComplete) return "Ready";
-    return "Intake";
-  };
 
   const formatJobDate = (timestamp: number) => {
     const date = new Date(timestamp);
