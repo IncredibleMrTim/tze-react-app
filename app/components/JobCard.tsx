@@ -113,17 +113,18 @@ export const JobCard: React.FC<JobCardProps> = ({
         </div>
 
         <div className="flex gap-2 text-xs justify-between">
-          <span
-            className={`flex items-center shadow border rounded px-4 text-center ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"}`}
-          >
-            {job.plating === "gold" ? "Gold Plating" : "Silver Plating"}
-          </span>
-
+          <div className="flex border-r pr-2">
+            <span
+              className={`flex items-center shadow border rounded px-4 text-center border-r ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"}`}
+            >
+              {job.plating === "gold" ? "Gold Plating" : "Silver Plating"}
+            </span>
+          </div>
           {(job.isInternal ||
             job.freightRequested ||
             job.minCharge ||
             job.stringsRequired) && (
-            <div className="flex gap-2 flex-wrap border-l pl-2">
+            <div className="flex gap-2 flex-wrap">
               {job.isInternal && (
                 <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow">
                   Internal
