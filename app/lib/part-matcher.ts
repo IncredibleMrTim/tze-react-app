@@ -11,21 +11,25 @@ function normalizeCode(code: string): string {
 
   // Strip numeric prefix for matching (e.g. "8.088." from HDP)
   if (/^\d+\.\d+\./.test(normalized)) {
-    const dotIdx = normalized.indexOf('.', normalized.indexOf('.') + 1);
+    const dotIdx = normalized.indexOf(".", normalized.indexOf(".") + 1);
     if (dotIdx > 0) {
       normalized = normalized.slice(dotIdx + 1);
     }
   }
 
   // Convert dots to underscores
-  return normalized.replace(/\./g, '_');
+  return normalized.replace(/\./g, "_");
 }
 
 /**
  * Attempts to find an exact match for the part code
  */
-function findExactMatch(code: string, customer: IContact, items: IItem[]): IItem | undefined {
-  return items.find(item => {
+function findExactMatch(
+  code: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
+  return items.find((item) => {
     if (item.code !== code) return false;
     // If item has a customer restriction, it must match
     if (item.customer && item.customer !== customer.account) return false;
@@ -36,12 +40,16 @@ function findExactMatch(code: string, customer: IContact, items: IItem[]): IItem
 /**
  * Attempts to find a match without the ticker suffix
  */
-function findWithoutTicker(code: string, customer: IContact, items: IItem[]): IItem | undefined {
+function findWithoutTicker(
+  code: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
   const match = code.match(/^(.+?)_[A-Z0-9]{2,6}$/);
   if (match) {
     const base = match[1];
-    return items.find(item => {
-      if (!item.code.startsWith(base + '_')) return false;
+    return items.find((item) => {
+      if (!item.code.startsWith(base + "_")) return false;
       // If item has a customer restriction, it must match
       if (item.customer && item.customer !== customer.account) return false;
       return true;
@@ -53,12 +61,16 @@ function findWithoutTicker(code: string, customer: IContact, items: IItem[]): II
 /**
  * Attempts to find a match by adding common tickers
  */
-function findWithTicker(code: string, customer: IContact, items: IItem[]): IItem | undefined {
-  if (code.includes('_')) return undefined;
+function findWithTicker(
+  code: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
+  if (code.includes("_")) return undefined;
 
-  const tickers = ['AGP', 'ASE', 'PATI', customer.account];
+  const tickers = ["AGP", "ASE", "PATI", customer.account];
   for (const ticker of tickers) {
-    const item = items.find(x => {
+    const item = items.find((x) => {
       if (x.code !== `${code}_${ticker}`) return false;
       // If item has a customer restriction, it must match
       if (x.customer && x.customer !== customer.account) return false;
@@ -71,9 +83,15 @@ function findWithTicker(code: string, customer: IContact, items: IItem[]): IItem
 
 /**
  * Attempts to find a match using substring matching (sliding window)
+ * Currently disabled in matching strategy - kept for future use
  */
-function findBySubstring(code: string, customer: IContact, items: IItem[]): IItem | undefined {
-  if (customer.account === 'PATI' || code.length < 4) return undefined;
+// @ts-expect-error - Function kept for future use
+function findBySubstring(
+  code: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
+  if (customer.account === "PATI" || code.length < 4) return undefined;
 
   let bestMatch: IItem | undefined = undefined;
   let bestLength = 0;
@@ -81,7 +99,7 @@ function findBySubstring(code: string, customer: IContact, items: IItem[]): IIte
   for (const item of items) {
     if (item.customer && item.customer !== customer.account) continue;
 
-    const itemCode = item.code.replace(/_[A-Z0-9]{2,6}$/, '');
+    const itemCode = item.code.replace(/_[A-Z0-9]{2,6}$/, "");
 
     for (let i = 0; i <= code.length - 3; i++) {
       for (let j = i + 3; j <= code.length; j++) {
@@ -99,11 +117,17 @@ function findBySubstring(code: string, customer: IContact, items: IItem[]): IIte
 
 /**
  * Fuzzy match code similarity - ONLY within customer's items
+ * Currently disabled in matching strategy - kept for future use
  */
-function findByCodeFuzzy(code: string, customer: IContact, items: IItem[]): IItem | undefined {
+// @ts-expect-error - Function kept for future use
+function findByCodeFuzzy(
+  code: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
   if (code.length < 3) return undefined;
 
-  const normalizedCode = code.toLowerCase().replace(/[\s\-_]/g, '');
+  const normalizedCode = code.toLowerCase().replace(/[\s\-_]/g, "");
   let bestMatch: IItem | undefined = undefined;
   let bestScore = 0;
 
@@ -111,7 +135,7 @@ function findByCodeFuzzy(code: string, customer: IContact, items: IItem[]): IIte
     // CRITICAL: Only match items for this customer or generic items
     if (item.customer && item.customer !== customer.account) continue;
 
-    const itemCode = item.code.toLowerCase().replace(/[\s\-_]/g, '');
+    const itemCode = item.code.toLowerCase().replace(/[\s\-_]/g, "");
 
     // Calculate similarity score
     let score = 0;
@@ -140,20 +164,26 @@ function findByCodeFuzzy(code: string, customer: IContact, items: IItem[]): IIte
 
 /**
  * Attempts to find a match by description keywords
+ * Currently disabled in matching strategy - kept for future use
  */
-function findByDescription(description: string, customer: IContact, items: IItem[]): IItem | undefined {
+// @ts-expect-error - Function kept for future use
+function findByDescription(
+  description: string,
+  customer: IContact,
+  items: IItem[],
+): IItem | undefined {
   if (description.length <= 3) return undefined;
 
   const words = description
     .toLowerCase()
     .split(/\s+/)
-    .filter(w => w.length > 3);
+    .filter((w) => w.length > 3);
 
   for (const item of items) {
     if (item.customer && item.customer !== customer.account) continue;
 
     const itemDesc = item.desc.toLowerCase();
-    if (words.some(word => itemDesc.includes(word))) {
+    if (words.some((word) => itemDesc.includes(word))) {
       return item;
     }
   }
@@ -170,29 +200,46 @@ function findByDescription(description: string, customer: IContact, items: IItem
 export function matchScannedParts(
   scannedParts: ScannedPart[],
   customer: IContact | null,
-  items: IItem[]
+  items: IItem[],
 ): IPart[] {
   if (!scannedParts || !customer) return [];
 
-  return scannedParts.map(scanned => {
+  console.log(
+    `🔍 Matching parts for customer: ${customer.name} (${customer.account})`,
+  );
+  console.log(`📦 Total items available: ${items.length}`);
+
+  return scannedParts.map((scanned) => {
     const code = normalizeCode(scanned.code);
     const description = scanned.description.trim();
     const quantity = scanned.quantity || 1;
+
+    console.log(
+      `\n🔎 Matching scanned code: "${scanned.code}" → normalized: "${code}"`,
+    );
 
     // Try matching strategies in order of specificity
     const item =
       findExactMatch(code, customer, items) ||
       findWithoutTicker(code, customer, items) ||
-      findWithTicker(code, customer, items) ||
-      findBySubstring(code, customer, items) ||
-      findByCodeFuzzy(code, customer, items) ||
-      findByDescription(description, customer, items);
+      findWithTicker(code, customer, items);
 
-    // If no match found, use ZINC MISCELLANEOUS but keep the scanned data
+    if (item) {
+      console.log(
+        `✅ Matched to DB item: ${item.code} (customer: ${item.customer || "generic"})`,
+      );
+    } else {
+      console.log(`❌ No match found - using ZINC MISCELLANEOUS`);
+    }
+    // findBySubstring(code, customer, items) ||
+    // findByCodeFuzzy(code, customer, items) ||
+    // findByDescription(description, customer, items);
+
+    // If no match found, use ZINC MISCELLANEOUS code but keep scanned description
     if (!item) {
-      const zincMisc = items.find(x => x.code === 'ZINC MISCELLANEOUS');
+      const zincMisc = items.find((x) => x.code === "ZINC MISCELLANEOUS");
 
-      // Build description from scanned PO data
+      // Build description from scanned PO data (preserve original scanned info)
       let fallbackDesc = description;
       if (code && description) {
         fallbackDesc = `${code} - ${description}`;
@@ -201,18 +248,19 @@ export function matchScannedParts(
       }
 
       return {
-        code: code || '',
+        code: zincMisc?.code || "ZINC MISCELLANEOUS",
         desc: fallbackDesc,
         price: zincMisc?.price || 0,
         qty: quantity,
       };
     }
 
+    // Matched item - use DB values for code, desc, price
     return {
-      code: item?.code || code || '',
-      desc: item?.desc || description,
-      price: item?.price || 0,
-      qty: quantity,
+      code: item.code, // Always use DB code for matched items
+      desc: item.desc, // Always use DB description
+      price: item.price, // Always use DB price
+      qty: quantity, // Use scanned quantity from PO
     };
   });
 }

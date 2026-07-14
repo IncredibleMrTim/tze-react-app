@@ -89,38 +89,61 @@ export const jigsOf = (
   return jigAssignments.filter((g) => g.jobId === jid);
 };
 
-export const jigUsed = (nm: string, jigAssignments: IJigAssignment[]): number => {
+export const jigUsed = (
+  nm: string,
+  jigAssignments: IJigAssignment[],
+): number => {
   return jigAssignments
-    .filter((g) => g.jigName === nm && g.status === 'ACTIVE')
+    .filter((g) => g.jigName === nm && g.status === "ACTIVE")
     .reduce((s, g) => s + g.pct, 0);
 };
 
-export const allDone = (jid: string, jigAssignments: IJigAssignment[]): boolean => {
+export const allDone = (
+  jid: string,
+  jigAssignments: IJigAssignment[],
+): boolean => {
   const gs = jigsOf(jid, jigAssignments);
-  return gs.length > 0 && gs.every((g) => g.status === 'CLEARED');
+  return gs.length > 0 && gs.every((g) => g.status === "CLEARED");
 };
 
 // Check if a job is currently on any jig
-export const isOnJig = (jid: string, jigAssignments: IJigAssignment[]): boolean => {
-  return jigAssignments.some((g) => g.jobId === jid && g.status === 'ACTIVE');
+export const isOnJig = (
+  jid: string,
+  jigAssignments: IJigAssignment[],
+): boolean => {
+  return jigAssignments.some((g) => g.jobId === jid && g.status === "ACTIVE");
 };
 
 // Get the active jig name(s) for a job
-export const getJobJigNames = (jid: string, jigAssignments: IJigAssignment[]): string[] => {
+export const getJobJigNames = (
+  jid: string,
+  jigAssignments: IJigAssignment[],
+): string[] => {
   return jigAssignments
-    .filter((g) => g.jobId === jid && g.status === 'ACTIVE')
+    .filter((g) => g.jobId === jid && g.status === "ACTIVE")
     .map((g) => g.jigName);
 };
 
 // Get the first active jig name for a job (for single jig scenarios)
-export const getJobJigName = (jid: string, jigAssignments: IJigAssignment[]): string | null => {
-  const jig = jigAssignments.find((g) => g.jobId === jid && g.status === 'ACTIVE');
-  return jig?.jigName || null;
+export const getJobJigName = (
+  jid: string,
+  jigAssignments: IJigAssignment[],
+): string | null => {
+  const jig = jigAssignments.find(
+    (g) => g.jobId === jid && g.status === "ACTIVE",
+  );
+
+  return jig?.jigName
+    ? `${jig.jigName}: ${jig.pct}% - (Loaded: ${new Date(jig.loadedAt).toLocaleDateString()})`
+    : null;
 };
 
 // Get all active jig assignments for a job
-export const getActiveJigs = (jid: string, jigAssignments: IJigAssignment[]): IJigAssignment[] => {
-  return jigAssignments.filter((g) => g.jobId === jid && g.status === 'ACTIVE');
+export const getActiveJigs = (
+  jid: string,
+  jigAssignments: IJigAssignment[],
+): IJigAssignment[] => {
+  return jigAssignments.filter((g) => g.jobId === jid && g.status === "ACTIVE");
 };
 
 // ================ Job Status Helpers ================ //
@@ -129,7 +152,7 @@ export const jobAgeDays = (j: IJob): number => {
   return (Date.now() - j.createdAt) / (1000 * 60 * 60 * 24);
 };
 
-export const trafficLight = (j: IJob) => {
+export const jobAgeTrafficLight = (j: IJob) => {
   const d = jobAgeDays(j);
   if (d < 2)
     return {
@@ -153,31 +176,81 @@ export const trafficLight = (j: IJob) => {
   };
 };
 
+export const jobStatusTrafficLight = (
+  j: IJob,
+  jigAssignments: IJigAssignment[],
+) => {
+  const status = stageLabel(j, jigAssignments);
+
+  switch (status) {
+    case "Dispatched":
+      return {
+        color: "#6b7280",
+        bg: "#f9fafb",
+        border: "#6b7280",
+        label: "Dispatched",
+      };
+    case "Ready to dispatch":
+      return {
+        color: "#2563eb",
+        bg: "#eff6ff",
+        border: "#2563eb",
+        label: "Ready",
+      };
+    case "WIP":
+      return {
+        color: "#d97706",
+        bg: "#fffbeb",
+        border: "#d97706",
+        label: "WIP",
+      };
+    case "Intake":
+    default:
+      return {
+        color: "#16a34a",
+        bg: "#f0fdf4",
+        border: "#16a34a",
+        label: "Intake",
+      };
+  }
+};
+
 export const isReady = (j: IJob, jigAssignments: IJigAssignment[]): boolean => {
   if (j.dispatchedAt || !j.poComplete) return false;
   const gs = jigAssignments.filter((g) => g.jobId === j.id);
   // Job must have at least one jig assignment to be ready for dispatch
   if (!gs.length) return false;
-  return gs.every((g) => g.status === 'CLEARED');
+  return gs.every((g) => g.status === "CLEARED");
 };
 
-export const stageLabel = (j: IJob, jigAssignments: IJigAssignment[]): string => {
+export const stageLabel = (
+  j: IJob,
+  jigAssignments: IJigAssignment[],
+): string => {
   if (j.dispatchedAt) return "Dispatched";
   if (isReady(j, jigAssignments)) return "Ready to dispatch";
-  if (jigsOf(j.id, jigAssignments).some((g) => g.status === 'ACTIVE')) return "WIP";
+  if (jigsOf(j.id, jigAssignments).some((g) => g.status === "ACTIVE"))
+    return "WIP";
   return "Intake";
 };
 
-export const stageBadge = (j: IJob, jigAssignments: IJigAssignment[]): string => {
+export const stageBadge = (
+  j: IJob,
+  jigAssignments: IJigAssignment[],
+): string => {
   if (j.dispatchedAt) return "b-done";
   if (isReady(j, jigAssignments)) return "b-dispatch";
-  if (jigsOf(j.id, jigAssignments).some((g) => g.status === 'ACTIVE')) return "b-jig";
+  if (jigsOf(j.id, jigAssignments).some((g) => g.status === "ACTIVE"))
+    return "b-jig";
   return "b-intake";
 };
 
 // ================ Customer Resolution ================ //
 
-export const resolveCustomer = (n: string, contacts: IContact[]): IContact | null => {
+export const resolveCustomer = (
+  n: string,
+  contacts: IContact[],
+): IContact | null => {
   if (!n || !contacts.length) return null;
   const trimmedName = n.trim();
   const searchTerm = trimmedName.toLowerCase();
@@ -209,8 +282,8 @@ export const resolveCustomer = (n: string, contacts: IContact[]): IContact | nul
     (x) =>
       searchTerm.includes(x.name.toLowerCase()) ||
       x.name.toLowerCase().includes(searchTerm) ||
-      x.alias?.some((alias) =>
-        searchTerm.includes(alias) || alias.includes(searchTerm)
+      x.alias?.some(
+        (alias) => searchTerm.includes(alias) || alias.includes(searchTerm),
       ),
   );
   if (c) {
