@@ -1,7 +1,12 @@
-'use client'
+"use client";
 
 import type { IJob, IJigAssignment } from "@/types/interfaces";
-import { stageLabel, trafficLight, isOnJig, getJobJigName } from "@/lib/helpers";
+import {
+  stageLabel,
+  trafficLight,
+  isOnJig,
+  getJobJigName,
+} from "@/lib/helpers";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +46,7 @@ export const JobCard: React.FC<JobCardProps> = ({
       onClick={onClick}
       className={cn(
         "border-2 mb-2.5 cursor-pointer active:scale-[0.98] transition-all hover:opacity-90",
-        cardColors
+        cardColors,
       )}
     >
       <CardContent className="p-3.5">
@@ -56,7 +61,9 @@ export const JobCard: React.FC<JobCardProps> = ({
                 </span>
               )}
             </div>
-            <div className="text-[13px] text-gray-600 mb-1">{job.customer_name}</div>
+            <div className="text-[13px] text-gray-600 mb-1">
+              {job.customer_name}
+            </div>
 
             {showArrivalTime && (
               <div className="text-xs text-gray-500">
@@ -93,15 +100,34 @@ export const JobCard: React.FC<JobCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
-          <span className="text-gray-700">
+        <div className="flex items-center gap-2 text-xs justify-between">
+          <span
+            className={`border rounded px-4 ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"}`}
+          >
             {job.plating === "gold" ? "Gold" : "Silver"}
           </span>
-          {job.stringsRequired && (
-            <span className="text-blue-700 flex items-center gap-1">
-              🎗️ Strings needed
-            </span>
-          )}
+          <div className="flex gap-2">
+            {job.stringsRequired && (
+              <span className="text-blue-700 flex items-center gap-1">
+                🎗️ Strings needed
+              </span>
+            )}
+            {job.isInternal && (
+              <span className="px-4 border rounded-full bg-blue-100">
+                Internal
+              </span>
+            )}
+            {job.freightRequested && (
+              <span className="px-4 border rounded-full bg-orange-100">
+                Freight
+              </span>
+            )}
+            {job.minCharge && (
+              <span className="px-4 border rounded-full bg-red-100">
+                Min-Charge
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
