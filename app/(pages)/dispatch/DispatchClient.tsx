@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useUpdateJob, useDispatchJob } from "@/hooks/useJobs";
-import { useJigAssignments, useDeleteJigAssignment } from "@/hooks/useJigAssignments";
+import {
+  useJigAssignments,
+  useDeleteJigAssignment,
+} from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 
 export default function DispatchClient() {
@@ -30,7 +33,8 @@ export default function DispatchClient() {
 
   // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
   const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
-  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } =
+    useJigAssignments(5000);
   const { data: settings, isLoading: settingsLoading } = useSettings();
 
   // Mutation hooks
@@ -50,7 +54,9 @@ export default function DispatchClient() {
   const [priceOverride, setPriceOverride] = useState("");
   const [freightCost, setFreightCost] = useState("0.00");
   const [showJobDetails, setShowJobDetails] = useState(false);
-  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">("FPN");
+  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
+    "FPN",
+  );
   const [selectedDownloads, setSelectedDownloads] = useState<string[]>([]);
 
   // Show loading state
@@ -65,7 +71,9 @@ export default function DispatchClient() {
     );
   }
 
-  const readyJobs = jobs.filter((j) => isReady(j, jigAssignments) && !j.dispatchedAt);
+  const readyJobs = jobs.filter(
+    (j) => isReady(j, jigAssignments) && !j.dispatchedAt,
+  );
   const dispatchedJobs = jobs
     .filter((j) => j.dispatchedAt && !j.fpnHidden)
     .sort((a, b) => (b.dispatchedAt || 0) - (a.dispatchedAt || 0));
@@ -92,7 +100,7 @@ export default function DispatchClient() {
           onError: () => {
             showToast("Failed to update job");
           },
-        }
+        },
       );
     }
   };
@@ -105,12 +113,14 @@ export default function DispatchClient() {
         ? "INTERNAL"
         : `${INV_PREFIX}-${new Date().getFullYear()}-${String(settings.invSeq).padStart(4, "0")}`;
 
-    const dispatchedJob = {
+    const dispatchedJob: IJob = {
       ...jobToDispatch,
       dispatchedAt: Date.now(),
       invoiceNumber,
       fpnDownloaded: false,
       csvDownloaded: false,
+      priceOverride: priceOverride ? parseFloat(priceOverride) : null,
+      freightCost: parseFloat(freightCost || "0"),
     };
 
     dispatchJobMutation.mutate(
@@ -123,7 +133,7 @@ export default function DispatchClient() {
         onError: () => {
           showToast("Failed to dispatch job");
         },
-      }
+      },
     );
   };
 
@@ -152,7 +162,9 @@ export default function DispatchClient() {
 
   const toggleSelectJob = (jobId: string) => {
     setSelectedDownloads((prev) =>
-      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+      prev.includes(jobId)
+        ? prev.filter((id) => id !== jobId)
+        : [...prev, jobId],
     );
   };
 
@@ -167,7 +179,9 @@ export default function DispatchClient() {
         const job = dispatchedJobs.find((j) => j.id === jobId);
         if (job) genFPN(job);
       });
-      showToast(`Downloaded ${selectedDownloads.length} FPN${selectedDownloads.length > 1 ? "s" : ""}`);
+      showToast(
+        `Downloaded ${selectedDownloads.length} FPN${selectedDownloads.length > 1 ? "s" : ""}`,
+      );
     } else {
       genBatchCSV(jobs, selectedDownloads, settings, jigAssignments);
       showToast("Batch CSV downloaded");
@@ -188,7 +202,7 @@ export default function DispatchClient() {
           onError: () => {
             showToast("Failed to remove job");
           },
-        }
+        },
       );
     }
   };
@@ -307,7 +321,10 @@ export default function DispatchClient() {
           {/* Job List */}
           <div className="border border-gray-200 rounded-b-lg divide-y">
             {dispatchedJobs.map((job) => (
-              <div key={job.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
+              <div
+                key={job.id}
+                className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50"
+              >
                 <input
                   type="checkbox"
                   checked={selectedDownloads.includes(job.id)}
@@ -319,9 +336,10 @@ export default function DispatchClient() {
                     {job.po_number}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {job.invoiceNumber} · {new Date(job.dispatchedAt!).toLocaleDateString("en-NZ", {
+                    {job.invoiceNumber} ·{" "}
+                    {new Date(job.dispatchedAt!).toLocaleDateString("en-NZ", {
                       day: "numeric",
-                      month: "short"
+                      month: "short",
                     })}
                   </div>
                 </div>
@@ -356,14 +374,18 @@ export default function DispatchClient() {
         </div>
       )}
 
-      <AlertDialog open={!!jobToSendBack} onOpenChange={(open) => !open && setJobToSendBack(null)}>
+      <AlertDialog
+        open={!!jobToSendBack}
+        onOpenChange={(open) => !open && setJobToSendBack(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-semibold">
               Send back — {jobToSendBack?.po_number}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base text-gray-600">
-              JIG links will be cleared. Job returns to active jobs for re-jigging.
+              JIG links will be cleared. Job returns to active jobs for
+              re-jigging.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
@@ -391,7 +413,9 @@ export default function DispatchClient() {
 
             {/* Job Info */}
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="font-bold text-xl mb-1">{jobToDispatch.po_number}</div>
+              <div className="font-bold text-xl mb-1">
+                {jobToDispatch.po_number}
+              </div>
               <div className="text-gray-600">{jobToDispatch.customer_name}</div>
             </div>
 
@@ -402,14 +426,19 @@ export default function DispatchClient() {
               </h3>
               <div className="space-y-3">
                 {jobToDispatch.parts.map((part, idx) => (
-                  <div key={idx} className="bg-white border border-gray-200 rounded-lg p-3">
+                  <div
+                    key={idx}
+                    className="bg-white border border-gray-200 rounded-lg p-3"
+                  >
                     <div className="flex justify-between items-start mb-1">
                       <div className="font-medium">{part.desc}</div>
                       <div className="font-semibold">×{part.qty}</div>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-500">{part.code}</div>
-                      <div className="text-gray-700">${(part.price * part.qty).toFixed(2)}</div>
+                      <div className="text-gray-700">
+                        ${(part.price * part.qty).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -426,7 +455,9 @@ export default function DispatchClient() {
                   <span>🔗</span>
                   <span>Check & edit job details</span>
                 </div>
-                <span className="text-gray-400">{showJobDetails ? "▲" : "▼"}</span>
+                <span className="text-gray-400">
+                  {showJobDetails ? "▲" : "▼"}
+                </span>
               </button>
 
               {showJobDetails && editedJob && (
@@ -440,7 +471,10 @@ export default function DispatchClient() {
                       type="text"
                       value={editedJob.po_number}
                       onChange={(e) =>
-                        setEditedJob({ ...editedJob, po_number: e.target.value })
+                        setEditedJob({
+                          ...editedJob,
+                          po_number: e.target.value,
+                        })
                       }
                       className="w-full"
                     />
@@ -449,13 +483,17 @@ export default function DispatchClient() {
                   {/* Contact Number */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Contact number <span className="text-gray-400">(optional)</span>
+                      Contact number{" "}
+                      <span className="text-gray-400">(optional)</span>
                     </label>
                     <Input
                       type="text"
                       value={editedJob.customer_contact || ""}
                       onChange={(e) =>
-                        setEditedJob({ ...editedJob, customer_contact: e.target.value })
+                        setEditedJob({
+                          ...editedJob,
+                          customer_contact: e.target.value,
+                        })
                       }
                       placeholder="e.g. 021 123 4567"
                       className="w-full"
@@ -471,7 +509,10 @@ export default function DispatchClient() {
                       type="text"
                       value={editedJob.plating || ""}
                       onChange={(e) =>
-                        setEditedJob({ ...editedJob, plating: e.target.value as TPlating })
+                        setEditedJob({
+                          ...editedJob,
+                          plating: e.target.value as TPlating,
+                        })
                       }
                       className="w-full"
                     />
@@ -499,12 +540,19 @@ export default function DispatchClient() {
                     </h4>
                     <div className="space-y-4">
                       {editedJob.parts.map((part, idx) => (
-                        <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div
+                          key={idx}
+                          className="bg-gray-50 rounded-lg p-4 space-y-3"
+                        >
                           <div className="font-medium">{part.code}</div>
-                          <div className="text-sm text-gray-600 mb-2">{part.desc}</div>
+                          <div className="text-sm text-gray-600 mb-2">
+                            {part.desc}
+                          </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="text-xs text-gray-600 mb-1 block">Qty</label>
+                              <label className="text-xs text-gray-600 mb-1 block">
+                                Qty
+                              </label>
                               <Input
                                 type="number"
                                 value={part.qty}
@@ -514,7 +562,10 @@ export default function DispatchClient() {
                                     ...part,
                                     qty: parseInt(e.target.value) || 0,
                                   };
-                                  setEditedJob({ ...editedJob, parts: newParts });
+                                  setEditedJob({
+                                    ...editedJob,
+                                    parts: newParts,
+                                  });
                                 }}
                                 min="0"
                                 className="w-full"
@@ -533,7 +584,10 @@ export default function DispatchClient() {
                                     ...part,
                                     price: parseFloat(e.target.value) || 0,
                                   };
-                                  setEditedJob({ ...editedJob, parts: newParts });
+                                  setEditedJob({
+                                    ...editedJob,
+                                    parts: newParts,
+                                  });
                                 }}
                                 step="0.01"
                                 min="0"
@@ -567,13 +621,16 @@ export default function DispatchClient() {
               {/* Parts Total */}
               <div className="bg-green-50 rounded-lg p-4 mb-3 flex justify-between items-center">
                 <div className="font-medium">Parts total</div>
-                <div className="font-bold text-lg">${calcPrice(jobToDispatch, settings).toFixed(2)}</div>
+                <div className="font-bold text-lg">
+                  ${calcPrice(jobToDispatch, settings).toFixed(2)}
+                </div>
               </div>
 
               {/* Price Override */}
               <div className="mb-3">
                 <label className="text-sm text-gray-600 mb-2 block">
-                  Price override ($) <span className="text-gray-400">optional</span>
+                  Price override ($){" "}
+                  <span className="text-gray-400">optional</span>
                 </label>
                 <Input
                   type="text"
@@ -602,10 +659,15 @@ export default function DispatchClient() {
 
               {/* Invoice Total */}
               <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
-                <div className="font-semibold">Invoice total (incl. freight)</div>
+                <div className="font-semibold">
+                  Invoice total (incl. freight)
+                </div>
                 <div className="font-bold text-xl">
-                  ${(
-                    (priceOverride ? parseFloat(priceOverride) : calcPrice(jobToDispatch, settings)) +
+                  $
+                  {(
+                    (priceOverride
+                      ? parseFloat(priceOverride)
+                      : calcPrice(jobToDispatch, settings)) +
                     parseFloat(freightCost || "0")
                   ).toFixed(2)}
                 </div>

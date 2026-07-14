@@ -295,9 +295,18 @@ export async function getItems() {
   })
 }
 
-export async function getItemsByCustomer(customer: string) {
+/**
+ * Get items for a specific customer
+ * Returns items where customer matches OR customer is empty (generic items)
+ */
+export async function getItemsByCustomer(customerAccount: string) {
   return await prisma.item.findMany({
-    where: { customer },
+    where: {
+      OR: [
+        { customer: customerAccount },
+        { customer: '' },
+      ],
+    },
     orderBy: {
       code: 'asc',
     },

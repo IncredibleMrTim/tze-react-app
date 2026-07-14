@@ -3,7 +3,7 @@ import type { IContact, IPart } from "@/types/interfaces";
 import { resolveCustomer } from "@/lib/helpers";
 import { callClaudeWithImage } from "@/lib/claude-api";
 import { matchScannedParts, type ScannedPart } from "@/lib/part-matcher";
-import { PO_SCAN_SYSTEM_PROMPT } from "@/constants/prompts";
+import { buildPOScanPrompt } from "@/lib/prompt-builder";
 import { getContacts, getItems } from "@/lib/db";
 
 interface POScanResult {
@@ -41,10 +41,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Build dynamic prompt with database rules
+    const systemPrompt = await buildPOScanPrompt();
+    console.log("📋 Using prompt with database rules");
+
     // Call Claude API to extract PO data (supports multi-page)
     const rawResponse = await callClaudeWithImage({
       base64DataArray,
-      systemPrompt: PO_SCAN_SYSTEM_PROMPT,
+      systemPrompt,
       maxTokens: 2500,
       apiKey,
     });

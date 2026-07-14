@@ -92,6 +92,7 @@ interface IntakeFormActions {
   setScanData: (data: ScanPOResponse | null) => void;
   setShowRawData: (show: boolean) => void;
   applyScanResult: (result: ScanPOResponse) => void;
+  setScanError: (error: string) => void;
 
   // Part search actions
   setPartSearchIndex: (index: number | null) => void;
@@ -200,7 +201,14 @@ export const useIntakeStore = create<IntakeStore>((set) => ({
       urgent: result.urgent || state.urgent,
       scanData: result,
       scanResult: `✓ Customer: ${result.customer?.name || result.customer_name || "Unknown"} → ${result.customer?.account || ""}\n${result.parts.filter((p: IPart) => p.price > 0).length} parts matched to inventory`,
+      scanning: false,
     })),
+  setScanError: (error) =>
+    set({
+      scanResult: `Error: ${error}`,
+      scanData: null,
+      scanning: false,
+    }),
 
   // Part search actions
   setPartSearchIndex: (partSearchIndex) => set({ partSearchIndex }),

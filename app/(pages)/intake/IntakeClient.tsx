@@ -1,6 +1,7 @@
 "use client";
 import { HiOutlineCamera, HiOutlineSparkles } from "react-icons/hi";
-import { useRef, useMemo } from "react";
+import { FiMail, FiPhone } from "react-icons/fi";
+import { useRef, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
 import {
   useJobs,
@@ -113,10 +114,9 @@ export default function IntakeClient() {
     addPartsPhotos,
     removePartsPhoto,
     setScanning,
-    setScanResult,
-    setScanData,
     setShowRawData,
     applyScanResult,
+    setScanError,
     setPartSearchIndex,
     setPartSearchTerm,
     updatePart,
@@ -135,6 +135,13 @@ export default function IntakeClient() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const partsPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // Clear form state when navigating away from this page
+  useEffect(() => {
+    return () => {
+      closeSheet();
+    };
+  }, [closeSheet]);
 
   const filteredCustomers = useMemo(
     () =>
@@ -204,7 +211,6 @@ export default function IntakeClient() {
     if (poPages.length === 0) return;
 
     setScanning(true);
-    setScanResult("");
 
     try {
       // Extract base64 data from all pages
@@ -226,16 +232,13 @@ export default function IntakeClient() {
 
       const result: ScanPOResponse = await response.json();
 
-      // Apply all scan results at once (reduces re-renders)
+      // Apply all scan results at once (includes setting scanning: false)
       applyScanResult(result);
       showToast("PO scanned successfully");
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      setScanResult(`Error: ${errorMessage}`);
-      setScanData(null);
+      setScanError(errorMessage);
       showToast("Scan failed: " + errorMessage);
-    } finally {
-      setScanning(false);
     }
   };
 
@@ -442,6 +445,15 @@ export default function IntakeClient() {
     setPartSearchTerm("");
   };
 
+  /**
+   * Filter items based on search term and customer restrictions
+   *
+   * Returns items that match the search term (in code or description) AND are
+   * allowed for the selected customer. For internal jobs, all items are allowed.
+   * Requires minimum 2 characters to search.
+   *
+   * @returns Filtered array of items matching search criteria
+   */
   const getFilteredItems = useMemo(() => {
     if (!partSearchTerm || partSearchTerm.length < 2) return [];
 
@@ -458,6 +470,18 @@ export default function IntakeClient() {
     });
   }, [partSearchTerm, ITEMS, customer, isInternal]);
 
+  /**
+   * Determine the current status of a job
+   *
+   * Status priority (highest to lowest):
+   * 1. "WIP" - Job is currently on a jig
+   * 2. "Dispatched" - Job has been sent to customer
+   * 3. "Ready" - Job is complete and ready for dispatch
+   * 4. "Intake" - Job is newly received (default)
+   *
+   * @param job - The job to check status for
+   * @returns Status string: "WIP" | "Dispatched" | "Ready" | "Intake"
+   */
   const getJobStatus = (job: IJob) => {
     if (isOnJig(job.id, jigAssignments)) return "WIP";
     if (job.dispatchedAt) return "Dispatched";
@@ -537,7 +561,7 @@ export default function IntakeClient() {
         <Button
           onClick={() => setShowSheet(true)}
           size="icon"
-          className="w-10 h-10 rounded-full"
+          className="w-8 h-8 rounded-full shadow-sm shadow-gray-400 border-black text-white"
           aria-label="Add new job"
         >
           <FiPlus size="20" />
@@ -583,7 +607,7 @@ export default function IntakeClient() {
               onClick={() => setCurrentJob(null)}
               className="flex items-center gap-1 text-primary font-medium text-sm"
             >
-              ← New Job
+              ← Back to Jobs
             </button>
             <div className="flex gap-2">
               <button
@@ -611,9 +635,8 @@ export default function IntakeClient() {
                 onClick={() => {
                   setEditingJobId(currentJob.id);
                   setCustomer(
-                    CONTACTS.find(
-                      (c) => c.name === currentJob.customer_name,
-                    ) || null,
+                    CONTACTS.find((c) => c.name === currentJob.customer_name) ||
+                      null,
                   );
                   setCustomerInput(currentJob.customer_name);
                   setPoNumber(currentJob.po_number);
@@ -644,35 +667,34 @@ export default function IntakeClient() {
               </button>
             </div>
           </div>
-
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-bold text-xl">{currentJob.po_number}</span>
-              {currentJob.urgent && (
-                <span className="flex items-center gap-1 text-sm font-medium text-red-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
-                  URGENT
-                </span>
+          <JobCard
+            job={currentJob}
+            jigAssignments={jigAssignments}
+            onClick={() => {}}
+            showJigStatus={true}
+          />
+          <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">
+            CONTACT
+          </h3>
+          <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-md mb-4">
+            <span className="flex items-center gap-2">
+              <FiMail />
+              {currentJob.customer_email ? (
+                <a
+                  href={`mailto: ${currentJob.customer_email}`}
+                  className="underline"
+                >
+                  {currentJob.customer_email}
+                </a>
+              ) : (
+                "No Provided"
               )}
-            </div>
-            <div className="text-base text-gray-700 mb-1">
-              {currentJob.customer_name}
-            </div>
-            {currentJob.customer_contact && (
-              <div className="flex items-center gap-1.5 text-gray-600 text-sm">
-                📞 {currentJob.customer_contact}
-              </div>
-            )}
-            <div className="flex gap-2 mt-3">
-              <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
-                {getJobStatus(currentJob)}
-              </span>
-              <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
-                {currentJob.plating === "gold" ? "Gold" : "Silver"}
-              </span>
-            </div>
+            </span>
+            <span className="flex items-center gap-2">
+              <FiPhone />
+              {currentJob.customer_contact || "Not Provided"}
+            </span>
           </div>
-
           {currentJob.parts.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -701,7 +723,6 @@ export default function IntakeClient() {
               ))}
             </div>
           )}
-
           {jobImages?.poPages && jobImages.poPages.length > 0 && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -739,7 +760,6 @@ export default function IntakeClient() {
               )}
             </div>
           )}
-
           {jobImages?.partsOnArrivalPhotos &&
             jobImages.partsOnArrivalPhotos.length > 0 && (
               <div className="mb-4">
@@ -779,16 +799,62 @@ export default function IntakeClient() {
                 )}
               </div>
             )}
-
           <div className="mb-4">
             <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
               JIG ASSIGNMENTS
             </h3>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-              No JIG assigned yet — assign from the JIG tab when loading.
-            </div>
+            {jigAssignments.filter((j) => j.jobId === currentJob.id).length >
+            0 ? (
+              <div className="space-y-2">
+                {jigAssignments
+                  .filter((j) => j.jobId === currentJob.id)
+                  .map((jig) => (
+                    <div
+                      key={jig.id}
+                      className="bg-white border border-gray-200 rounded-lg p-3"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-semibold text-sm">
+                          {jig.jigName}
+                        </div>
+                        <div
+                          className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            jig.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {jig.status}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {jig.pct}% of jig • Loaded{" "}
+                        {new Date(jig.loadedAt).toLocaleDateString("en-NZ", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </div>
+                      {jig.completedAt && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Completed{" "}
+                          {new Date(jig.completedAt).toLocaleDateString(
+                            "en-NZ",
+                            {
+                              day: "numeric",
+                              month: "short",
+                            },
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+                No JIG assigned yet — assign from the JIG tab when loading.
+              </div>
+            )}
           </div>
-
           {currentJob.partDescription && (
             <div className="mb-4">
               <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -799,7 +865,6 @@ export default function IntakeClient() {
               </div>
             </div>
           )}
-
           <div className="mb-4">
             <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
               JOB TIMELINE
@@ -828,7 +893,7 @@ export default function IntakeClient() {
       )}
 
       {showSheet && (
-        <Overlay onClose={() => setShowSheet(false)}>
+        <Overlay onClose={closeSheet}>
           <div className="px-4 pt-5">
             <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
             <h2 className="text-[17px] font-bold mb-4">Enter Job</h2>
@@ -1510,10 +1575,7 @@ export default function IntakeClient() {
 
             <div className="flex gap-3 pt-4 pb-4 border-t border-gray-200">
               <button
-                onClick={() => {
-                  handleResetForm();
-                  setShowSheet(false);
-                }}
+                onClick={closeSheet}
                 className="flex-1 bg-gray-100 text-gray-700 rounded-lg py-3 text-base font-medium hover:bg-gray-200"
               >
                 Cancel
