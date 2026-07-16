@@ -10,6 +10,7 @@ import {
 } from "@/lib/helpers";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 interface JobCardProps {
   job: IJob;
@@ -17,6 +18,9 @@ interface JobCardProps {
   onClick: () => void;
   showArrivalTime?: boolean;
   showJigStatus?: boolean;
+  isDispatch?: boolean;
+  onSendBack?: () => void;
+  isPending?: boolean;
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -25,6 +29,9 @@ export const JobCard: React.FC<JobCardProps> = ({
   onClick,
   showArrivalTime = false,
   showJigStatus = false,
+  isDispatch = false,
+  onSendBack,
+  isPending = false,
 }) => {
   const label = stageLabel(job, jigAssignments);
   const hasJig = isOnJig(job.id, jigAssignments);
@@ -119,10 +126,10 @@ export const JobCard: React.FC<JobCardProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-2 text-xs justify-between">
-          <div className={`flex pr-2 ${showPills ? "border-r" : "w-20"}`}>
+        <div className="flex gap-2 text-xs">
+          <div className={`flex pr-4 w-20 ${showPills ? "border-r" : ""}`}>
             <span
-              className={`flex items-center shadow border rounded px-4 text-center ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"} ${showPills ? "border-r" : "w-20 py-1"}`}
+              className={`flex items-center shadow border rounded px-4 py-1 text-center text-wrap ${job.plating === "gold" ? "bg-yellow-300" : "bg-gray-300"} ${showPills ? "border-r" : ""}`}
             >
               {job.plating === "gold" ? "Gold Plating" : "Silver Plating"}
             </span>
@@ -130,33 +137,47 @@ export const JobCard: React.FC<JobCardProps> = ({
           {showPills && (
             <div className="flex gap-2 flex-wrap">
               {job.isInternal && (
-                <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow">
+                <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Internal
                 </span>
               )}
               {job.freightRequested && (
-                <span className="px-4 border rounded-full bg-orange-200 text-[10px] md:text-xs shadow">
+                <span className="px-4 border rounded-full bg-orange-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Freight
                 </span>
               )}
               {job.requiresWeighing && (
-                <span className="px-4 border rounded-full bg-green-200 text-[10px] md:text-xs shadow">
+                <span className="px-4 border rounded-full bg-green-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Requires Weighing
                 </span>
               )}
               {job.minCharge && (
-                <span className="px-4 border rounded-full bg-red-200 text-[10px] md:text-xs shadow">
+                <span className="px-4 border rounded-full bg-red-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Min-Charge
                 </span>
               )}
               {job.stringsRequired && (
-                <span className="px-4 border rounded-full bg-purple-200 text-[10px] md:text-xs shadow">
+                <span className="px-4 border rounded-full bg-purple-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Strings needed
                 </span>
               )}
             </div>
           )}
         </div>
+
+        {isDispatch && (
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSendBack?.();
+            }}
+            className="w-full mt-3 bg-white border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm font-normal hover:bg-gray-50"
+            variant="outline"
+            disabled={isPending}
+          >
+            ↻ Send back for another run
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

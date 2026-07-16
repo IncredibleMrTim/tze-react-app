@@ -27,6 +27,7 @@ import {
   useDeleteJigAssignment,
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
+import { JobCard } from "@/components/JobCard";
 
 export default function DispatchClient() {
   const { showToast } = useToast();
@@ -217,53 +218,14 @@ export default function DispatchClient() {
             Ready to Dispatch ({readyJobs.length})
           </h3>
           {readyJobs.map((j) => (
-            <div
-              key={j.id}
+            <JobCard
+              job={j}
+              jigAssignments={jigAssignments}
               onClick={() => openDispatchModal(j)}
-              className="bg-white border-2 border-primary rounded-xl p-4 mb-2.5 active:bg-primary-bg cursor-pointer hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="font-bold text-lg mb-1">{j.po_number}</div>
-                  <div className="text-[15px] text-gray-700">
-                    {j.customer_name}
-                  </div>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-blue-500 text-white text-sm font-medium">
-                  Ready
-                </span>
-              </div>
-
-              <div className="flex gap-2 mb-3">
-                {j.plating && (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-gray-100 text-gray-700 capitalize">
-                    {j.plating}
-                  </span>
-                )}
-                {j.urgent && (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-red-100 text-red-800">
-                    Urgent
-                  </span>
-                )}
-                {j.isInternal && (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-sky-100 text-sky-800">
-                    Internal
-                  </span>
-                )}
-              </div>
-
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setJobToSendBack(j);
-                }}
-                className="w-full bg-white border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm font-normal hover:bg-gray-50"
-                variant="outline"
-                disabled={isPending}
-              >
-                ↻ Send back for another run
-              </Button>
-            </div>
+              isDispatch
+              onSendBack={() => setJobToSendBack(j)}
+              isPending={isPending}
+            />
           ))}
         </div>
       )}
