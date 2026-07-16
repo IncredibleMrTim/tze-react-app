@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getPoRules } from "@/actions/poRules";
+import { getPoRulesAction } from "@/actions/poRules";
 
 export async function GET() {
   try {
-    const result = await getPoRules();
+    const result = await getPoRulesAction();
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });

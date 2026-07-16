@@ -53,6 +53,7 @@ interface IntakeFormActions {
   setCurrentJob: (job: IJob | null) => void;
   setEditingJobId: (id: string | null) => void;
   openJobSheet: (job: IJob) => void;
+  openJobForEdit: (job: IJob, customer: IContact | null) => void;
   closeSheet: () => void;
 
   // Customer actions
@@ -146,6 +147,29 @@ export const useIntakeStore = create<IntakeStore>((set) => ({
   setCurrentJob: (currentJob) => set({ currentJob }),
   setEditingJobId: (editingJobId) => set({ editingJobId }),
   openJobSheet: (job) => set({ currentJob: job, showSheet: false }),
+  openJobForEdit: (job, customer) =>
+    set({
+      editingJobId: job.id,
+      customer,
+      customerInput: customer?.name || job.customer_name,
+      po_number: job.po_number,
+      contactNumber: job.customer_contact || "",
+      partsDescription: job.partDescription || "",
+      parts: job.parts,
+      plating: job.plating,
+      notes: job.notes,
+      urgent: job.urgent,
+      isInternal: job.isInternal,
+      flagged: job.flagged,
+      stringsRequired: job.stringsRequired,
+      stringCount: job.stringCount,
+      requiresWeighing: job.requiresWeighing,
+      freightRequested: job.freightRequested,
+      minCharge: job.minCharge,
+      poPages: [],
+      partsOnArrivalPhotos: [],
+      showSheet: true,
+    }),
   closeSheet: () => set({ ...initialState }),
 
   // Customer actions
