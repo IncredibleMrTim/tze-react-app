@@ -1,11 +1,12 @@
-import { prisma } from './prisma'
-import type { Job, JigAssignment } from '@prisma/client'
-import type { IJob, IJigAssignment, ISettings } from '@/types/interfaces'
+import { prisma } from "./prisma";
+import type { Job, JigAssignment } from "@prisma/client";
+import type { IJob, IJigAssignment, ISettings } from "@/types/interfaces";
+import { notify } from "./notify";
 
 // ============ BIGINT CONVERSION HELPERS ============
 
-type JobWithRelations = Job & { jigAssignments?: JigAssignment[] }
-type JigAssignmentWithRelations = JigAssignment & { job?: Job }
+type JobWithRelations = Job & { jigAssignments?: JigAssignment[] };
+type JigAssignmentWithRelations = JigAssignment & { job?: Job };
 
 // Convert BigInt fields to Number for JSON serialization
 function serializeJob(job: JobWithRelations): IJob {
@@ -13,17 +14,20 @@ function serializeJob(job: JobWithRelations): IJob {
     ...job,
     createdAt: Number(job.createdAt),
     dispatchedAt: job.dispatchedAt ? Number(job.dispatchedAt) : null,
-    jigAssignments: job.jigAssignments?.map(serializeJigAssignment) || undefined,
-  } as unknown as IJob
+    jigAssignments:
+      job.jigAssignments?.map(serializeJigAssignment) || undefined,
+  } as unknown as IJob;
 }
 
-function serializeJigAssignment(assignment: JigAssignmentWithRelations): IJigAssignment {
+function serializeJigAssignment(
+  assignment: JigAssignmentWithRelations,
+): IJigAssignment {
   return {
     ...assignment,
     completedAt: assignment.completedAt ? Number(assignment.completedAt) : null,
     loadedAt: Number(assignment.loadedAt),
     job: assignment.job ? serializeJob(assignment.job) : undefined,
-  } as unknown as IJigAssignment
+  } as unknown as IJigAssignment;
 }
 
 // ============ JOBS ============
@@ -64,33 +68,43 @@ export async function createJob(job: IJob) {
       fpnHidden: job.fpnHidden,
       csvDownloaded: job.csvDownloaded,
     },
-  })
+  });
 
-  return serializeJob(created)
+  const serialized = serializeJob(created);
+  await notify("job_updates", { type: "created", job: serialized });
+
+  return serialized;
 }
 
 export async function updateJob(jobId: string, job: Partial<IJob>) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateData: Record<string, any> = { ...job }
+  const updateData: Record<string, any> = { ...job };
 
   // Convert timestamp fields to BigInt if present
-  if (job.createdAt !== undefined) updateData.createdAt = BigInt(job.createdAt)
+  if (job.createdAt !== undefined) updateData.createdAt = BigInt(job.createdAt);
   if (job.dispatchedAt !== undefined) {
-    updateData.dispatchedAt = job.dispatchedAt ? BigInt(job.dispatchedAt) : null
+    updateData.dispatchedAt = job.dispatchedAt
+      ? BigInt(job.dispatchedAt)
+      : null;
   }
 
   const updated = await prisma.job.update({
     where: { id: jobId },
     data: updateData,
-  })
+  });
 
-  return serializeJob(updated)
+  const serialized = serializeJob(updated);
+  await notify("job_updates", { type: "updated", job: serialized });
+
+  return serialized;
 }
 
 export async function deleteJob(jobId: string) {
-  return await prisma.job.delete({
+  await prisma.job.delete({
     where: { id: jobId },
-  })
+  });
+
+  await notify("job_updates", { type: "deleted", jobId });
 }
 
 export async function getJobs() {
@@ -132,16 +146,18 @@ export async function getJobs() {
       jigAssignments: true,
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
-  })
+  });
 
   // Photos excluded from list query for performance - added as empty arrays
-  return jobs.map(job => serializeJob({
-    ...job,
-    poPages: [],
-    partsOnArrivalPhotos: [],
-  } as unknown as JobWithRelations))
+  return jobs.map((job) =>
+    serializeJob({
+      ...job,
+      poPages: [],
+      partsOnArrivalPhotos: [],
+    } as unknown as JobWithRelations),
+  );
 }
 
 export async function getJobById(jobId: string) {
@@ -150,11 +166,11 @@ export async function getJobById(jobId: string) {
     include: {
       jigAssignments: true,
     },
-  })
+  });
 
-  if (!job) return null
+  if (!job) return null;
 
-  return serializeJob(job)
+  return serializeJob(job);
 }
 
 // ============ JIG ASSIGNMENTS ============
@@ -167,38 +183,45 @@ export async function createJigAssignment(assignment: IJigAssignment) {
       jigName: assignment.jigName,
       pct: assignment.pct,
       pic: assignment.pic,
-      completedAt: assignment.completedAt ? BigInt(assignment.completedAt) : null,
+      completedAt: assignment.completedAt
+        ? BigInt(assignment.completedAt)
+        : null,
       loadedAt: BigInt(assignment.loadedAt),
       status: assignment.status,
     },
-  })
+  });
 
-  return serializeJigAssignment(created)
+  return serializeJigAssignment(created);
 }
 
-export async function updateJigAssignment(assignmentId: string, assignment: Partial<IJigAssignment>) {
+export async function updateJigAssignment(
+  assignmentId: string,
+  assignment: Partial<IJigAssignment>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateData: Record<string, any> = { ...assignment }
+  const updateData: Record<string, any> = { ...assignment };
 
   if (assignment.completedAt !== undefined) {
-    updateData.completedAt = assignment.completedAt ? BigInt(assignment.completedAt) : null
+    updateData.completedAt = assignment.completedAt
+      ? BigInt(assignment.completedAt)
+      : null;
   }
   if (assignment.loadedAt !== undefined) {
-    updateData.loadedAt = BigInt(assignment.loadedAt)
+    updateData.loadedAt = BigInt(assignment.loadedAt);
   }
 
   const updated = await prisma.jigAssignment.update({
     where: { id: assignmentId },
     data: updateData,
-  })
+  });
 
-  return serializeJigAssignment(updated)
+  return serializeJigAssignment(updated);
 }
 
 export async function deleteJigAssignment(assignmentId: string) {
   return await prisma.jigAssignment.delete({
     where: { id: assignmentId },
-  })
+  });
 }
 
 export async function getJigAssignments() {
@@ -206,26 +229,26 @@ export async function getJigAssignments() {
     include: {
       job: true,
     },
-  })
+  });
 
-  return assignments.map(serializeJigAssignment)
+  return assignments.map(serializeJigAssignment);
 }
 
 export async function deleteJigAssignmentsByJobId(jobId: string) {
   return await prisma.jigAssignment.deleteMany({
     where: { jobId },
-  })
+  });
 }
 
 export async function getActiveJigAssignments(jobId: string) {
   const assignments = await prisma.jigAssignment.findMany({
     where: {
       jobId,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     },
-  })
+  });
 
-  return assignments.map(serializeJigAssignment)
+  return assignments.map(serializeJigAssignment);
 }
 
 export async function getJobWithJigs(jobId: string) {
@@ -234,15 +257,15 @@ export async function getJobWithJigs(jobId: string) {
     include: {
       jigAssignments: {
         where: {
-          status: 'ACTIVE',
+          status: "ACTIVE",
         },
       },
     },
-  })
+  });
 
-  if (!job) return null
+  if (!job) return null;
 
-  return serializeJob(job)
+  return serializeJob(job);
 }
 
 // Simple helpers to check jig status
@@ -250,39 +273,39 @@ export async function isJobOnJig(jobId: string): Promise<boolean> {
   const count = await prisma.jigAssignment.count({
     where: {
       jobId,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     },
-  })
+  });
 
-  return count > 0
+  return count > 0;
 }
 
 export async function getJobJigName(jobId: string): Promise<string | null> {
   const assignment = await prisma.jigAssignment.findFirst({
     where: {
       jobId,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     },
     select: {
       jigName: true,
     },
-  })
+  });
 
-  return assignment?.jigName || null
+  return assignment?.jigName || null;
 }
 
 export async function getJobJigNames(jobId: string): Promise<string[]> {
   const assignments = await prisma.jigAssignment.findMany({
     where: {
       jobId,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     },
     select: {
       jigName: true,
     },
-  })
+  });
 
-  return assignments.map(a => a.jigName)
+  return assignments.map((a) => a.jigName);
 }
 
 // ============ ITEMS ============
@@ -290,9 +313,9 @@ export async function getJobJigNames(jobId: string): Promise<string[]> {
 export async function getItems() {
   return await prisma.item.findMany({
     orderBy: {
-      code: 'asc',
+      code: "asc",
     },
-  })
+  });
 }
 
 /**
@@ -302,30 +325,27 @@ export async function getItems() {
 export async function getItemsByCustomer(customerAccount: string) {
   return await prisma.item.findMany({
     where: {
-      OR: [
-        { customer: customerAccount },
-        { customer: '' },
-      ],
+      OR: [{ customer: customerAccount }, { customer: "" }],
     },
     orderBy: {
-      code: 'asc',
+      code: "asc",
     },
-  })
+  });
 }
 
 export async function searchItems(query: string) {
   return await prisma.item.findMany({
     where: {
       OR: [
-        { code: { contains: query, mode: 'insensitive' } },
-        { desc: { contains: query, mode: 'insensitive' } },
-        { customer: { contains: query, mode: 'insensitive' } },
+        { code: { contains: query, mode: "insensitive" } },
+        { desc: { contains: query, mode: "insensitive" } },
+        { customer: { contains: query, mode: "insensitive" } },
       ],
     },
     orderBy: {
-      code: 'asc',
+      code: "asc",
     },
-  })
+  });
 }
 
 // ============ CONTACTS ============
@@ -333,30 +353,30 @@ export async function searchItems(query: string) {
 export async function getContacts() {
   return await prisma.contact.findMany({
     orderBy: {
-      name: 'asc',
+      name: "asc",
     },
-  })
+  });
 }
 
 export async function getContactByAccount(account: string) {
   return await prisma.contact.findUnique({
     where: { account },
-  })
+  });
 }
 
 export async function searchContacts(query: string) {
   return await prisma.contact.findMany({
     where: {
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { account: { contains: query, mode: 'insensitive' } },
-        { email: { contains: query, mode: 'insensitive' } },
+        { name: { contains: query, mode: "insensitive" } },
+        { account: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
       ],
     },
     orderBy: {
-      name: 'asc',
+      name: "asc",
     },
-  })
+  });
 }
 
 // ============ SETTINGS ============
@@ -364,14 +384,14 @@ export async function searchContacts(query: string) {
 export async function getSettings() {
   let settings = await prisma.settings.findUnique({
     where: { id: 1 },
-  })
+  });
 
   if (!settings) {
     // Create default settings if not exists
     settings = await prisma.settings.create({
       data: {
         id: 1,
-        apiKey: process.env.ANTHROPIC_API_KEY || '',
+        apiKey: process.env.ANTHROPIC_API_KEY || "",
         silverKg: 300,
         goldKg: 400,
         silverJig: 1,
@@ -382,17 +402,17 @@ export async function getSettings() {
         stringRate: 1.5,
         invSeq: 1,
       },
-    })
+    });
   }
 
-  return settings
+  return settings;
 }
 
 export async function updateSettings(settings: Partial<ISettings>) {
   return await prisma.settings.update({
     where: { id: 1 },
     data: settings,
-  })
+  });
 }
 
 // ============ JIG PHOTOS ============
@@ -400,7 +420,7 @@ export async function updateSettings(settings: Partial<ISettings>) {
 export async function getJigPhoto(jigName: string) {
   return await prisma.jigPhoto.findUnique({
     where: { jigName },
-  })
+  });
 }
 
 export async function setJigPhoto(jigName: string, photoData: string) {
@@ -408,15 +428,21 @@ export async function setJigPhoto(jigName: string, photoData: string) {
     where: { jigName },
     update: { photoData },
     create: { jigName, photoData },
-  })
+  });
 }
 
 export async function getAllJigPhotos() {
-  const photos = await prisma.jigPhoto.findMany()
-  return photos.reduce((acc: Record<string, string>, photo: { jigName: string; photoData: string }) => {
-    acc[photo.jigName] = photo.photoData
-    return acc
-  }, {} as Record<string, string>)
+  const photos = await prisma.jigPhoto.findMany();
+  return photos.reduce(
+    (
+      acc: Record<string, string>,
+      photo: { jigName: string; photoData: string },
+    ) => {
+      acc[photo.jigName] = photo.photoData;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 }
 
 // ============ PO RULES ============
@@ -424,16 +450,16 @@ export async function getAllJigPhotos() {
 export async function getAllPoRules() {
   return await prisma.poRule.findMany({
     orderBy: {
-      priority: 'asc',
+      priority: "asc",
     },
-  })
+  });
 }
 
 export async function getPoRulesByAccount(contactAccount: string) {
   return await prisma.poRule.findMany({
     where: { contactAccount },
     orderBy: {
-      priority: 'asc',
+      priority: "asc",
     },
-  })
+  });
 }

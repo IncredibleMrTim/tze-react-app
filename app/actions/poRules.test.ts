@@ -28,7 +28,7 @@ describe("getPoRules", () => {
     const result = await getPoRulesAction();
 
     expect(result).toEqual({
-      error: "Failed to fetch PO rules",
+      error: "Failed to fetch PO Rules",
       success: false,
       rules: [],
     });

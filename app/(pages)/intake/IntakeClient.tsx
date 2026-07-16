@@ -27,7 +27,7 @@ export default function IntakeClient() {
     data: jobs = [],
     isLoading: jobsLoading,
     error: jobsError,
-  } = useJobs(10000);
+  } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments(5000);
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
@@ -37,8 +37,13 @@ export default function IntakeClient() {
   const error = jobsError;
 
   // Zustand store - all state
-  const { currentJob, setShowSheet, setCurrentJob, closeSheet, openJobForEdit } =
-    useIntakeStore();
+  const {
+    currentJob,
+    setShowSheet,
+    setCurrentJob,
+    closeSheet,
+    openJobForEdit,
+  } = useIntakeStore();
 
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
