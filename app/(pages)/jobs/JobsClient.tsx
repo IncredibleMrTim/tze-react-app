@@ -1,30 +1,25 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useToast } from "@/hooks/useToast";
-import { useJobs, useUpdateJob, useJobImages } from "@/hooks/useJobs";
+import { useJobs } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
+import { useContacts } from "@/hooks/useContacts";
+import { useIntakeStore } from "@/hooks/useIntakeStore";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady, stageLabel } from "@/lib/helpers";
-import { genFPN } from "@/lib/exports";
 import type { IJob } from "@/types/interfaces";
-import { Overlay } from "@/components/Overlay";
+import { EnterJobSheet } from "@/components/intake/EnterJobSheet";
 
 export default function JobsClient() {
-  const { showToast } = useToast();
-
   // React Query hooks - auto-refresh for real-time updates
   const { data: jobs = [], isLoading: jobsLoading } = useJobs(10000);
-  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
-  const updateJobMutation = useUpdateJob();
+  const { data: jigAssignments = [], isLoading: jigsLoading } =
+    useJigAssignments(5000);
+  const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
+  const { openJobForEdit } = useIntakeStore();
 
-  const isLoading = jobsLoading || jigsLoading;
-
-  const [viewingJob, setViewingJob] = useState<IJob | null>(null);
-
-  // Fetch images when viewing a job
-  const { data: jobImages } = useJobImages(viewingJob?.id || null);
+  const isLoading = jobsLoading || jigsLoading || contactsLoading;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -45,7 +40,10 @@ export default function JobsClient() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -53,10 +51,11 @@ export default function JobsClient() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle keyboard navigation
   const handleJobClickAction = (job: IJob) => {
-    // Show job details for all jobs
-    setViewingJob(job);
+    openJobForEdit(
+      job,
+      CONTACTS.find((c) => c.name === job.customer_name) || null,
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, predictions: IJob[]) => {
@@ -67,7 +66,9 @@ export default function JobsClient() {
       setSelectedIndex((prev) => (prev + 1) % predictions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + predictions.length) % predictions.length);
+      setSelectedIndex(
+        (prev) => (prev - 1 + predictions.length) % predictions.length,
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (predictions[selectedIndex]) {
@@ -102,8 +103,17 @@ export default function JobsClient() {
           p.desc.toLowerCase().includes(term),
       );
 
-      if (!matchesPO && !matchesCustomer && !matchesAccount && !matchesContact &&
-          !matchesEmail && !matchesInvoice && !matchesNotes && !matchesPartDesc && !matchesParts) {
+      if (
+        !matchesPO &&
+        !matchesCustomer &&
+        !matchesAccount &&
+        !matchesContact &&
+        !matchesEmail &&
+        !matchesInvoice &&
+        !matchesNotes &&
+        !matchesPartDesc &&
+        !matchesParts
+      ) {
         return false;
       }
     }
@@ -123,12 +133,14 @@ export default function JobsClient() {
     : [];
 
   const dispatched = filtered.filter((j) => j.dispatchedAt);
-  const ready = filtered.filter((j) => isReady(j, jigAssignments) && !j.dispatchedAt);
+  const ready = filtered.filter(
+    (j) => isReady(j, jigAssignments) && !j.dispatchedAt,
+  );
   const wip = filtered.filter(
     (j) =>
       !isReady(j, jigAssignments) &&
       !j.dispatchedAt &&
-      jigAssignments.some((g) => g.jobId === j.id && g.status === 'ACTIVE'),
+      jigAssignments.some((g) => g.jobId === j.id && g.status === "ACTIVE"),
   );
   const intake = filtered.filter(
     (j) => !j.dispatchedAt && !jigAssignments.some((g) => g.jobId === j.id),
@@ -194,13 +206,15 @@ export default function JobsClient() {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      job.dispatchedAt
-                        ? "bg-green-100 text-green-700"
-                        : job.poComplete
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        job.dispatchedAt
+                          ? "bg-green-100 text-green-700"
+                          : job.poComplete
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
                       {stageLabel(job, jigAssignments)}
                     </span>
                   </div>
@@ -359,287 +373,7 @@ export default function JobsClient() {
           />
         )}
 
-      {/* Job Viewer Modal */}
-      {viewingJob && (
-        <Overlay onClose={() => setViewingJob(null)}>
-          <div className="px-4 pt-5 pb-6">
-            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold">
-                Job Details {viewingJob.dispatchedAt && "(Dispatched)"}
-              </h2>
-              <button
-                onClick={() => setViewingJob(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className={`border-2 rounded-xl p-4 mb-4 ${
-              viewingJob.dispatchedAt
-                ? "bg-green-50 border-green-300"
-                : "bg-blue-50 border-blue-300"
-            }`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-xl">{viewingJob.po_number}</span>
-                {viewingJob.urgent && (
-                  <span className="flex items-center gap-1 text-sm font-medium text-red-700">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
-                    URGENT
-                  </span>
-                )}
-              </div>
-              <div className="text-base text-gray-700 mb-1">
-                {viewingJob.customer_name}
-              </div>
-              {viewingJob.customer_email && (
-                <div className="flex items-center gap-1.5 text-gray-600 text-sm mb-1">
-                  ✉️ {viewingJob.customer_email}
-                </div>
-              )}
-              {viewingJob.customer_contact && (
-                <div className="flex items-center gap-1.5 text-gray-600 text-sm">
-                  📞 {viewingJob.customer_contact}
-                </div>
-              )}
-              <div className="flex gap-2 mt-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  viewingJob.dispatchedAt
-                    ? "bg-green-600 text-white"
-                    : viewingJob.poComplete
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-600 text-white"
-                }`}>
-                  {stageLabel(viewingJob, jigAssignments)}
-                </span>
-                <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
-                  {viewingJob.plating === "gold" ? "Gold" : "Silver"}
-                </span>
-                {viewingJob.invoiceNumber && (
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                    Invoice: {viewingJob.invoiceNumber}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {viewingJob.parts.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS
-                </h3>
-                {viewingJob.parts.map((part, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="font-medium text-sm text-gray-900">
-                        {part.desc}
-                      </div>
-                      <div className="text-xs text-gray-500">{part.code}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-gray-900">
-                        ×{part.qty}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        ${part.price.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {jobImages?.poPages && jobImages.poPages.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PO DOCUMENT {jobImages.poPages.length > 1 && `(${jobImages.poPages.length} PAGES)`}
-                </h3>
-                {jobImages.poPages.length === 1 ? (
-                  <img
-                    src={jobImages.poPages[0]}
-                    alt="Purchase Order"
-                    className="w-full rounded-lg border border-gray-200"
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {jobImages.poPages.map((page, index) => (
-                      <div key={index}>
-                        <div className="text-xs text-gray-500 mb-1">
-                          Page {index + 1} of {jobImages.poPages.length}
-                        </div>
-                        <img
-                          src={page}
-                          alt={`PO page ${index + 1}`}
-                          className="w-full rounded-lg border border-gray-200"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {jobImages?.partsOnArrivalPhotos && jobImages.partsOnArrivalPhotos.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS ON ARRIVAL {jobImages.partsOnArrivalPhotos.length > 1 && `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
-                </h3>
-                {jobImages.partsOnArrivalPhotos.length === 1 ? (
-                  <img
-                    src={jobImages.partsOnArrivalPhotos[0]}
-                    alt="Parts on arrival"
-                    className="w-full rounded-lg border border-gray-200"
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {jobImages.partsOnArrivalPhotos.map((photo, index) => (
-                      <div key={index}>
-                        <div className="text-xs text-gray-500 mb-1">
-                          Photo {index + 1} of {jobImages.partsOnArrivalPhotos.length}
-                        </div>
-                        <img
-                          src={photo}
-                          alt={`Parts photo ${index + 1}`}
-                          className="w-full rounded-lg border border-gray-200"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {viewingJob.partDescription && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS DESCRIPTION
-                </h3>
-                <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                  {viewingJob.partDescription}
-                </div>
-              </div>
-            )}
-
-            {viewingJob.notes && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  NOTES
-                </h3>
-                <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                  {viewingJob.notes}
-                </div>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                TIMELINE
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">📬</span>
-                  <div>
-                    <div className="font-semibold text-sm text-gray-900">
-                      Arrived
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {new Date(viewingJob.createdAt).toLocaleDateString("en-NZ", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}{" "}
-                      {new Date(viewingJob.createdAt).toLocaleTimeString("en-NZ", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
-                    </div>
-                  </div>
-                </div>
-                {viewingJob.dispatchedAt && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">🚚</span>
-                    <div>
-                      <div className="font-semibold text-sm text-gray-900">
-                        Dispatched
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {new Date(viewingJob.dispatchedAt).toLocaleDateString("en-NZ", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}{" "}
-                        {new Date(viewingJob.dispatchedAt).toLocaleTimeString("en-NZ", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-4 border-t border-gray-200">
-              {viewingJob.dispatchedAt && (
-                <>
-                  <button
-                    onClick={() => {
-                      genFPN(viewingJob);
-                      showToast(`Downloaded FPN for ${viewingJob.po_number}`);
-                    }}
-                    className="w-full bg-blue-600 text-white rounded-lg py-3 text-base font-semibold hover:bg-blue-700"
-                  >
-                    📥 Download FPN
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`Remove ${viewingJob.po_number} from dispatch? This will move it back to Ready to Dispatch.`)) {
-                        updateJobMutation.mutate(
-                          {
-                            jobId: viewingJob.id,
-                            job: {
-                              dispatchedAt: null,
-                              invoiceNumber: null,
-                            },
-                          },
-                          {
-                            onSuccess: () => {
-                              setViewingJob(null);
-                              showToast("Job removed from dispatch");
-                            },
-                            onError: () => {
-                              showToast("Failed to remove from dispatch");
-                            },
-                          }
-                        );
-                      }
-                    }}
-                    disabled={updateJobMutation.isPending}
-                    className="w-full bg-orange-600 text-white rounded-lg py-3 text-base font-semibold hover:bg-orange-700 disabled:opacity-50"
-                  >
-                    ↩️ Remove from Dispatch
-                  </button>
-                </>
-              )}
-
-              <button
-                onClick={() => setViewingJob(null)}
-                className="w-full bg-gray-100 text-gray-700 rounded-lg py-3 text-base font-medium hover:bg-gray-200"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </Overlay>
-      )}
+      <EnterJobSheet />
     </div>
   );
 }

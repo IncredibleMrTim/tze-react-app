@@ -181,7 +181,6 @@ export const jobStatusTrafficLight = (
   jigAssignments: IJigAssignment[],
 ) => {
   const status = stageLabel(j, jigAssignments);
-
   switch (status) {
     case "Dispatched":
       return {
@@ -204,6 +203,7 @@ export const jobStatusTrafficLight = (
         border: "#d97706",
         label: "WIP",
       };
+
     case "Intake":
     default:
       return {

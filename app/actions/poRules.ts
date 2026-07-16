@@ -9,7 +9,7 @@ import type { IPoRulesResult } from "@/types/interfaces";
  *
  * @returns Result object containing rules array or error message
  */
-export async function getPoRules(): Promise<IPoRulesResult> {
+export async function getPoRulesAction(): Promise<IPoRulesResult> {
   try {
     const res = await getAllPoRules();
     return { success: true, rules: res };
