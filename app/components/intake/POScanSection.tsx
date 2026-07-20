@@ -6,6 +6,7 @@ import { useIntakeStore } from "@/hooks/useIntakeStore";
 import type { ScanPOResponse } from "@/api/scan-po/route";
 import { PO_COMPRESSION } from "@/lib/image-compression";
 import { loadCompressedImages } from "@/components/intake/load-images";
+import { blobUrlToBase64, toBlobProxyUrl } from "@/lib/blob-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,6 +48,7 @@ export function POScanSection() {
         files,
         PO_COMPRESSION,
         "PO page",
+        "po-pages",
       );
       oversizedMessages.forEach(showToast);
 
@@ -72,8 +74,8 @@ export function POScanSection() {
     setScanning(true);
 
     try {
-      // Extract base64 data from all pages
-      const base64DataArray = poPages.map((dataUrl) => dataUrl.split(",")[1]);
+      // Fetch each staged page back from Blob storage and re-encode as base64 for Claude
+      const base64DataArray = await Promise.all(poPages.map(blobUrlToBase64));
 
       // Call API route to scan all pages
       const response = await fetch("/api/scan-po", {
@@ -131,7 +133,7 @@ export function POScanSection() {
             // Single image - no carousel needed
             <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
               <img
-                src={poPages[0]}
+                src={toBlobProxyUrl(poPages[0])}
                 alt="PO Page"
                 className="w-full rounded-lg"
                 loading="lazy"
@@ -155,7 +157,7 @@ export function POScanSection() {
                   <CarouselItem key={index}>
                     <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
                       <img
-                        src={page}
+                        src={toBlobProxyUrl(page)}
                         alt={`PO Page ${index + 1}`}
                         className="w-full rounded-lg"
                         loading="lazy"

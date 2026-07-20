@@ -3,6 +3,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState, type ReactNode } from 'react'
+import { useJobSocket } from '../hooks/useJobSocket'
+
+function JobSocketListener() {
+  useJobSocket()
+  return null
+}
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -24,6 +30,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <JobSocketListener />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

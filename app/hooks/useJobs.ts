@@ -60,7 +60,6 @@ export function useJobs(refetchInterval = 10000) {
   return useQuery({
     queryKey: ["jobs"],
     queryFn: fetchJobs,
-
     refetchInterval, // Auto-refresh every 10 seconds by default
     staleTime: 5000, // Consider fresh for 5 seconds
     retry: 2, // Only retry twice instead of default 3

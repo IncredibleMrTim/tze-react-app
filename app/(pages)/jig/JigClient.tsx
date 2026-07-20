@@ -33,6 +33,8 @@ import {
   useCompleteJig
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
+import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
+import { uploadImageToBlob, toBlobProxyUrl } from "@/lib/blob-upload";
 
 export default function JigClient() {
   const { showToast } = useToast();
@@ -48,6 +50,8 @@ export default function JigClient() {
   const deleteAssignmentMutation = useDeleteJigAssignment();
   const completeJigMutation = useCompleteJig();
   const updateJobMutation = useUpdateJob();
+  const { data: jigPhotos = {} } = useJigPhotos();
+  const setJigPhotoMutation = useSetJigPhoto();
 
   // Generate jigs list from settings
   const jigsList = useMemo(() => {
@@ -69,7 +73,7 @@ export default function JigClient() {
     useState<IJob | null>(null);
   const [assignmentPercentage, setAssignmentPercentage] = useState("25");
   const [poComplete, setPoComplete] = useState(false);
-  const [uploadedJigPhoto, setUploadedJigPhoto] = useState<string | null>(null);
+  const [isUploadingJigPhoto, setIsUploadingJigPhoto] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
@@ -183,13 +187,21 @@ export default function JigClient() {
     }
   };
 
-  const handlePhotoUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadedJigPhoto(reader.result as string);
+  const handlePhotoUpload = async (file: File) => {
+    if (!selectedJig) return;
+
+    setIsUploadingJigPhoto(true);
+    try {
+      const pathname = `jigs/${selectedJig}.jpg`;
+      const url = await uploadImageToBlob(file, pathname);
+      await setJigPhotoMutation.mutateAsync({ jigName: selectedJig, photoUrl: url });
       showToast("Photo uploaded");
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Failed to upload jig photo:", error);
+      showToast("Failed to upload photo");
+    } finally {
+      setIsUploadingJigPhoto(false);
+    }
   };
 
   const handleRemoveClick = (assignmentId: string, e: React.MouseEvent) => {
@@ -413,10 +425,12 @@ export default function JigClient() {
                 if (file) handlePhotoUpload(file);
               }}
             />
-            {uploadedJigPhoto ? (
+            {isUploadingJigPhoto ? (
+              <p className="text-gray-500">Uploading...</p>
+            ) : jigPhotos[selectedJig] ? (
               <div className="relative w-full aspect-video">
                 <Image
-                  src={uploadedJigPhoto}
+                  src={toBlobProxyUrl(jigPhotos[selectedJig])}
                   alt="Loaded JIG"
                   fill
                   className="object-cover rounded"
