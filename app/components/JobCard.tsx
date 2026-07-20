@@ -4,8 +4,7 @@ import type { IJob, IJigAssignment } from "@/types/interfaces";
 import {
   stageLabel,
   jobAgeTrafficLight,
-  isOnJig,
-  getJobJigName,
+  getActiveJigs,
   jobStatusTrafficLight,
 } from "@/lib/helpers";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,8 +33,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   isPending = false,
 }) => {
   const label = stageLabel(job, jigAssignments);
-  const hasJig = isOnJig(job.id, jigAssignments);
-  const jigName = getJobJigName(job.id, jigAssignments);
+  const activeJigs = getActiveJigs(job.id, jigAssignments);
 
   // Traffic light colors based on age and status
   const ageColors = jobAgeTrafficLight(job);
@@ -113,13 +111,19 @@ export const JobCard: React.FC<JobCardProps> = ({
             )}
 
             <div className="flex justify-between w-full">
-              {showJigStatus && (
-                <div className="text-xs  my-1 w-full">
-                  {hasJig && (
-                    <div className="flex gap-2 items-center border p-2 rounded bg-white shadow">
-                      <span>{jigName}</span>
+              {showJigStatus && activeJigs.length > 0 && (
+                <div className="text-xs my-1 w-full space-y-1">
+                  {activeJigs.map((assignment) => (
+                    <div
+                      key={assignment.id}
+                      className="flex gap-2 items-center border p-2 rounded bg-white shadow"
+                    >
+                      <span>
+                        {assignment.jigName}: {assignment.pct}% - (Loaded:{" "}
+                        {new Date(assignment.loadedAt).toLocaleDateString()})
+                      </span>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>

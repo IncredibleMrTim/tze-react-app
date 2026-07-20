@@ -219,6 +219,7 @@ export default function DispatchClient() {
           </h3>
           {readyJobs.map((j) => (
             <JobCard
+              key={j.id}
               job={j}
               jigAssignments={jigAssignments}
               onClick={() => openDispatchModal(j)}

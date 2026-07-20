@@ -445,6 +445,30 @@ export async function getAllJigPhotos() {
   );
 }
 
+// ============ JIG REWORK ============
+
+export async function setJigRework(jigName: string, isRework: boolean) {
+  return await prisma.jigRework.upsert({
+    where: { jigName },
+    update: { isRework },
+    create: { jigName, isRework },
+  });
+}
+
+export async function getAllJigRework() {
+  const rows = await prisma.jigRework.findMany();
+  return rows.reduce(
+    (
+      acc: Record<string, boolean>,
+      row: { jigName: string; isRework: boolean },
+    ) => {
+      acc[row.jigName] = row.isRework;
+      return acc;
+    },
+    {} as Record<string, boolean>,
+  );
+}
+
 // ============ PO RULES ============
 
 export async function getAllPoRules() {
