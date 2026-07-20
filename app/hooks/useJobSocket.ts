@@ -12,7 +12,9 @@ export function useJobSocket() {
     let reconnectDelay = 1000;
 
     function connect() {
-      socket = new WebSocket(`${location.origin.replace("http", "ws")}/api/ws`);
+      const bypassToken = process.env.NEXT_PUBLIC_WS_PROTECTION_BYPASS;
+      const bypassQuery = bypassToken ? `?x-vercel-protection-bypass=${bypassToken}` : "";
+      socket = new WebSocket(`${location.origin.replace("http", "ws")}/api/ws${bypassQuery}`);
 
       socket.onmessage = (event) => {
         const { type, job, jobId } = JSON.parse(event.data);
