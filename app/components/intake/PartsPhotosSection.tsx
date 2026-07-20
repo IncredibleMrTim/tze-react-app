@@ -33,6 +33,7 @@ export function PartsPhotosSection() {
         files,
         PARTS_COMPRESSION,
         "Parts photo",
+        "parts-photos",
       );
       oversizedMessages.forEach(showToast);
 
