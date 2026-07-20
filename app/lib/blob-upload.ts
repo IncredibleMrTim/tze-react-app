@@ -30,6 +30,15 @@ export function toBlobProxyUrl(blobUrl: string): string {
 }
 
 /**
+ * Build the URL to fetch a private Blob-stored image via a short-lived
+ * presigned URL, redirecting the browser straight to the Blob CDN instead of
+ * streaming bytes through our own server.
+ */
+export function toSignedImageUrl(blobUrl: string): string {
+  return `/api/blob-signed-image?url=${encodeURIComponent(blobUrl)}`;
+}
+
+/**
  * Fetch a Blob-stored image back down and re-encode it as a base64 data URL.
  * Used where we still need raw bytes client-side (e.g. sending to Claude for OCR).
  */
