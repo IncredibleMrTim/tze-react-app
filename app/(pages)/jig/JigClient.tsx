@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
 import { jigUsed } from "@/lib/helpers";
 import { generateJigsList } from "@/constants/settings.const";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Overlay } from "@/components/Overlay";
-import { LuTriangleAlert, LuCamera } from "react-icons/lu";
+import { LuCamera } from "react-icons/lu";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useUpdateJob } from "@/hooks/useJobs";
 import {
