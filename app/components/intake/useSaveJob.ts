@@ -56,23 +56,6 @@ export function useSaveJob() {
       return;
     }
 
-    // Validate data size to prevent mobile issues
-    const totalImages = [...poPages, ...partsOnArrivalPhotos];
-    const estimatedSizeMB = totalImages.reduce((total, img) => {
-      return total + (img.length * 0.75) / (1024 * 1024); // base64 to bytes to MB
-    }, 0);
-
-    if (estimatedSizeMB > 10) {
-      showToast(
-        `Images too large (${estimatedSizeMB.toFixed(1)}MB). Please use fewer photos.`,
-      );
-      return;
-    }
-
-    console.log(
-      `Job data size: ${estimatedSizeMB.toFixed(2)}MB, ${totalImages.length} images`,
-    );
-
     if (editingJobId) {
       const existingJob = jobs.find((j) => j.id === editingJobId);
       if (!existingJob) return;
