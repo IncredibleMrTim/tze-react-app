@@ -9,10 +9,12 @@ export async function uploadImageToBlob(
   pathname: string,
 ): Promise<string> {
   const body = typeof image === "string" ? await (await fetch(image)).blob() : image;
+  const bypassToken = process.env.NEXT_PUBLIC_WS_PROTECTION_BYPASS;
 
   const blob = await upload(pathname, body, {
     access: "public",
     handleUploadUrl: "/api/upload",
+    headers: bypassToken ? { "x-vercel-protection-bypass": bypassToken } : undefined,
   });
 
   return blob.url;
