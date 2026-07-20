@@ -6,7 +6,7 @@ import { useIntakeStore } from "@/hooks/useIntakeStore";
 import type { ScanPOResponse } from "@/api/scan-po/route";
 import { PO_COMPRESSION } from "@/lib/image-compression";
 import { loadCompressedImages } from "@/components/intake/load-images";
-import { blobUrlToBase64 } from "@/lib/blob-upload";
+import { blobUrlToBase64, toBlobProxyUrl } from "@/lib/blob-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,7 +133,7 @@ export function POScanSection() {
             // Single image - no carousel needed
             <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
               <img
-                src={poPages[0]}
+                src={toBlobProxyUrl(poPages[0])}
                 alt="PO Page"
                 className="w-full rounded-lg"
                 loading="lazy"
@@ -157,7 +157,7 @@ export function POScanSection() {
                   <CarouselItem key={index}>
                     <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
                       <img
-                        src={page}
+                        src={toBlobProxyUrl(page)}
                         alt={`PO Page ${index + 1}`}
                         className="w-full rounded-lg"
                         loading="lazy"

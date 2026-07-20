@@ -6,6 +6,7 @@ import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { toBlobProxyUrl } from "@/lib/blob-upload";
 import type { IJob } from "@/types/interfaces";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -280,7 +281,7 @@ export default function IntakeClient() {
               </h3>
               {jobImages.poPages.length === 1 ? (
                 <img
-                  src={jobImages.poPages[0]}
+                  src={toBlobProxyUrl(jobImages.poPages[0])}
                   alt="PO Document"
                   className="w-full rounded-lg border border-gray-200"
                 />
@@ -291,7 +292,7 @@ export default function IntakeClient() {
                       <CarouselItem key={index}>
                         <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
                           <img
-                            src={page}
+                            src={toBlobProxyUrl(page)}
                             alt={`PO Page ${index + 1}`}
                             className="w-full rounded-lg"
                           />
@@ -318,7 +319,7 @@ export default function IntakeClient() {
                 </h3>
                 {jobImages.partsOnArrivalPhotos.length === 1 ? (
                   <img
-                    src={jobImages.partsOnArrivalPhotos[0]}
+                    src={toBlobProxyUrl(jobImages.partsOnArrivalPhotos[0])}
                     alt="Parts on arrival"
                     className="w-full rounded-lg border border-gray-200"
                   />
@@ -329,7 +330,7 @@ export default function IntakeClient() {
                         <CarouselItem key={index}>
                           <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
                             <img
-                              src={photo}
+                              src={toBlobProxyUrl(photo)}
                               alt={`Parts photo ${index + 1}`}
                               className="w-full rounded-lg"
                             />

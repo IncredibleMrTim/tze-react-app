@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/useToast";
 import { useIntakeStore } from "@/hooks/useIntakeStore";
 import { PARTS_COMPRESSION } from "@/lib/image-compression";
 import { loadCompressedImages } from "@/components/intake/load-images";
+import { toBlobProxyUrl } from "@/lib/blob-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,7 +81,7 @@ export function PartsPhotosSection() {
           {partsOnArrivalPhotos.length === 1 ? (
             <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
               <img
-                src={partsOnArrivalPhotos[0]}
+                src={toBlobProxyUrl(partsOnArrivalPhotos[0])}
                 alt="Parts Photo"
                 className="w-full rounded-lg"
                 loading="lazy"
@@ -102,7 +103,7 @@ export function PartsPhotosSection() {
                   <CarouselItem key={index}>
                     <div className="relative w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
                       <img
-                        src={photo}
+                        src={toBlobProxyUrl(photo)}
                         alt={`Parts Photo ${index + 1}`}
                         className="w-full rounded-lg"
                         loading="lazy"

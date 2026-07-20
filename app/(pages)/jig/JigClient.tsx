@@ -34,7 +34,7 @@ import {
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
-import { uploadImageToBlob } from "@/lib/blob-upload";
+import { uploadImageToBlob, toBlobProxyUrl } from "@/lib/blob-upload";
 
 export default function JigClient() {
   const { showToast } = useToast();
@@ -430,7 +430,7 @@ export default function JigClient() {
             ) : jigPhotos[selectedJig] ? (
               <div className="relative w-full aspect-video">
                 <Image
-                  src={jigPhotos[selectedJig]}
+                  src={toBlobProxyUrl(jigPhotos[selectedJig])}
                   alt="Loaded JIG"
                   fill
                   className="object-cover rounded"

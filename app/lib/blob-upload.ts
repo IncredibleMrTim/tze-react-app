@@ -12,7 +12,7 @@ export async function uploadImageToBlob(
   const bypassToken = process.env.NEXT_PUBLIC_WS_PROTECTION_BYPASS;
 
   const blob = await upload(pathname, body, {
-    access: "public",
+    access: "private",
     handleUploadUrl: "/api/upload",
     headers: bypassToken ? { "x-vercel-protection-bypass": bypassToken } : undefined,
   });
@@ -21,11 +21,20 @@ export async function uploadImageToBlob(
 }
 
 /**
+ * Build the URL to fetch a private Blob-stored image through our own
+ * authenticated proxy route, since private blob URLs aren't fetchable
+ * directly from the browser.
+ */
+export function toBlobProxyUrl(blobUrl: string): string {
+  return `/api/blob-image?url=${encodeURIComponent(blobUrl)}`;
+}
+
+/**
  * Fetch a Blob-stored image back down and re-encode it as a base64 data URL.
  * Used where we still need raw bytes client-side (e.g. sending to Claude for OCR).
  */
 export async function blobUrlToBase64(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetch(toBlobProxyUrl(url));
   const blob = await response.blob();
 
   return new Promise<string>((resolve, reject) => {
