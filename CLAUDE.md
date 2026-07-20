@@ -123,7 +123,7 @@ const item = items.find(x => x.code === code);
 ### Commits
 
 - Follow conventional commits: `type(scope): description`
-- Types: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`
+- Types: `feature`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`
 - Keep commits atomic and focused
 - commit messages should always been in lower case except scope
 - Reference ticket numbers in commit body if applicable
