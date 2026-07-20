@@ -34,6 +34,7 @@ output
 *.njsproj
 *.sln
 *.sw?
+package-lock.json
 
 /generated/prisma
 .vercel

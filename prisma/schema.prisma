@@ -136,6 +136,19 @@ model JigPhoto {
   @@index([jigName])
 }
 
+// Jig Rework flag — marks the unfilled remainder of a jig as rework so it
+// can be completed below 100% loaded. Reset to false whenever the jig is
+// marked complete, so the next load cycle starts clean.
+model JigRework {
+  id        String   @id @default(cuid())
+  jigName   String   @unique
+  isRework  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jigName])
+}
+
 // PO Scanning Rules (customer-specific PO scanning configurations)
 model PoRule {
   id             Int      @id @default(autoincrement())

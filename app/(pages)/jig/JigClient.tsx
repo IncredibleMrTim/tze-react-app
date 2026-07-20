@@ -28,11 +28,12 @@ import {
   useJigAssignments,
   useCreateJigAssignment,
   useUpdateJigAssignment,
-  useDeleteJigAssignment,
+  useRemoveJigAssignment,
   useCompleteJig,
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
+import { useJigRework, useSetJigRework } from "@/hooks/useJigRework";
 import { uploadImageToBlob, toSignedImageUrl } from "@/lib/blob-upload";
 import { JobCard } from "@/components/JobCard";
 
@@ -48,11 +49,13 @@ export default function JigClient() {
   // Mutation hooks
   const createAssignmentMutation = useCreateJigAssignment();
   const updateAssignmentMutation = useUpdateJigAssignment();
-  const deleteAssignmentMutation = useDeleteJigAssignment();
+  const removeAssignmentMutation = useRemoveJigAssignment();
   const completeJigMutation = useCompleteJig();
   const updateJobMutation = useUpdateJob();
   const { data: jigPhotos = {} } = useJigPhotos();
   const setJigPhotoMutation = useSetJigPhoto();
+  const { data: jigRework = {} } = useJigRework();
+  const setJigReworkMutation = useSetJigRework();
 
   // Generate jigs list from settings
   const jigsList = useMemo(() => {
@@ -63,7 +66,7 @@ export default function JigClient() {
   const isPending =
     createAssignmentMutation.isPending ||
     updateAssignmentMutation.isPending ||
-    deleteAssignmentMutation.isPending ||
+    removeAssignmentMutation.isPending ||
     completeJigMutation.isPending ||
     updateJobMutation.isPending;
 
@@ -94,12 +97,19 @@ export default function JigClient() {
 
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  const isSelectedJigRework = selectedJig ? (jigRework[selectedJig] ?? false) : false;
+
   const availableJobs = jobs.filter((j) => {
     if (j.dispatchedAt) return false;
-    const isOnJig = jigAssignments.some(
-      (g) => g.jobId === j.id && g.status === "ACTIVE",
+    // Once every part on the PO has been processed there's nothing left to jig
+    if (j.poComplete) return false;
+    // Still allow it to be added elsewhere, just not a second time to the
+    // same jig it's already loaded on
+    const isOnSelectedJig = jigAssignments.some(
+      (g) =>
+        g.jobId === j.id && g.jigName === selectedJig && g.status === "ACTIVE",
     );
-    return !isOnJig;
+    return !isOnSelectedJig;
   });
 
   const getJigJobs = (jigName: string) => {
@@ -220,11 +230,9 @@ export default function JigClient() {
   const handleConfirmRemove = (assignmentId: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Find the assignment
-    const assignment = jigAssignments.find((g) => g.id === assignmentId);
-    if (!assignment) return;
-
-    deleteAssignmentMutation.mutate(assignment.jobId, {
+    // Only remove this one assignment — a job can be spread across several
+    // jigs, so removing it from one shouldn't touch its other jig links
+    removeAssignmentMutation.mutate(assignmentId, {
       onSuccess: () => {
         showToast("Job removed from JIG");
         setConfirmingRemoveId(null);
@@ -245,7 +253,7 @@ export default function JigClient() {
     if (!selectedJig) return;
 
     const used = jigUsed(selectedJig, jigAssignments);
-    if (used < 100) {
+    if (used < 100 && !isSelectedJigRework) {
       setIncompleteJigInfo({
         name: selectedJig,
         percent: Math.round(used),
@@ -513,6 +521,32 @@ export default function JigClient() {
               })}
             </div>
           )}
+          <div className="border border-gray-300 rounded-lg p-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900">Rework</div>
+                <div className="text-xs text-gray-500">
+                  Remainder of Jig is Rework - can be marked as complete.
+                </div>
+              </div>
+              <Switch
+                checked={isSelectedJigRework}
+                onCheckedChange={(checked) =>
+                  setJigReworkMutation.mutate(
+                    {
+                      jigName: selectedJig,
+                      isRework: checked,
+                    },
+                    {
+                      onError: () => showToast("Failed to update rework status"),
+                    },
+                  )
+                }
+                className="ml-3"
+                aria-label="Toggle rework"
+              />
+            </div>
+          </div>
 
           <Button
             onClick={handleAddJobClick}
@@ -528,7 +562,7 @@ export default function JigClient() {
             onClick={handleCompleteJigClick}
             disabled={isPending}
             className={`w-full h-12 md:h-14 text-sm md:text-lg font-semibold ${
-              jigUsed(selectedJig, jigAssignments) < 100
+              jigUsed(selectedJig, jigAssignments) < 100 && !isSelectedJigRework
                 ? "bg-gray-300 text-gray-500 hover:bg-gray-400"
                 : "bg-emerald-600 hover:bg-emerald-700"
             }`}
@@ -593,6 +627,24 @@ export default function JigClient() {
                     {selectedJobForAssignment.customer_name}
                   </h3>
                 </div>
+
+                {(() => {
+                  const otherAssignments = jigAssignments.filter(
+                    (g) =>
+                      g.jobId === selectedJobForAssignment.id &&
+                      g.status === "ACTIVE",
+                  );
+                  if (otherAssignments.length === 0) return null;
+                  return (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-sm">
+                      Already loaded on{" "}
+                      {otherAssignments
+                        .map((g) => `${g.jigName} (${g.pct}%)`)
+                        .join(", ")}
+                      .
+                    </div>
+                  );
+                })()}
 
                 <div>
                   <label className="text-sm text-gray-600 mb-2 block">
