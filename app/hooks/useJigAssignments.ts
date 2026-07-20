@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { completeJigAction, clearJobJigsAction } from '@/actions/jigs'
+import { completeJigAction, clearJobJigsAction, deleteJigAssignmentAction } from '@/actions/jigs'
 import type { IJigAssignment } from '@/types/interfaces'
 
 /**
@@ -145,6 +145,41 @@ export function useDeleteJigAssignment() {
 }
 
 /**
+ * Hook to remove a single jig assignment (used when a job is spread across
+ * multiple jigs and only one of them should be removed)
+ */
+export function useRemoveJigAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (assignmentId: string) => deleteJigAssignmentAction(assignmentId),
+
+    onMutate: async (assignmentId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['jig-assignments'] })
+
+      const previousAssignments = queryClient.getQueryData<IJigAssignment[]>(['jig-assignments'])
+
+      queryClient.setQueryData<IJigAssignment[]>(['jig-assignments'], (old) => {
+        return old ? old.filter((a) => a.id !== assignmentId) : []
+      })
+
+      return { previousAssignments }
+    },
+
+    onError: (_error, _assignmentId, context) => {
+      if (context?.previousAssignments) {
+        queryClient.setQueryData(['jig-assignments'], context.previousAssignments)
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['jig-assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    },
+  })
+}
+
+/**
  * Hook to mark a jig as complete
  */
 export function useCompleteJig() {
@@ -155,8 +190,10 @@ export function useCompleteJig() {
 
     onMutate: async (jigName: string) => {
       await queryClient.cancelQueries({ queryKey: ['jig-assignments'] })
+      await queryClient.cancelQueries({ queryKey: ['jig-rework'] })
 
       const previousAssignments = queryClient.getQueryData<IJigAssignment[]>(['jig-assignments'])
+      const previousRework = queryClient.getQueryData<Record<string, boolean>>(['jig-rework'])
 
       const now = Date.now()
       queryClient.setQueryData<IJigAssignment[]>(['jig-assignments'], (old) => {
@@ -169,18 +206,28 @@ export function useCompleteJig() {
           : []
       })
 
-      return { previousAssignments }
+      // Rework is reset server-side once the jig is completed
+      queryClient.setQueryData<Record<string, boolean>>(['jig-rework'], (old = {}) => ({
+        ...old,
+        [jigName]: false,
+      }))
+
+      return { previousAssignments, previousRework }
     },
 
     onError: (_error, _jigName, context) => {
       if (context?.previousAssignments) {
         queryClient.setQueryData(['jig-assignments'], context.previousAssignments)
       }
+      if (context?.previousRework) {
+        queryClient.setQueryData(['jig-rework'], context.previousRework)
+      }
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jig-assignments'] })
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['jig-rework'] })
     },
   })
 }
