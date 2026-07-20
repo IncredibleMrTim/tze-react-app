@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
 import { jigUsed } from "@/lib/helpers";
 import { generateJigsList } from "@/constants/settings.const";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Overlay } from "@/components/Overlay";
-import { LuTriangleAlert, LuCamera, LuWrench } from "react-icons/lu";
+import { LuCamera } from "react-icons/lu";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useUpdateJob } from "@/hooks/useJobs";
 import {
@@ -30,18 +29,20 @@ import {
   useCreateJigAssignment,
   useUpdateJigAssignment,
   useDeleteJigAssignment,
-  useCompleteJig
+  useCompleteJig,
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
-import { uploadImageToBlob, toBlobProxyUrl } from "@/lib/blob-upload";
+import { uploadImageToBlob, toSignedImageUrl } from "@/lib/blob-upload";
+import { JobCard } from "@/components/JobCard";
 
 export default function JigClient() {
   const { showToast } = useToast();
 
   // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
   const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
-  const { data: jigAssignments = [], isLoading: jigsLoading } = useJigAssignments(5000);
+  const { data: jigAssignments = [], isLoading: jigsLoading } =
+    useJigAssignments(5000);
   const { data: settings, isLoading: settingsLoading } = useSettings();
 
   // Mutation hooks
@@ -95,12 +96,16 @@ export default function JigClient() {
 
   const availableJobs = jobs.filter((j) => {
     if (j.dispatchedAt) return false;
-    const isOnJig = jigAssignments.some((g) => g.jobId === j.id && g.status === 'ACTIVE');
+    const isOnJig = jigAssignments.some(
+      (g) => g.jobId === j.id && g.status === "ACTIVE",
+    );
     return !isOnJig;
   });
 
   const getJigJobs = (jigName: string) => {
-    return jigAssignments.filter((g) => g.jigName === jigName && g.status === 'ACTIVE');
+    return jigAssignments.filter(
+      (g) => g.jigName === jigName && g.status === "ACTIVE",
+    );
   };
 
   const handleSelectJig = (jigName: string) => {
@@ -144,7 +149,7 @@ export default function JigClient() {
       jobId: selectedJobForAssignment.id,
       pct,
       pic: null,
-      status: 'ACTIVE',
+      status: "ACTIVE",
       loadedAt: Date.now(),
       completedAt: null,
     };
@@ -170,7 +175,7 @@ export default function JigClient() {
           onError: () => {
             showToast("Failed to update job");
           },
-        }
+        },
       );
     } else {
       // Just create the assignment
@@ -194,7 +199,10 @@ export default function JigClient() {
     try {
       const pathname = `jigs/${selectedJig}.jpg`;
       const url = await uploadImageToBlob(file, pathname);
-      await setJigPhotoMutation.mutateAsync({ jigName: selectedJig, photoUrl: url });
+      await setJigPhotoMutation.mutateAsync({
+        jigName: selectedJig,
+        photoUrl: url,
+      });
       showToast("Photo uploaded");
     } catch (error) {
       console.error("Failed to upload jig photo:", error);
@@ -282,13 +290,19 @@ export default function JigClient() {
 
     // Update assignment percentage
     updateAssignmentMutation.mutate(
-      { assignmentId: editingAssignment.assignment.id, assignment: { pct: newPct } },
+      {
+        assignmentId: editingAssignment.assignment.id,
+        assignment: { pct: newPct },
+      },
       {
         onSuccess: () => {
           // Update job if PO complete changed
           if (editPoComplete !== editingAssignment.job.poComplete) {
             updateJobMutation.mutate(
-              { jobId: editingAssignment.job.id, job: { poComplete: editPoComplete } },
+              {
+                jobId: editingAssignment.job.id,
+                job: { poComplete: editPoComplete },
+              },
               {
                 onSuccess: () => {
                   showToast("Changes saved");
@@ -298,7 +312,7 @@ export default function JigClient() {
                 onError: () => {
                   showToast("Failed to update job");
                 },
-              }
+              },
             );
           } else {
             showToast("Changes saved");
@@ -309,7 +323,7 @@ export default function JigClient() {
         onError: () => {
           showToast("Failed to save changes");
         },
-      }
+      },
     );
   };
 
@@ -345,15 +359,6 @@ export default function JigClient() {
 
   return (
     <div className="space-y-4">
-      {/* Warning Banner */}
-      <Alert className="border-yellow-300 bg-yellow-50 p-3 md:p-4">
-        <LuTriangleAlert className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 flex-shrink-0" />
-        <AlertDescription className="ml-2 text-xs md:text-sm leading-relaxed">
-          <span className="font-semibold">Phase 1 — single device:</span> Data
-          lives on this device only. All staff must share this device.
-        </AlertDescription>
-      </Alert>
-
       {/* Heading */}
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
         TAP A JIG TO MANAGE IT
@@ -412,7 +417,9 @@ export default function JigClient() {
 
           <div
             onClick={() => photoInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden"
+            className={`border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden ${
+              jigPhotos[selectedJig] ? "" : "p-12"
+            }`}
           >
             <input
               ref={photoInputRef}
@@ -430,7 +437,7 @@ export default function JigClient() {
             ) : jigPhotos[selectedJig] ? (
               <div className="relative w-full aspect-video">
                 <Image
-                  src={toBlobProxyUrl(jigPhotos[selectedJig])}
+                  src={toSignedImageUrl(jigPhotos[selectedJig])}
                   alt="Loaded JIG"
                   fill
                   className="object-cover rounded"
@@ -560,75 +567,15 @@ export default function JigClient() {
             />
 
             <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
-              {filteredJobs.map((job) => {
-                const isRework = job.isRework;
-                const isInternal = job.isInternal;
-                const isSelected = selectedJobForAssignment?.id === job.id;
-
-                return (
-                  <div
-                    key={job.id}
-                    onClick={() => handleJobClick(job)}
-                    className={`border-2 rounded-lg p-3 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-yellow-400 bg-yellow-50"
-                        : isRework || isInternal
-                          ? "border-orange-400 bg-orange-50 hover:shadow-md"
-                          : "border-gray-200 hover:border-primary hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        {(isRework || isInternal) && (
-                          <LuWrench className="text-orange-600" />
-                        )}
-                        <span className="font-bold text-base">
-                          {isRework || isInternal ? "Rework" : job.po_number}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {(isRework || isInternal) && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                            Space holder
-                          </span>
-                        )}
-                        {isSelected && (
-                          <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded font-medium">
-                            Select
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-sm text-gray-600 mb-1">
-                      {isRework || isInternal
-                        ? "Internal rework — no invoice"
-                        : job.customer_name}
-                    </div>
-
-                    {!isRework && !isInternal && (
-                      <>
-                        <div className="text-xs text-gray-500 mb-2">
-                          Arrived:{" "}
-                          {new Date(job.createdAt).toLocaleDateString("en-NZ", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}{" "}
-                          {new Date(job.createdAt).toLocaleTimeString("en-NZ", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </div>
-                        <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                          {job.plating === "gold" ? "Gold" : "Silver"}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              {filteredJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  jigAssignments={[]}
+                  onClick={() => handleJobClick(job)}
+                  showArrivalTime={true}
+                />
+              ))}
 
               {filteredJobs.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
@@ -723,7 +670,8 @@ export default function JigClient() {
             {/* JIG Status */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
               <p className="text-blue-700 font-medium">
-                {selectedJig} — {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
+                {selectedJig} —{" "}
+                {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
               </p>
             </div>
 
@@ -813,16 +761,12 @@ export default function JigClient() {
       >
         <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Mark {selectedJig} as complete?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Mark {selectedJig} as complete?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
               <p>
                 This will mark the JIG as complete and move it out of the tank.
               </p>
-              <p className="font-medium">
-                Are you sure you want to continue?
-              </p>
+              <p className="font-medium">Are you sure you want to continue?</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

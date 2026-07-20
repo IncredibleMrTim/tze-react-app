@@ -6,7 +6,7 @@ import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/hooks/useIntakeStore";
-import { toBlobProxyUrl } from "@/lib/blob-upload";
+import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
 import type { IJob } from "@/types/interfaces";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -319,7 +319,7 @@ export default function IntakeClient() {
                 </h3>
                 {jobImages.partsOnArrivalPhotos.length === 1 ? (
                   <img
-                    src={toBlobProxyUrl(jobImages.partsOnArrivalPhotos[0])}
+                    src={toSignedImageUrl(jobImages.partsOnArrivalPhotos[0])}
                     alt="Parts on arrival"
                     className="w-full rounded-lg border border-gray-200"
                   />
@@ -330,7 +330,7 @@ export default function IntakeClient() {
                         <CarouselItem key={index}>
                           <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
                             <img
-                              src={toBlobProxyUrl(photo)}
+                              src={toSignedImageUrl(photo)}
                               alt={`Parts photo ${index + 1}`}
                               className="w-full rounded-lg"
                             />
