@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useCreateJob, useUpdateJob } from "@/hooks/useJobs";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import type { IJob } from "@/types/interfaces";
 
 /**

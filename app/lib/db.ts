@@ -126,8 +126,8 @@ export async function getJobs() {
       minCharge: true,
       flagged: true,
       notes: true,
-      // poPages excluded - too large for list view
-      // partsOnArrivalPhotos excluded - too large for list view
+      poPages: true,
+      partsOnArrivalPhotos: true,
       manualPO: true,
       urgent: true,
       isInternal: true,
@@ -150,14 +150,7 @@ export async function getJobs() {
     },
   });
 
-  // Photos excluded from list query for performance - added as empty arrays
-  return jobs.map((job) =>
-    serializeJob({
-      ...job,
-      poPages: [],
-      partsOnArrivalPhotos: [],
-    } as unknown as JobWithRelations),
-  );
+  return jobs.map((job) => serializeJob(job as unknown as JobWithRelations));
 }
 
 export async function getJobById(jobId: string) {
@@ -445,6 +438,12 @@ export async function getAllJigPhotos() {
   );
 }
 
+export async function deleteJigPhoto(jigName: string) {
+  return await prisma.jigPhoto.deleteMany({
+    where: { jigName },
+  });
+}
+
 // ============ JIG REWORK ============
 
 export async function setJigRework(jigName: string, isRework: boolean) {
@@ -452,6 +451,12 @@ export async function setJigRework(jigName: string, isRework: boolean) {
     where: { jigName },
     update: { isRework },
     create: { jigName, isRework },
+  });
+}
+
+export async function deleteJigRework(jigName: string) {
+  return await prisma.jigRework.deleteMany({
+    where: { jigName },
   });
 }
 

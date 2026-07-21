@@ -4,12 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { useJobs } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady, stageLabel } from "@/lib/helpers";
 import type { IJob } from "@/types/interfaces";
-import { EnterJobSheet } from "@/components/intake/EnterJobSheet";
+import { useRouter } from "next/navigation";
 
 export default function JobsClient() {
   // React Query hooks - auto-refresh for real-time updates
@@ -17,7 +17,8 @@ export default function JobsClient() {
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments(5000);
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
-  const { openJobForEdit } = useIntakeStore();
+  const { openJobForEdit, setCurrentJob } = useIntakeStore();
+  const router = useRouter();
 
   const isLoading = jobsLoading || jigsLoading || contactsLoading;
 
@@ -56,6 +57,8 @@ export default function JobsClient() {
       job,
       CONTACTS.find((c) => c.name === job.customer_name) || null,
     );
+    setCurrentJob(job);
+    router.push("/intake");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, predictions: IJob[]) => {
@@ -372,8 +375,6 @@ export default function JobsClient() {
             message="Type a PO number, customer name, part code or description — or pick a date range above"
           />
         )}
-
-      <EnterJobSheet />
     </div>
   );
 }

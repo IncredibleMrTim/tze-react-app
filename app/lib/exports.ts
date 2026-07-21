@@ -93,19 +93,24 @@ export const genCSV = (j: IJob, settings: ISettings): void => {
   );
 };
 
+/**
+ * Generates a batch invoice CSV for the given dispatched job ids.
+ *
+ * @returns false if none of the selected jobs were valid for export (not
+ * dispatched, internal, or rework), so the caller can surface that to the user
+ */
 export const genBatchCSV = (
   jobs: IJob[],
   ids: string[],
   _settings: ISettings,
   jigAssignments: IJigAssignment[],
-): void => {
+): boolean => {
   const selected = jobs.filter(
     (j) =>
       ids.indexOf(j.id) >= 0 && j.dispatchedAt && !j.isInternal && !j.isRework,
   );
   if (!selected.length) {
-    alert("No valid jobs selected");
-    return;
+    return false;
   }
 
   const allRows: string[] = [];
@@ -116,6 +121,7 @@ export const genBatchCSV = (
   const body = allRows.join("\n") + "\n";
   const date = new Date().toISOString().slice(0, 10);
   dl(new Blob([CSV_HDR + body], { type: "text/csv" }), `TZE-batch-${date}.csv`);
+  return true;
 };
 
 const csvRows = (
