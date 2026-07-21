@@ -8,7 +8,8 @@ import {
   getJigAssignments,
   deleteJigAssignmentsByJobId,
   updateJob,
-  setJigRework,
+  deleteJigPhoto,
+  deleteJigRework,
 } from '@/lib/db'
 import type { IJigAssignment } from '@/types/interfaces'
 
@@ -101,8 +102,10 @@ export async function completeJigAction(jigName: string) {
       }
     }
 
-    // Reset the rework flag so the next load cycle on this jig starts clean
-    await setJigRework(jigName, false)
+    // Clear the jig's reference photo and rework flag so the next load
+    // cycle on this jig starts clean
+    await deleteJigPhoto(jigName)
+    await deleteJigRework(jigName)
 
     revalidatePath('/jig')
     revalidatePath('/intake')

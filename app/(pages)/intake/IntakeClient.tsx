@@ -1,11 +1,11 @@
 "use client";
 import { FiMail, FiPhone } from "react-icons/fi";
-import { useMemo, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
 import type { IJob } from "@/types/interfaces";
 import { FiPlus } from "react-icons/fi";
@@ -19,10 +19,20 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function IntakeClient() {
   const { showToast } = useToast();
-
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // React Query hooks - auto-refresh for real-time updates
   const {
     data: jobs = [],
@@ -38,25 +48,31 @@ export default function IntakeClient() {
   const error = jobsError;
 
   // Zustand store - all state
-  const {
-    currentJob,
-    setShowSheet,
-    setCurrentJob,
-    closeSheet,
-    openJobForEdit,
-  } = useIntakeStore();
+  const { currentJob, setShowSheet, setCurrentJob, openJobForEdit } =
+    useIntakeStore();
 
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
 
   const isLoading = jobsLoading || jigsLoading || contactsLoading;
 
-  // Clear form state when navigating away from this page
-  useEffect(() => {
-    return () => {
-      closeSheet();
-    };
-  }, [closeSheet]);
+  const confirmDeleteJob = () => {
+    if (!currentJob) return;
+
+    deleteJobMutation.mutate(currentJob.id, {
+      onSuccess: () => {
+        setCurrentJob(null);
+        setShowDeleteConfirm(false);
+        showToast("Job deleted");
+      },
+      onError: (error: Error) => {
+        console.error("Delete job error:", error);
+        const message = error?.message || "Unknown error";
+        setShowDeleteConfirm(false);
+        showToast(`Failed to delete job: ${message}`);
+      },
+    });
+  };
 
   const formatJobDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -82,10 +98,10 @@ export default function IntakeClient() {
     const groups: Record<string, IJob[]> = {};
     const undispatchedJobs = jobs.filter((j) => !j.dispatchedAt);
 
-    undispatchedJobs.forEach((job) => {
-      const dateLabel = formatJobDate(job.createdAt);
+    undispatchedJobs.forEach((j) => {
+      const dateLabel = formatJobDate(j.createdAt);
       if (!groups[dateLabel]) groups[dateLabel] = [];
-      groups[dateLabel].push(job);
+      groups[dateLabel].push(j);
     });
 
     return groups;
@@ -154,12 +170,12 @@ export default function IntakeClient() {
               <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 {dateLabel}
               </div>
-              {dateJobs.map((job) => (
+              {dateJobs.map((j) => (
                 <JobCard
-                  key={job.id}
-                  job={job}
+                  key={j.id}
+                  job={j}
                   jigAssignments={jigAssignments}
-                  onClick={() => setCurrentJob(job)}
+                  onClick={() => setCurrentJob(j)}
                   showArrivalTime={true}
                   showJigStatus={true}
                 />
@@ -180,21 +196,7 @@ export default function IntakeClient() {
             </button>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  if (window.confirm(`Delete job ${currentJob.po_number}?`)) {
-                    deleteJobMutation.mutate(currentJob.id, {
-                      onSuccess: () => {
-                        setCurrentJob(null);
-                        showToast("Job deleted");
-                      },
-                      onError: (error: Error) => {
-                        console.error("Delete job error:", error);
-                        const message = error?.message || "Unknown error";
-                        showToast(`Failed to delete job: ${message}`);
-                      },
-                    });
-                  }
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deleteJobMutation.isPending}
                 className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
               >
@@ -208,7 +210,6 @@ export default function IntakeClient() {
                       null,
                   );
                   setCurrentJob(null);
-                  showToast("Editing job");
                 }}
                 className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg"
               >
@@ -440,6 +441,28 @@ export default function IntakeClient() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete job {currentJob?.po_number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteJob}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <EnterJobSheet />
     </div>

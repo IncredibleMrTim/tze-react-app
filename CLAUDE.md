@@ -67,6 +67,11 @@ const itemsWithPrice = items.filter(item => item.price > 0);
 - Extract complex logic to custom hooks or utility functions
 - Props interface should be named `[ComponentName]Props`
 
+### Design Systems
+
+- Use ShadDDN components where possible instead of writing your own.
+- Do not use the RadixUI component primitives, instead use the ShadCDN syntax.
+
 ### Server Actions
 
 - Always use `"use server"` directive at top of file

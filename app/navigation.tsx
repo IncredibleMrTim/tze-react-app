@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useIntakeStore } from "./store/useIntakeStore";
 
 export function Navigation() {
   const pathname = usePathname();
+  const { setCurrentJob } = useIntakeStore();
 
   const navItems = [
     { href: "/jobs", icon: "🔍", label: "Search" },
@@ -22,6 +24,7 @@ export function Navigation() {
           <Link
             key={href}
             href={href}
+            onClick={() => setCurrentJob(null)}
             className={`flex-1 px-1 py-2.5 flex flex-col items-center gap-0.5 border-none bg-transparent cursor-pointer text-[10px] font-medium border-t-2 transition-colors ${
               isActive
                 ? "text-primary border-t-primary"

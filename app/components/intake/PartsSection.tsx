@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { useItems } from "@/hooks/useItems";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import type { IItem } from "@/types/interfaces";
 import { Input } from "@/components/ui/input";
 
@@ -19,12 +19,15 @@ export function PartsSection() {
     parts,
     partSearchIndex,
     partSearchTerm,
+    currentJob,
     setPartSearchIndex,
     setPartSearchTerm,
     updatePart,
     addPart,
     removePart,
   } = useIntakeStore();
+
+  const isEditable = !currentJob?.poComplete;
 
   const { data: ITEMS = [] } = useItems(customer?.account ?? "");
 
@@ -90,12 +93,14 @@ export function PartsSection() {
                 <span className="text-xs text-gray-500 uppercase">
                   Part {i + 1}
                 </span>
-                <button
-                  onClick={() => removePart(i)}
-                  className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                >
-                  Remove
-                </button>
+                {isEditable && (
+                  <button
+                    onClick={() => removePart(i)}
+                    className="text-red-600 hover:text-red-800 font-semibold text-sm"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
 
               <div className="relative mb-2">
@@ -103,6 +108,7 @@ export function PartsSection() {
                   Part code
                 </label>
                 <Input
+                  disabled={!isEditable}
                   type="text"
                   value={part.code}
                   onChange={(e) => handlePartCodeChange(i, e.target.value)}
@@ -142,6 +148,7 @@ export function PartsSection() {
 
               <Input
                 type="text"
+                disabled={!isEditable}
                 value={part.desc}
                 onChange={(e) => updatePart(i, "desc", e.target.value)}
                 placeholder="Search or type description..."
@@ -154,6 +161,7 @@ export function PartsSection() {
                     Price per part ($)
                   </label>
                   <Input
+                    disabled={!isEditable}
                     type="number"
                     value={part.price}
                     onChange={(e) =>
@@ -169,6 +177,7 @@ export function PartsSection() {
                     Quantity
                   </label>
                   <Input
+                    disabled={!isEditable}
                     type="number"
                     value={part.qty}
                     onChange={(e) =>
@@ -183,13 +192,15 @@ export function PartsSection() {
             </div>
           ))}
 
-          <button
-            onClick={addPart}
-            disabled={parts.length >= 15}
-            className="w-full bg-white border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-600 font-medium hover:border-primary hover:text-primary disabled:opacity-50"
-          >
-            + Add part
-          </button>
+          {isEditable && (
+            <button
+              onClick={addPart}
+              disabled={parts.length >= 15}
+              className="w-full bg-white border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-600 font-medium hover:border-primary hover:text-primary disabled:opacity-50"
+            >
+              + Add part
+            </button>
+          )}
         </div>
       )}
     </div>

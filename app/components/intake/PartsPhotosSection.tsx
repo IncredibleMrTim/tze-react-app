@@ -1,7 +1,7 @@
 "use client";
 import { useRef } from "react";
 import { useToast } from "@/hooks/useToast";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import { PARTS_COMPRESSION } from "@/lib/image-compression";
 import { loadCompressedImages } from "@/components/intake/load-images";
 import { toSignedImageUrl } from "@/lib/blob-upload";
@@ -24,8 +24,10 @@ export function PartsPhotosSection() {
   const { showToast } = useToast();
   const partsPhotoInputRef = useRef<HTMLInputElement>(null);
 
-  const { partsOnArrivalPhotos, addPartsPhotos, removePartsPhoto } =
+  const { currentJob, partsOnArrivalPhotos, addPartsPhotos, removePartsPhoto } =
     useIntakeStore();
+
+  const isEditable = !currentJob?.poComplete;
 
   // Add parts photos to array
   const handleAddPartsPhotos = async (files: FileList) => {
@@ -62,6 +64,7 @@ export function PartsPhotosSection() {
         </span>
       </label>
       <Input
+        disabled={!isEditable}
         ref={partsPhotoInputRef}
         type="file"
         accept="image/*"
@@ -134,8 +137,9 @@ export function PartsPhotosSection() {
         </div>
       ) : (
         <button
+          disabled={!isEditable}
           onClick={() => partsPhotoInputRef.current?.click()}
-          className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-6 text-gray-500 text-sm flex flex-col items-center gap-2 hover:border-gray-400 transition-colors"
+          className={`w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-6 text-gray-500 text-sm flex flex-col items-center gap-2 hover:border-gray-400 transition-colors ${!isEditable ? "opacity-75" : ""}`}
         >
           <div className="text-2xl">📦</div>
           <div className="font-medium text-gray-700">
