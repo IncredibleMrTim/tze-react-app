@@ -28,6 +28,7 @@ import {
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 import { JobCard } from "@/components/JobCard";
+import { LuRotateCcw, LuTrash } from "react-icons/lu";
 
 export default function DispatchClient() {
   const { showToast } = useToast();
@@ -134,6 +135,18 @@ export default function DispatchClient() {
         onError: () => {
           showToast("Failed to dispatch job");
         },
+      },
+    );
+  };
+
+  const handleBackToDispatch = (job: IJob) => {
+    updateJobMutation.mutate(
+      { jobId: job.id, job: { dispatchedAt: null, invoiceNumber: null } },
+      {
+        onSuccess: () => {
+          showToast("Job removed from dispatch — now ready to dispatch");
+        },
+        onError: () => showToast("Failed to remove from dispatch"),
       },
     );
   };
@@ -284,40 +297,49 @@ export default function DispatchClient() {
           {/* Job List */}
           <div className="border border-gray-200 rounded-b-lg divide-y">
             {dispatchedJobs.map((job) => (
-              <div
-                key={job.id}
-                className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedDownloads.includes(job.id)}
-                  onChange={() => toggleSelectJob(job.id)}
-                  className="w-5 h-5 rounded border-gray-300"
-                />
-                <div className="flex-1">
-                  <div className="font-bold text-base mb-1">
-                    {job.po_number}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {job.invoiceNumber} ·{" "}
-                    {new Date(job.dispatchedAt!).toLocaleDateString("en-NZ", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+              <div className="flex flex-col p-3">
+                <div
+                  key={job.id}
+                  className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDownloads.includes(job.id)}
+                    onChange={() => toggleSelectJob(job.id)}
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                  <div className="flex-1">
+                    <div className="font-bold text-base mb-1">
+                      {job.po_number}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {job.invoiceNumber} ·{" "}
+                      {new Date(job.dispatchedAt!).toLocaleDateString("en-NZ", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </div>
                   </div>
                 </div>
-                {job.plating && (
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded capitalize">
-                    {job.plating}
-                  </span>
-                )}
-                <button
-                  onClick={() => handleDeleteDispatchedJob(job.id)}
-                  disabled={isPending}
-                  className="px-3 py-1 border-2 border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
-                >
-                  Delete
-                </button>
+                <div className="flex flex-row gap-3 justify-between">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleBackToDispatch(job)}
+                  >
+                    <LuRotateCcw />
+                    Back to Dispatch
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteDispatchedJob(job.id)}
+                    disabled={isPending}
+                    className="border-red-300 text-red-600 w-full hover:bg-red-500"
+                    variant="outline"
+                  >
+                    <LuTrash />
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -65,7 +65,7 @@ export function EnterJobSheet() {
         <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
         <h2 className="text-[17px] font-bold mb-4">Enter Job</h2>
 
-        <DispatchActions />
+        {/* <DispatchActions /> */}
 
         <POScanSection />
 
