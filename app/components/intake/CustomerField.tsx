@@ -14,13 +14,10 @@ export function CustomerField() {
     customer,
     customerInput,
     showCustomerDropdown,
-    currentJob,
     setCustomer,
     setCustomerInput,
     setShowCustomerDropdown,
   } = useIntakeStore();
-
-  const isEditable = !currentJob?.poComplete;
 
   const filteredCustomers = useMemo(
     () =>
@@ -40,7 +37,6 @@ export function CustomerField() {
       <div className="relative">
         <Input
           type="text"
-          disabled={!isEditable}
           value={customerInput}
           onChange={(e) => {
             setCustomerInput(e.target.value);

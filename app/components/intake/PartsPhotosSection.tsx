@@ -24,10 +24,12 @@ export function PartsPhotosSection() {
   const { showToast } = useToast();
   const partsPhotoInputRef = useRef<HTMLInputElement>(null);
 
-  const { currentJob, partsOnArrivalPhotos, addPartsPhotos, removePartsPhoto } =
-    useIntakeStore();
-
-  const isEditable = !currentJob?.poComplete;
+  const {
+    isDispatched,
+    partsOnArrivalPhotos,
+    addPartsPhotos,
+    removePartsPhoto,
+  } = useIntakeStore();
 
   // Add parts photos to array
   const handleAddPartsPhotos = async (files: FileList) => {
@@ -64,7 +66,7 @@ export function PartsPhotosSection() {
         </span>
       </label>
       <Input
-        disabled={!isEditable}
+        disabled={isDispatched}
         ref={partsPhotoInputRef}
         type="file"
         accept="image/*"
@@ -137,9 +139,9 @@ export function PartsPhotosSection() {
         </div>
       ) : (
         <button
-          disabled={!isEditable}
+          disabled={isDispatched}
           onClick={() => partsPhotoInputRef.current?.click()}
-          className={`w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-6 text-gray-500 text-sm flex flex-col items-center gap-2 hover:border-gray-400 transition-colors ${!isEditable ? "opacity-75" : ""}`}
+          className={`w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg py-6 text-gray-500 text-sm flex flex-col items-center gap-2 hover:border-gray-400 transition-colors ${isDispatched ? "opacity-75" : ""}`}
         >
           <div className="text-2xl">📦</div>
           <div className="font-medium text-gray-700">

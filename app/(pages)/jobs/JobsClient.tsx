@@ -1,26 +1,51 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useJobs } from "@/hooks/useJobs";
+import { useToast } from "@/hooks/useToast";
+import { useJobs, useUpdateJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
-import { useContacts } from "@/hooks/useContacts";
-import { useIntakeStore } from "@/store/useIntakeStore";
 import { JobCard } from "@/components/JobCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isReady, stageLabel } from "@/lib/helpers";
+import { genFPN } from "@/lib/exports";
+import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
 import type { IJob } from "@/types/interfaces";
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function JobsClient() {
+  const { showToast } = useToast();
+
   // React Query hooks - auto-refresh for real-time updates
   const { data: jobs = [], isLoading: jobsLoading } = useJobs(10000);
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments(5000);
-  const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
-  const { openJobForEdit, setCurrentJob } = useIntakeStore();
-  const router = useRouter();
+  const updateJobMutation = useUpdateJob();
 
-  const isLoading = jobsLoading || jigsLoading || contactsLoading;
+  const isLoading = jobsLoading || jigsLoading;
+
+  const [viewingJob, setViewingJob] = useState<IJob | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  // Fetch images when viewing a job
+  const { data: jobImages } = useJobImages(viewingJob?.id || null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -53,12 +78,35 @@ export default function JobsClient() {
   }, []);
 
   const handleJobClickAction = (job: IJob) => {
-    openJobForEdit(
-      job,
-      CONTACTS.find((c) => c.name === job.customer_name) || null,
+    setViewingJob(job);
+  };
+
+  const handleDownloadFPN = () => {
+    if (!viewingJob) return;
+    genFPN(viewingJob);
+    showToast(`Downloaded FPN for ${viewingJob.po_number}`);
+  };
+
+  const handleRemoveFromDispatch = () => {
+    if (!viewingJob) return;
+
+    updateJobMutation.mutate(
+      {
+        jobId: viewingJob.id,
+        job: { dispatchedAt: null, invoiceNumber: null },
+      },
+      {
+        onSuccess: () => {
+          setShowRemoveConfirm(false);
+          setViewingJob(null);
+          showToast("Job removed from dispatch");
+        },
+        onError: () => {
+          setShowRemoveConfirm(false);
+          showToast("Failed to remove from dispatch");
+        },
+      },
     );
-    setCurrentJob(job);
-    router.push("/intake");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, predictions: IJob[]) => {
@@ -375,6 +423,322 @@ export default function JobsClient() {
             message="Type a PO number, customer name, part code or description — or pick a date range above"
           />
         )}
+
+      {/* Job Viewer */}
+      <Drawer
+        open={!!viewingJob}
+        onOpenChange={(open) => !open && setViewingJob(null)}
+      >
+        <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+          {viewingJob && (
+            <div className="px-4 pt-5 pb-6 flex-1 min-h-0 overflow-y-auto">
+              <DrawerTitle className="text-[17px] font-bold mb-4">
+                Job Details {viewingJob.dispatchedAt && "(Dispatched)"}
+              </DrawerTitle>
+
+              <div
+                className={`border-2 rounded-xl p-4 mb-4 ${
+                  viewingJob.dispatchedAt
+                    ? "bg-green-50 border-green-300"
+                    : "bg-blue-50 border-blue-300"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-xl">
+                    {viewingJob.po_number}
+                  </span>
+                  {viewingJob.urgent && (
+                    <span className="flex items-center gap-1 text-sm font-medium text-red-700">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+                      URGENT
+                    </span>
+                  )}
+                </div>
+                <div className="text-base text-gray-700 mb-1">
+                  {viewingJob.customer_name}
+                </div>
+                {viewingJob.customer_email && (
+                  <div className="flex items-center gap-1.5 text-gray-600 text-sm mb-1">
+                    ✉️ {viewingJob.customer_email}
+                  </div>
+                )}
+                {viewingJob.customer_contact && (
+                  <div className="flex items-center gap-1.5 text-gray-600 text-sm">
+                    📞 {viewingJob.customer_contact}
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      viewingJob.dispatchedAt
+                        ? "bg-green-600 text-white"
+                        : viewingJob.poComplete
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-600 text-white"
+                    }`}
+                  >
+                    {stageLabel(viewingJob, jigAssignments)}
+                  </span>
+                  <span className="px-3 py-1 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700">
+                    {viewingJob.plating === "gold" ? "Gold" : "Silver"}
+                  </span>
+                  {viewingJob.invoiceNumber && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      Invoice: {viewingJob.invoiceNumber}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {viewingJob.parts.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    PARTS
+                  </h3>
+                  {viewingJob.parts.map((part, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">
+                          {part.desc}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {part.code}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-gray-900">
+                          ×{part.qty}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          ${part.price.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {jobImages?.poPages && jobImages.poPages.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    PO DOCUMENT{" "}
+                    {jobImages.poPages.length > 1 &&
+                      `(${jobImages.poPages.length} PAGES)`}
+                  </h3>
+                  {jobImages.poPages.length === 1 ? (
+                    <img
+                      src={toBlobProxyUrl(jobImages.poPages[0])}
+                      alt="Purchase Order"
+                      className="w-full rounded-lg border border-gray-200"
+                    />
+                  ) : (
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {jobImages.poPages.map((page, index) => (
+                          <CarouselItem key={index}>
+                            <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                              <img
+                                src={toBlobProxyUrl(page)}
+                                alt={`PO page ${index + 1}`}
+                                className="w-full rounded-lg"
+                              />
+                              <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                                Page {index + 1} of {jobImages.poPages.length}
+                              </div>
+                            </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </Carousel>
+                  )}
+                </div>
+              )}
+
+              {jobImages?.partsOnArrivalPhotos &&
+                jobImages.partsOnArrivalPhotos.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      PARTS ON ARRIVAL{" "}
+                      {jobImages.partsOnArrivalPhotos.length > 1 &&
+                        `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
+                    </h3>
+                    {jobImages.partsOnArrivalPhotos.length === 1 ? (
+                      <img
+                        src={toSignedImageUrl(
+                          jobImages.partsOnArrivalPhotos[0],
+                        )}
+                        alt="Parts on arrival"
+                        className="w-full rounded-lg border border-gray-200"
+                      />
+                    ) : (
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {jobImages.partsOnArrivalPhotos.map(
+                            (photo, index) => (
+                              <CarouselItem key={index}>
+                                <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                                  <img
+                                    src={toSignedImageUrl(photo)}
+                                    alt={`Parts photo ${index + 1}`}
+                                    className="w-full rounded-lg"
+                                  />
+                                  <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                                    Photo {index + 1} of{" "}
+                                    {jobImages.partsOnArrivalPhotos.length}
+                                  </div>
+                                </div>
+                              </CarouselItem>
+                            ),
+                          )}
+                        </CarouselContent>
+                        <CarouselPrevious className="left-2" />
+                        <CarouselNext className="right-2" />
+                      </Carousel>
+                    )}
+                  </div>
+                )}
+
+              {viewingJob.partDescription && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    PARTS DESCRIPTION
+                  </h3>
+                  <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+                    {viewingJob.partDescription}
+                  </div>
+                </div>
+              )}
+
+              {viewingJob.notes && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    NOTES
+                  </h3>
+                  <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+                    {viewingJob.notes}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  TIMELINE
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">📬</span>
+                    <div>
+                      <div className="font-semibold text-sm text-gray-900">
+                        Arrived
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {new Date(viewingJob.createdAt).toLocaleDateString(
+                          "en-NZ",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}{" "}
+                        {new Date(viewingJob.createdAt).toLocaleTimeString(
+                          "en-NZ",
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          },
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {viewingJob.dispatchedAt && (
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">🚚</span>
+                      <div>
+                        <div className="font-semibold text-sm text-gray-900">
+                          Dispatched
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {new Date(
+                            viewingJob.dispatchedAt,
+                          ).toLocaleDateString("en-NZ", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}{" "}
+                          {new Date(
+                            viewingJob.dispatchedAt,
+                          ).toLocaleTimeString("en-NZ", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-gray-200">
+                {viewingJob.dispatchedAt && (
+                  <>
+                    <Button
+                      onClick={handleDownloadFPN}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                    >
+                      📥 Download FPN
+                    </Button>
+
+                    <Button
+                      onClick={() => setShowRemoveConfirm(true)}
+                      disabled={updateJobMutation.isPending}
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3"
+                    >
+                      ↩️ Remove from Dispatch
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  variant="outline"
+                  onClick={() => setViewingJob(null)}
+                  className="w-full py-3"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove {viewingJob?.po_number} from dispatch?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move it back to Ready to Dispatch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveFromDispatch}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
