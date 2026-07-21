@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Overlay } from "@/components/Overlay";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { LuCamera } from "react-icons/lu";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useUpdateJob } from "@/hooks/useJobs";
@@ -97,7 +97,9 @@ export default function JigClient() {
 
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const isSelectedJigRework = selectedJig ? (jigRework[selectedJig] ?? false) : false;
+  const isSelectedJigRework = selectedJig
+    ? (jigRework[selectedJig] ?? false)
+    : false;
 
   const availableJobs = jobs.filter((j) => {
     if (j.dispatchedAt) return false;
@@ -538,7 +540,8 @@ export default function JigClient() {
                       isRework: checked,
                     },
                     {
-                      onError: () => showToast("Failed to update rework status"),
+                      onError: () =>
+                        showToast("Failed to update rework status"),
                     },
                   )
                 }
@@ -575,210 +578,215 @@ export default function JigClient() {
 
       {/* Job Selector Modal */}
       {showJobSelector && selectedJig && (
-        <Overlay onClose={() => setShowJobSelector(false)}>
-          <div className="p-6">
-            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">
-              Add job to {selectedJig}
-            </h2>
+        <Drawer
+          open
+          onOpenChange={(open) => !open && setShowJobSelector(false)}
+        >
+          <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+            <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+              <DrawerTitle className="text-2xl font-bold mb-4">
+                Add job to {selectedJig}
+              </DrawerTitle>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
-              <p className="text-blue-700 font-medium">
-                {spaceRemaining}% space remaining on {selectedJig}
-              </p>
-            </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-blue-700 font-medium">
+                  {spaceRemaining}% space remaining on {selectedJig}
+                </p>
+              </div>
 
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              SELECT A JOB
-            </h3>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                SELECT A JOB
+              </h3>
 
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search PO, customer, parts..."
-              className="w-full mb-4"
-            />
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search PO, customer, parts..."
+                className="w-full mb-4"
+              />
 
-            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
-              {filteredJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  jigAssignments={[]}
-                  onClick={() => handleJobClick(job)}
-                  showArrivalTime={true}
-                />
-              ))}
+              <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                {filteredJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    jigAssignments={[]}
+                    onClick={() => handleJobClick(job)}
+                    showArrivalTime={true}
+                  />
+                ))}
 
-              {filteredJobs.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No jobs found
+                {filteredJobs.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No jobs found
+                  </div>
+                )}
+              </div>
+
+              {/* Assignment Details */}
+              {selectedJobForAssignment && (
+                <div className="border-t pt-4 space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold mb-2">
+                      Selected: {selectedJobForAssignment.po_number} —{" "}
+                      {selectedJobForAssignment.customer_name}
+                    </h3>
+                  </div>
+
+                  {(() => {
+                    const otherAssignments = jigAssignments.filter(
+                      (g) =>
+                        g.jobId === selectedJobForAssignment.id &&
+                        g.status === "ACTIVE",
+                    );
+                    if (otherAssignments.length === 0) return null;
+                    return (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-sm">
+                        Already loaded on{" "}
+                        {otherAssignments
+                          .map((g) => `${g.jigName} (${g.pct}%)`)
+                          .join(", ")}
+                        .
+                      </div>
+                    );
+                  })()}
+
+                  <div>
+                    <label className="text-sm text-gray-600 mb-2 block">
+                      Space this job takes on {selectedJig} (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={assignmentPercentage}
+                      onChange={(e) => setAssignmentPercentage(e.target.value)}
+                      placeholder="e.g. 25"
+                      min="1"
+                      max={spaceRemaining}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="text-base font-semibold text-gray-900">
+                          PO complete — all parts processed
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Job moves straight to Dispatch
+                        </div>
+                      </div>
+                      <Switch
+                        checked={poComplete}
+                        onCheckedChange={setPoComplete}
+                        className="ml-3"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleConfirmAssignment}
+                    disabled={isPending}
+                    className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600"
+                  >
+                    Confirm — add to {selectedJig}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedJobForAssignment(null)}
+                    className="w-full h-12 text-base"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               )}
             </div>
-
-            {/* Assignment Details */}
-            {selectedJobForAssignment && (
-              <div className="border-t pt-4 space-y-4">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">
-                    Selected: {selectedJobForAssignment.po_number} —{" "}
-                    {selectedJobForAssignment.customer_name}
-                  </h3>
-                </div>
-
-                {(() => {
-                  const otherAssignments = jigAssignments.filter(
-                    (g) =>
-                      g.jobId === selectedJobForAssignment.id &&
-                      g.status === "ACTIVE",
-                  );
-                  if (otherAssignments.length === 0) return null;
-                  return (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-sm">
-                      Already loaded on{" "}
-                      {otherAssignments
-                        .map((g) => `${g.jigName} (${g.pct}%)`)
-                        .join(", ")}
-                      .
-                    </div>
-                  );
-                })()}
-
-                <div>
-                  <label className="text-sm text-gray-600 mb-2 block">
-                    Space this job takes on {selectedJig} (%)
-                  </label>
-                  <Input
-                    type="number"
-                    value={assignmentPercentage}
-                    onChange={(e) => setAssignmentPercentage(e.target.value)}
-                    placeholder="e.g. 25"
-                    min="1"
-                    max={spaceRemaining}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="text-base font-semibold text-gray-900">
-                        PO complete — all parts processed
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Job moves straight to Dispatch
-                      </div>
-                    </div>
-                    <Switch
-                      checked={poComplete}
-                      onCheckedChange={setPoComplete}
-                      className="ml-3"
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleConfirmAssignment}
-                  disabled={isPending}
-                  className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600"
-                >
-                  Confirm — add to {selectedJig}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedJobForAssignment(null)}
-                  className="w-full h-12 text-base"
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </div>
-        </Overlay>
+          </DrawerContent>
+        </Drawer>
       )}
 
       {/* Edit Job Assignment Modal */}
       {showEditModal && editingAssignment && selectedJig && (
-        <Overlay onClose={() => setShowEditModal(false)}>
-          <div className="p-6">
-            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">
-              Edit JIG — {editingAssignment.job.po_number}
-            </h2>
+        <Drawer open onOpenChange={(open) => !open && setShowEditModal(false)}>
+          <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+            <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+              <DrawerTitle className="text-2xl font-bold mb-4">
+                Edit JIG — {editingAssignment.job.po_number}
+              </DrawerTitle>
 
-            {/* Job Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="font-bold text-xl mb-1">
-                {editingAssignment.job.po_number}
-              </div>
-              <div className="text-gray-600">
-                {editingAssignment.job.customer_name}
-              </div>
-            </div>
-
-            {/* JIG Status */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
-              <p className="text-blue-700 font-medium">
-                {selectedJig} —{" "}
-                {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
-              </p>
-            </div>
-
-            {/* Space Percentage */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Space this job takes (%)
-              </label>
-              <Input
-                type="number"
-                value={editPercentage}
-                onChange={(e) => setEditPercentage(e.target.value)}
-                min="1"
-                max="100"
-                className="w-full text-lg"
-              />
-            </div>
-
-            {/* PO Complete Toggle */}
-            <div className="border border-gray-200 rounded-lg p-4 mb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="text-base font-semibold text-gray-900">
-                    PO complete — all parts processed
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Job moves to Dispatch when toggled on
-                  </div>
+              {/* Job Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="font-bold text-xl mb-1">
+                  {editingAssignment.job.po_number}
                 </div>
-                <Switch
-                  checked={editPoComplete}
-                  onCheckedChange={setEditPoComplete}
-                  className="ml-3"
+                <div className="text-gray-600">
+                  {editingAssignment.job.customer_name}
+                </div>
+              </div>
+
+              {/* JIG Status */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-blue-700 font-medium">
+                  {selectedJig} —{" "}
+                  {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
+                </p>
+              </div>
+
+              {/* Space Percentage */}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Space this job takes (%)
+                </label>
+                <Input
+                  type="number"
+                  value={editPercentage}
+                  onChange={(e) => setEditPercentage(e.target.value)}
+                  min="1"
+                  max="100"
+                  className="w-full text-lg"
                 />
               </div>
+
+              {/* PO Complete Toggle */}
+              <div className="border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="text-base font-semibold text-gray-900">
+                      PO complete — all parts processed
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Job moves to Dispatch when toggled on
+                    </div>
+                  </div>
+                  <Switch
+                    checked={editPoComplete}
+                    onCheckedChange={setEditPoComplete}
+                    className="ml-3"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <Button
+                onClick={handleSaveEdit}
+                disabled={isPending}
+                className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 mb-3"
+              >
+                Save changes
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+                className="w-full h-12 text-base"
+              >
+                Cancel
+              </Button>
             </div>
-
-            {/* Action Buttons */}
-            <Button
-              onClick={handleSaveEdit}
-              disabled={isPending}
-              className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600 mb-3"
-            >
-              Save changes
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setShowEditModal(false)}
-              className="w-full h-12 text-base"
-            >
-              Cancel
-            </Button>
-          </div>
-        </Overlay>
+          </DrawerContent>
+        </Drawer>
       )}
 
       {/* Incomplete JIG Dialog */}

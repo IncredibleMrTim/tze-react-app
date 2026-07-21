@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import { HiOutlineCamera, HiOutlineSparkles } from "react-icons/hi";
 import { useToast } from "@/hooks/useToast";
-import { useIntakeStore } from "@/hooks/useIntakeStore";
+import { useIntakeStore } from "@/store/useIntakeStore";
 import type { ScanPOResponse } from "@/api/scan-po/route";
 import { PO_COMPRESSION } from "@/lib/image-compression";
 import { loadCompressedImages } from "@/components/intake/load-images";

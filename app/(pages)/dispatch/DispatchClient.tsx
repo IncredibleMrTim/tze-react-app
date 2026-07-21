@@ -9,7 +9,7 @@ import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Overlay } from "@/components/Overlay";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +51,8 @@ export default function DispatchClient() {
     deleteAssignmentMutation.isPending;
 
   const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<IJob | null>(null);
+  const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false);
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null);
   const [editedJob, setEditedJob] = useState<IJob | null>(null);
   const [priceOverride, setPriceOverride] = useState("");
@@ -92,8 +94,20 @@ export default function DispatchClient() {
     if (editedJob) {
       setJobToDispatch(editedJob);
 
+      // Only send the fields this panel actually edits. editedJob is seeded
+      // from the jobs list, which excludes images for size (always poPages:
+      // []), so sending the whole object would wipe out the job's real images.
       updateJobMutation.mutate(
-        { jobId: editedJob.id, job: editedJob },
+        {
+          jobId: editedJob.id,
+          job: {
+            po_number: editedJob.po_number,
+            customer_contact: editedJob.customer_contact,
+            plating: editedJob.plating,
+            notes: editedJob.notes,
+            parts: editedJob.parts,
+          },
+        },
         {
           onSuccess: () => {
             setShowJobDetails(false);
@@ -197,7 +211,16 @@ export default function DispatchClient() {
         `Downloaded ${selectedDownloads.length} FPN${selectedDownloads.length > 1 ? "s" : ""}`,
       );
     } else {
-      genBatchCSV(jobs, selectedDownloads, settings, jigAssignments);
+      const generated = genBatchCSV(
+        jobs,
+        selectedDownloads,
+        settings,
+        jigAssignments,
+      );
+      if (!generated) {
+        setShowNoValidJobsAlert(true);
+        return;
+      }
       showToast("Batch CSV downloaded");
     }
   };
@@ -206,19 +229,25 @@ export default function DispatchClient() {
     const job = jobs.find((j) => j.id === jobId);
     if (!job) return;
 
-    if (window.confirm(`Delete ${job.po_number} from downloads?`)) {
-      updateJobMutation.mutate(
-        { jobId, job: { fpnHidden: true } },
-        {
-          onSuccess: () => {
-            showToast("Job removed from downloads");
-          },
-          onError: () => {
-            showToast("Failed to remove job");
-          },
+    setJobToDelete(job);
+  };
+
+  const confirmDeleteDispatchedJob = () => {
+    if (!jobToDelete) return;
+
+    updateJobMutation.mutate(
+      { jobId: jobToDelete.id, job: { fpnHidden: true } },
+      {
+        onSuccess: () => {
+          setJobToDelete(null);
+          showToast("Job removed from downloads");
         },
-      );
-    }
+        onError: () => {
+          setJobToDelete(null);
+          showToast("Failed to remove job");
+        },
+      },
+    );
   };
 
   return (
@@ -297,11 +326,8 @@ export default function DispatchClient() {
           {/* Job List */}
           <div className="border border-gray-200 rounded-b-lg divide-y">
             {dispatchedJobs.map((job) => (
-              <div className="flex flex-col p-3">
-                <div
-                  key={job.id}
-                  className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50"
-                >
+              <div className="flex flex-col p-3" key={job.id}>
+                <div className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50">
                   <input
                     type="checkbox"
                     checked={selectedDownloads.includes(job.id)}
@@ -387,296 +413,344 @@ export default function DispatchClient() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={!!jobToDelete}
+        onOpenChange={(open) => !open && setJobToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {jobToDelete?.po_number} from downloads?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteDispatchedJob}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showNoValidJobsAlert}
+        onOpenChange={setShowNoValidJobsAlert}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No valid jobs selected</AlertDialogTitle>
+            <AlertDialogDescription>
+              Internal and rework jobs can&apos;t be included in a batch CSV
+              export.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowNoValidJobsAlert(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Dispatch Modal */}
       {jobToDispatch && (
-        <Overlay onClose={() => setJobToDispatch(null)}>
-          <div className="p-6">
-            <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">
-              Dispatch — {jobToDispatch.po_number}
-            </h2>
+        <Drawer open onOpenChange={(open) => !open && setJobToDispatch(null)}>
+          <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white ">
+            <div className="p-6 flex-1 min-h-0 overflow-y-auto">
+              <DrawerTitle className="text-2xl font-bold mb-4">
+                Dispatch — {jobToDispatch.po_number}
+              </DrawerTitle>
 
-            {/* Job Info */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="font-bold text-xl mb-1">
-                {jobToDispatch.po_number}
+              {/* Job Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="font-bold text-xl mb-1">
+                  {jobToDispatch.po_number}
+                </div>
+                <div className="text-gray-600">
+                  {jobToDispatch.customer_name}
+                </div>
               </div>
-              <div className="text-gray-600">{jobToDispatch.customer_name}</div>
-            </div>
 
-            {/* Parts List */}
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                PARTS
-              </h3>
-              <div className="space-y-3">
-                {jobToDispatch.parts.map((part, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white border border-gray-200 rounded-lg p-3"
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="font-medium">{part.desc}</div>
-                      <div className="font-semibold">×{part.qty}</div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500">{part.code}</div>
-                      <div className="text-gray-700">
-                        ${(part.price * part.qty).toFixed(2)}
+              {/* Parts List */}
+              <div className="mb-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  PARTS
+                </h3>
+                <div className="space-y-3">
+                  {jobToDispatch.parts.map((part, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-gray-200 rounded-lg p-3"
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="font-medium">{part.desc}</div>
+                        <div className="font-semibold">×{part.qty}</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-500">{part.code}</div>
+                        <div className="text-gray-700">
+                          ${(part.price * part.qty).toFixed(2)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Check & Edit Job Details - Collapsible */}
-            <div className="mb-4 border-2 border-emerald-500 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setShowJobDetails(!showJobDetails)}
-                className="w-full p-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-2 text-emerald-600 font-medium">
-                  <span>🔗</span>
-                  <span>Check & edit job details</span>
+                  ))}
                 </div>
-                <span className="text-gray-400">
-                  {showJobDetails ? "▲" : "▼"}
-                </span>
-              </button>
+              </div>
 
-              {showJobDetails && editedJob && (
-                <div className="p-4 pt-0 border-t space-y-4">
-                  {/* PO Number */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      PO number
-                    </label>
-                    <Input
-                      type="text"
-                      value={editedJob.po_number}
-                      onChange={(e) =>
-                        setEditedJob({
-                          ...editedJob,
-                          po_number: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
+              {/* Check & Edit Job Details - Collapsible */}
+              <div className="mb-4 border-2 border-emerald-500 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setShowJobDetails(!showJobDetails)}
+                  className="w-full p-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-emerald-600 font-medium">
+                    <span>🔗</span>
+                    <span>Check & edit job details</span>
                   </div>
+                  <span className="text-gray-400">
+                    {showJobDetails ? "▲" : "▼"}
+                  </span>
+                </button>
 
-                  {/* Contact Number */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Contact number{" "}
-                      <span className="text-gray-400">(optional)</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={editedJob.customer_contact || ""}
-                      onChange={(e) =>
-                        setEditedJob({
-                          ...editedJob,
-                          customer_contact: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. 021 123 4567"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Plating */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Plating
-                    </label>
-                    <Input
-                      type="text"
-                      value={editedJob.plating || ""}
-                      onChange={(e) =>
-                        setEditedJob({
-                          ...editedJob,
-                          plating: e.target.value as TPlating,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Notes
-                    </label>
-                    <textarea
-                      value={editedJob.notes || ""}
-                      onChange={(e) =>
-                        setEditedJob({ ...editedJob, notes: e.target.value })
-                      }
-                      placeholder="Collection instructions or special notes"
-                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  {/* Parts */}
-                  <div>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                      PARTS
-                    </h4>
-                    <div className="space-y-4">
-                      {editedJob.parts.map((part, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-gray-50 rounded-lg p-4 space-y-3"
-                        >
-                          <div className="font-medium">{part.code}</div>
-                          <div className="text-sm text-gray-600 mb-2">
-                            {part.desc}
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-xs text-gray-600 mb-1 block">
-                                Qty
-                              </label>
-                              <Input
-                                type="number"
-                                value={part.qty}
-                                onChange={(e) => {
-                                  const newParts = [...editedJob.parts];
-                                  newParts[idx] = {
-                                    ...part,
-                                    qty: parseInt(e.target.value) || 0,
-                                  };
-                                  setEditedJob({
-                                    ...editedJob,
-                                    parts: newParts,
-                                  });
-                                }}
-                                min="0"
-                                className="w-full"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-600 mb-1 block">
-                                Price per part
-                              </label>
-                              <Input
-                                type="number"
-                                value={part.price}
-                                onChange={(e) => {
-                                  const newParts = [...editedJob.parts];
-                                  newParts[idx] = {
-                                    ...part,
-                                    price: parseFloat(e.target.value) || 0,
-                                  };
-                                  setEditedJob({
-                                    ...editedJob,
-                                    parts: newParts,
-                                  });
-                                }}
-                                step="0.01"
-                                min="0"
-                                className="w-full"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                {showJobDetails && editedJob && (
+                  <div className="p-4 pt-0 border-t space-y-4">
+                    {/* PO Number */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 my-2 block">
+                        PO number
+                      </label>
+                      <Input
+                        type="text"
+                        value={editedJob.po_number}
+                        onChange={(e) =>
+                          setEditedJob({
+                            ...editedJob,
+                            po_number: e.target.value,
+                          })
+                        }
+                        className="w-full"
+                      />
                     </div>
+
+                    {/* Contact Number */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Contact number{" "}
+                        <span className="text-gray-400">(optional)</span>
+                      </label>
+                      <Input
+                        type="text"
+                        value={editedJob.customer_contact || ""}
+                        onChange={(e) =>
+                          setEditedJob({
+                            ...editedJob,
+                            customer_contact: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. 021 123 4567"
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Plating */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Plating
+                      </label>
+                      <Input
+                        type="text"
+                        value={editedJob.plating || ""}
+                        onChange={(e) =>
+                          setEditedJob({
+                            ...editedJob,
+                            plating: e.target.value as TPlating,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Notes
+                      </label>
+                      <textarea
+                        value={editedJob.notes || ""}
+                        onChange={(e) =>
+                          setEditedJob({ ...editedJob, notes: e.target.value })
+                        }
+                        placeholder="Collection instructions or special notes"
+                        className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Parts */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                        PARTS
+                      </h4>
+                      <div className="space-y-4">
+                        {editedJob.parts.map((part, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-gray-50 rounded-lg p-4 space-y-3"
+                          >
+                            <div className="font-medium">{part.code}</div>
+                            <div className="text-sm text-gray-600 mb-2">
+                              {part.desc}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-600 mb-1 block">
+                                  Qty
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={part.qty}
+                                  onChange={(e) => {
+                                    const newParts = [...editedJob.parts];
+                                    newParts[idx] = {
+                                      ...part,
+                                      qty: parseInt(e.target.value) || 0,
+                                    };
+                                    setEditedJob({
+                                      ...editedJob,
+                                      parts: newParts,
+                                    });
+                                  }}
+                                  min="0"
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-600 mb-1 block">
+                                  Price per part
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={part.price}
+                                  onChange={(e) => {
+                                    const newParts = [...editedJob.parts];
+                                    newParts[idx] = {
+                                      ...part,
+                                      price: parseFloat(e.target.value) || 0,
+                                    };
+                                    setEditedJob({
+                                      ...editedJob,
+                                      parts: newParts,
+                                    });
+                                  }}
+                                  step="0.01"
+                                  min="0"
+                                  className="w-full"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Apply Changes Button */}
+                    <Button
+                      onClick={applyJobChanges}
+                      disabled={isPending}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3"
+                    >
+                      Apply changes
+                    </Button>
                   </div>
+                )}
+              </div>
 
-                  {/* Apply Changes Button */}
-                  <Button
-                    onClick={applyJobChanges}
-                    disabled={isPending}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3"
-                  >
-                    Apply changes
-                  </Button>
+              {/* Pricing */}
+              <div className="mb-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  PRICING
+                </h3>
+
+                {/* Parts Total */}
+                <div className="bg-green-50 rounded-lg p-4 mb-3 flex justify-between items-center">
+                  <div className="font-medium">Parts total</div>
+                  <div className="font-bold text-lg">
+                    ${calcPrice(jobToDispatch, settings).toFixed(2)}
+                  </div>
                 </div>
-              )}
+
+                {/* Price Override */}
+                <div className="mb-3">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Price override ($){" "}
+                    <span className="text-gray-400">optional</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={priceOverride}
+                    onChange={(e) => setPriceOverride(e.target.value)}
+                    placeholder="Leave blank to use calculated"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Freight Cost */}
+                <div className="mb-3">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Freight cost ($)
+                  </label>
+                  <Input
+                    type="number"
+                    value={freightCost}
+                    onChange={(e) => setFreightCost(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Invoice Total */}
+                <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
+                  <div className="font-semibold">
+                    Invoice total (incl. freight)
+                  </div>
+                  <div className="font-bold text-xl">
+                    $
+                    {(
+                      (priceOverride
+                        ? parseFloat(priceOverride)
+                        : calcPrice(jobToDispatch, settings)) +
+                      parseFloat(freightCost || "0")
+                    ).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <Button
+                onClick={handleDispatchJob}
+                disabled={isPending}
+                className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mb-3"
+              >
+                Confirm & Dispatch — Generate FPN + CSV
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setJobToDispatch(null)}
+                className="w-full h-12 text-base"
+              >
+                Cancel
+              </Button>
             </div>
-
-            {/* Pricing */}
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                PRICING
-              </h3>
-
-              {/* Parts Total */}
-              <div className="bg-green-50 rounded-lg p-4 mb-3 flex justify-between items-center">
-                <div className="font-medium">Parts total</div>
-                <div className="font-bold text-lg">
-                  ${calcPrice(jobToDispatch, settings).toFixed(2)}
-                </div>
-              </div>
-
-              {/* Price Override */}
-              <div className="mb-3">
-                <label className="text-sm text-gray-600 mb-2 block">
-                  Price override ($){" "}
-                  <span className="text-gray-400">optional</span>
-                </label>
-                <Input
-                  type="text"
-                  value={priceOverride}
-                  onChange={(e) => setPriceOverride(e.target.value)}
-                  placeholder="Leave blank to use calculated"
-                  className="w-full"
-                />
-              </div>
-
-              {/* Freight Cost */}
-              <div className="mb-3">
-                <label className="text-sm text-gray-600 mb-2 block">
-                  Freight cost ($)
-                </label>
-                <Input
-                  type="number"
-                  value={freightCost}
-                  onChange={(e) => setFreightCost(e.target.value)}
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0"
-                  className="w-full"
-                />
-              </div>
-
-              {/* Invoice Total */}
-              <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
-                <div className="font-semibold">
-                  Invoice total (incl. freight)
-                </div>
-                <div className="font-bold text-xl">
-                  $
-                  {(
-                    (priceOverride
-                      ? parseFloat(priceOverride)
-                      : calcPrice(jobToDispatch, settings)) +
-                    parseFloat(freightCost || "0")
-                  ).toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <Button
-              onClick={handleDispatchJob}
-              disabled={isPending}
-              className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mb-3"
-            >
-              Confirm & Dispatch — Generate FPN + CSV
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setJobToDispatch(null)}
-              className="w-full h-12 text-base"
-            >
-              Cancel
-            </Button>
-          </div>
-        </Overlay>
+          </DrawerContent>
+        </Drawer>
       )}
     </div>
   );
