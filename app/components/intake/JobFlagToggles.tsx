@@ -13,15 +13,12 @@ export function JobFlagToggles() {
     flagged,
     freightRequested,
     minCharge,
-    currentJob,
     setUrgent,
     setIsInternal,
     setFlagged,
     setFreightRequested,
     setMinCharge,
   } = useIntakeStore();
-
-  const isEditable = !currentJob?.poComplete;
 
   return (
     <div className="space-y-3 mb-5">
@@ -34,7 +31,6 @@ export function JobFlagToggles() {
             </div>
           </div>
           <Switch
-            disabled={!isEditable}
             checked={urgent}
             onCheckedChange={setUrgent}
             className="ml-3"
@@ -54,7 +50,6 @@ export function JobFlagToggles() {
             </div>
           </div>
           <Switch
-            disabled={!isEditable}
             checked={isInternal}
             onCheckedChange={setIsInternal}
             className="ml-3"
@@ -74,7 +69,6 @@ export function JobFlagToggles() {
             </div>
           </div>
           <Switch
-            disabled={!isEditable}
             checked={freightRequested}
             onCheckedChange={setFreightRequested}
             className="ml-3"
@@ -94,7 +88,6 @@ export function JobFlagToggles() {
             </div>
           </div>
           <Switch
-            disabled={!isEditable}
             checked={minCharge}
             onCheckedChange={setMinCharge}
             className="ml-3"
@@ -114,7 +107,6 @@ export function JobFlagToggles() {
             </div>
           </div>
           <Switch
-            disabled={!isEditable}
             checked={flagged}
             onCheckedChange={setFlagged}
             className="ml-3"
