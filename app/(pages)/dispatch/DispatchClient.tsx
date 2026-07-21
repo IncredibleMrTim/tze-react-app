@@ -33,10 +33,10 @@ import { LuRotateCcw, LuTrash } from "react-icons/lu";
 export default function DispatchClient() {
   const { showToast } = useToast();
 
-  // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
-  const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
+  // Live updates arrive via WebSocket; hooks poll only as a backstop
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
-    useJigAssignments(5000);
+    useJigAssignments();
   const { data: settings, isLoading: settingsLoading } = useSettings();
 
   // Mutation hooks

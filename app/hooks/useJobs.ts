@@ -55,12 +55,20 @@ async function fetchJobImages(
 
 /**
  * Hook to fetch all jobs with automatic refresh
+ *
+ * Live updates arrive via the job_updates WebSocket (see useJobSocket) —
+ * this poll is just a backstop for missed events, and is disabled entirely
+ * in dev where a manual refresh is enough.
  */
-export function useJobs(refetchInterval = 10000) {
+export function useJobs(
+  refetchInterval: number | false = process.env.NODE_ENV === "development"
+    ? false
+    : 45000,
+) {
   return useQuery({
     queryKey: ["jobs"],
     queryFn: fetchJobs,
-    refetchInterval, // Auto-refresh every 10 seconds by default
+    refetchInterval,
     staleTime: 5000, // Consider fresh for 5 seconds
     retry: 2, // Only retry twice instead of default 3
     retryDelay: 1000, // Wait 1 second between retries
