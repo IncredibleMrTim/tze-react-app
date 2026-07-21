@@ -11,7 +11,6 @@ import { CustomerField } from "@/components/intake/CustomerField";
 import { PartsSection } from "@/components/intake/PartsSection";
 import { PartsPhotosSection } from "@/components/intake/PartsPhotosSection";
 import { JobFlagToggles } from "@/components/intake/JobFlagToggles";
-import { DispatchActions } from "@/components/intake/DispatchActions";
 import { useSaveJob } from "@/components/intake/useSaveJob";
 
 /**
@@ -64,8 +63,6 @@ export function EnterJobSheet() {
       <div className="px-4 pt-5">
         <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
         <h2 className="text-[17px] font-bold mb-4">Enter Job</h2>
-
-        <DispatchActions />
 
         <POScanSection />
 
