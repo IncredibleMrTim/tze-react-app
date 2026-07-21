@@ -22,6 +22,7 @@ interface IntakeFormState {
   parts: IPart[];
   plating: TPlating;
   notes: string;
+  isDispatched: boolean;
 
   // Flags
   urgent: boolean;
@@ -142,6 +143,7 @@ const initialState: IntakeFormState = {
   showRawData: false,
   partSearchIndex: null,
   partSearchTerm: "",
+  isDispatched: false,
 };
 
 export const useIntakeStore = create<IntakeStore>()(
@@ -151,7 +153,8 @@ export const useIntakeStore = create<IntakeStore>()(
 
       // UI actions
       setShowSheet: (showSheet) => set({ showSheet }),
-      setCurrentJob: (currentJob) => set({ currentJob }),
+      setCurrentJob: (currentJob) =>
+        set({ currentJob, isDispatched: !!currentJob?.dispatchedAt }),
       setEditingJobId: (editingJobId) => set({ editingJobId }),
       openJobSheet: (job) => set({ currentJob: job, showSheet: false }),
       openJobForEdit: (job, customer) =>

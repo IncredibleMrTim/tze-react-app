@@ -9,8 +9,8 @@ import { CustomerField } from "@/components/intake/CustomerField";
 import { PartsSection } from "@/components/intake/PartsSection";
 import { PartsPhotosSection } from "@/components/intake/PartsPhotosSection";
 import { JobFlagToggles } from "@/components/intake/JobFlagToggles";
+
 import { useSaveJob } from "@/components/intake/useSaveJob";
-import { useRouter } from "next/navigation";
 
 /**
  * Enter Job sheet — the intake form for creating or editing a job.
@@ -20,8 +20,6 @@ import { useRouter } from "next/navigation";
  * (e.g. when editing an existing job or applying a PO scan result).
  */
 export function EnterJobSheet() {
-  const router = useRouter();
-
   const {
     showSheet,
     closeSheet,
@@ -34,7 +32,6 @@ export function EnterJobSheet() {
     isInternal,
     stringsRequired,
     requiresWeighing,
-    currentJob,
     setPoNumber,
     setContactNumber,
     setPartsDescription,
@@ -43,7 +40,6 @@ export function EnterJobSheet() {
     setStringsRequired,
     setRequiresWeighing,
   } = useIntakeStore();
-  const isEditable = !currentJob?.poComplete;
   const { handleSave, isSaving } = useSaveJob();
 
   if (!showSheet) return null;
@@ -70,7 +66,6 @@ export function EnterJobSheet() {
             <Input
               type="text"
               value={po_number}
-              disabled={!isEditable}
               onChange={(e) => setPoNumber(e.target.value)}
               placeholder="Customer PO number"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base outline-none focus:border-primary"
@@ -86,7 +81,6 @@ export function EnterJobSheet() {
             </label>
             <Input
               type="tel"
-              disabled={!isEditable}
               value={contactNumber}
               onChange={(e) => setContactNumber(e.target.value)}
               placeholder="e.g. 021 123 4567"
@@ -103,7 +97,6 @@ export function EnterJobSheet() {
             </label>
             <Input
               type="text"
-              disabled={!isEditable}
               value={partsDescription}
               onChange={(e) => setPartsDescription(e.target.value)}
               placeholder="e.g. roller pins x50, swing arms"
@@ -118,7 +111,6 @@ export function EnterJobSheet() {
             <div className="flex gap-2">
               <Button
                 onClick={() => setPlating("silver")}
-                disabled={!isEditable}
                 className={`flex-1 py-2.5 border rounded-lg text-sm font-medium ${
                   plating === "silver"
                     ? "border-gray-400 bg-gray-400"
@@ -129,7 +121,6 @@ export function EnterJobSheet() {
               </Button>
               <Button
                 onClick={() => setPlating("gold")}
-                disabled={!isEditable}
                 className={`flex-1 py-2.5 border rounded-lg text-sm font-medium ${
                   plating === "gold"
                     ? "border-gray-400 bg-yellow-400 text-gray-900 disabled:bg-yellow-200"
@@ -165,7 +156,6 @@ export function EnterJobSheet() {
 
                 <Switch
                   id="string-required"
-                  disabled={!isEditable}
                   checked={stringsRequired}
                   onCheckedChange={setStringsRequired}
                   aria-label="Toggle strings required"
@@ -182,7 +172,6 @@ export function EnterJobSheet() {
                   </div>
                 </div>
                 <Switch
-                  disabled={!isEditable}
                   checked={requiresWeighing}
                   onCheckedChange={setRequiresWeighing}
                   className="ml-3"
@@ -201,7 +190,6 @@ export function EnterJobSheet() {
               COLLECTION INSTRUCTIONS / NOTES
             </label>
             <textarea
-              disabled={!isEditable}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Special handling or collection instructions..."
@@ -212,34 +200,21 @@ export function EnterJobSheet() {
 
           <JobFlagToggles />
 
-          {isEditable ? (
-            <div className="flex gap-3 pt-4 pb-4 border-t border-gray-200">
-              <button
-                onClick={closeSheet}
-                className="flex-1 bg-gray-100 text-gray-700 rounded-lg py-3 text-base font-medium hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={(!customer && !isInternal) || isSaving}
-                className="flex-1 bg-primary text-white rounded-lg py-3 text-base font-semibold hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Saving..." : "Save Job"}
-              </button>
-            </div>
-          ) : (
+          <div className="flex gap-3 pt-4 pb-4 border-t border-gray-200">
             <button
-              onClick={() => {
-                closeSheet();
-                router.back();
-              }}
-              disabled={(!customer && !isInternal) || isSaving}
-              className="flex-1 w-full bg-primary text-white rounded-lg py-3 text-base font-semibold hover:bg-emerald-700 mb-3"
+              onClick={closeSheet}
+              className="flex-1 bg-gray-100 text-gray-700 rounded-lg py-3 text-base font-medium hover:bg-gray-200"
             >
-              Close
+              Cancel
             </button>
-          )}
+            <button
+              onClick={handleSave}
+              disabled={(!customer && !isInternal) || isSaving}
+              className="flex-1 bg-primary text-white rounded-lg py-3 text-base font-semibold hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Saving..." : "Save Job"}
+            </button>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

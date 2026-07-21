@@ -223,6 +223,8 @@ export const isReady = (j: IJob, jigAssignments: IJigAssignment[]): boolean => {
   return gs.every((g) => g.status === "CLEARED");
 };
 
+export const isDispatched = (j: IJob) => !!j.dispatchedAt;
+
 export const stageLabel = (
   j: IJob,
   jigAssignments: IJigAssignment[],
