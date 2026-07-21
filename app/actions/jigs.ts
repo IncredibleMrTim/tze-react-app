@@ -7,6 +7,7 @@ import {
   deleteJigAssignment,
   getJigAssignments,
   deleteJigAssignmentsByJobId,
+  updateJob,
   setJigRework,
 } from '@/lib/db'
 import type { IJigAssignment } from '@/types/interfaces'
@@ -56,6 +57,9 @@ export async function deleteJigAssignmentAction(assignmentId: string) {
 export async function clearJobJigsAction(jobId: string) {
   try {
     await deleteJigAssignmentsByJobId(jobId)
+    // Sending a job back for re-jigging means its parts aren't processed
+    // yet, so it needs to be assignable to a jig again
+    await updateJob(jobId, { poComplete: false })
     revalidatePath('/jig')
     revalidatePath('/intake')
     revalidatePath('/jobs')
@@ -85,7 +89,6 @@ export async function completeJigAction(jigName: string) {
 
     // Mark jobs as complete, unless they're still spread across another
     // jig that hasn't been cleared yet
-    const { updateJob } = await import('@/lib/db')
     for (const assignment of activeAssignments) {
       const stillActiveElsewhere = assignments.some(
         (a) =>
