@@ -40,7 +40,7 @@ export default function IntakeClient() {
     error: jobsError,
   } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
-    useJigAssignments(5000);
+    useJigAssignments();
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
 
   const deleteJobMutation = useDeleteJob();

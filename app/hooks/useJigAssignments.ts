@@ -13,14 +13,21 @@ async function fetchJigAssignments(): Promise<IJigAssignment[]> {
 
 /**
  * Hook to fetch all jig assignments with automatic refresh
- * Refresh more frequently (5s) since this is active work monitoring
+ *
+ * Live updates arrive via the jig_updates WebSocket (see useJobSocket) —
+ * this poll is just a backstop for missed events, and is disabled entirely
+ * in dev where a manual refresh is enough.
  */
-export function useJigAssignments(refetchInterval = 5000) {
+export function useJigAssignments(
+  refetchInterval: number | false = process.env.NODE_ENV === 'development'
+    ? false
+    : 45000,
+) {
   return useQuery({
     queryKey: ['jig-assignments'],
     queryFn: fetchJigAssignments,
     refetchInterval,
-    staleTime: 2000, // Consider fresh for only 2 seconds
+    staleTime: 5000,
   })
 }
 
