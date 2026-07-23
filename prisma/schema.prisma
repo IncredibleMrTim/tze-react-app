@@ -112,11 +112,12 @@ model JigAssignment {
 // Settings (singleton table)
 model Settings {
   id           Int    @id @default(1)
-  apiKey       String
   silverKg     Float
   goldKg       Float
   silverJig    Float
   goldJig      Float
+  silverMinCharge Float @default(60)
+  goldMinCharge   Float @default(70)
   dueDays      Int
   jigCount     Int
   invSeqStart  Int

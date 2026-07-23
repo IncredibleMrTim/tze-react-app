@@ -56,24 +56,3 @@ export const loadState = (): IStorageState | null => {
   }
 };
 
-export const loadApiKey = (): string => {
-  if (typeof window === 'undefined') return '';
-
-  try {
-    const storedKey = localStorage.getItem('tze_api_key');
-    if (storedKey) return storedKey;
-    return '';
-  } catch (e) {
-    return '';
-  }
-};
-
-export const saveApiKey = (key: string): void => {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.setItem('tze_api_key', key);
-  } catch (e) {
-    console.error('Failed to save API key:', e);
-  }
-};

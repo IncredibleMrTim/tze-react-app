@@ -70,14 +70,15 @@ export interface IJigAssignment {
   pic: string | null;
   completedAt: number | null;
   loadedAt: number;
-  status: 'ACTIVE' | 'CLEARED';
+  status: "ACTIVE" | "CLEARED";
 }
 
 export interface ISettings {
-  apiKey: string;
   silverKg: number;
   goldKg: number;
   silverJig: number;
+  goldMinCharge: number;
+  silverMinCharge: number;
   goldJig: number;
   dueDays: number;
   jigCount: number;
