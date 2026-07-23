@@ -32,10 +32,14 @@ export function EnterJobSheet() {
     isInternal,
     stringsRequired,
     requiresWeighing,
+    stringCount,
+    weightKg,
     setPoNumber,
     setContactNumber,
     setPartsDescription,
     setPlating,
+    setStringCount,
+    setWeightKg,
     setNotes,
     setStringsRequired,
     setRequiresWeighing,
@@ -141,42 +145,58 @@ export function EnterJobSheet() {
             </label>
 
             <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <label
-                    className="text-sm font-medium text-gray-900"
-                    htmlFor="string-required"
-                  >
-                    Strings required
-                  </label>
-                  <div className="text-xs text-gray-500">
-                    JIG cannot complete until string count is entered
+              <div className="flex flex-col gap-2 border p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <label
+                      className="text-sm font-medium text-gray-900"
+                      htmlFor="string-required"
+                    >
+                      Strings required
+                    </label>
+                    <div className="text-xs text-gray-500">
+                      JIG cannot complete until string count is entered
+                    </div>
                   </div>
-                </div>
 
-                <Switch
-                  id="string-required"
-                  checked={stringsRequired}
-                  onCheckedChange={setStringsRequired}
-                  aria-label="Toggle strings required"
-                />
+                  <Switch
+                    id="string-required"
+                    checked={stringsRequired}
+                    onCheckedChange={setStringsRequired}
+                    aria-label="Toggle strings required"
+                  />
+                </div>
+                {stringsRequired && (
+                  <Input
+                    defaultValue={stringCount || 0}
+                    onChange={(e) => setStringCount(parseInt(e.target.value))}
+                  />
+                )}
               </div>
 
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">
-                    Requires weighing
+              <div className="flex flex-col gap-2 border p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      Requires weighing
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Dispatch blocked until weight is entered
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    Dispatch blocked until weight is entered
-                  </div>
+                  <Switch
+                    checked={requiresWeighing}
+                    onCheckedChange={setRequiresWeighing}
+                    className="ml-3"
+                    aria-label="Toggle requires weighing"
+                  />
                 </div>
-                <Switch
-                  checked={requiresWeighing}
-                  onCheckedChange={setRequiresWeighing}
-                  className="ml-3"
-                  aria-label="Toggle requires weighing"
-                />
+                {requiresWeighing && (
+                  <Input
+                    defaultValue={weightKg || 0}
+                    onChange={(e) => setWeightKg(parseInt(e.target.value))}
+                  />
+                )}
               </div>
             </div>
           </div>

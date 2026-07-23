@@ -38,6 +38,7 @@ export function useSaveJob() {
     minCharge,
     poPages,
     partsOnArrivalPhotos,
+    weightKg,
   } = useIntakeStore();
 
   const handleSave = () => {
@@ -69,6 +70,7 @@ export function useSaveJob() {
         parts,
         plating,
         stringCount,
+        weightKg,
         stringsRequired,
         requiresWeighing,
         freightRequested,
@@ -112,7 +114,7 @@ export function useSaveJob() {
         customer_contact: contactNumber,
         parts,
         plating,
-        weightKg: 0,
+        weightKg,
         stringCount,
         stringsRequired,
         requiresWeighing,

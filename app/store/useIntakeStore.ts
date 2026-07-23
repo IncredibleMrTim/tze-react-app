@@ -31,6 +31,7 @@ interface IntakeFormState {
   stringsRequired: boolean;
   stringCount: number;
   requiresWeighing: boolean;
+  weightKg: number;
   freightRequested: boolean;
   minCharge: boolean;
 
@@ -78,6 +79,7 @@ interface IntakeFormActions {
   setStringsRequired: (required: boolean) => void;
   setStringCount: (count: number) => void;
   setRequiresWeighing: (required: boolean) => void;
+  setWeightKg: (weight: number) => void;
   setFreightRequested: (requested: boolean) => void;
   setMinCharge: (minCharge: boolean) => void;
 
@@ -144,6 +146,7 @@ const initialState: IntakeFormState = {
   partSearchIndex: null,
   partSearchTerm: "",
   isDispatched: false,
+  weightKg: 0,
 };
 
 export const useIntakeStore = create<IntakeStore>()(
@@ -173,6 +176,7 @@ export const useIntakeStore = create<IntakeStore>()(
           flagged: job.flagged,
           stringsRequired: job.stringsRequired,
           stringCount: job.stringCount,
+          weightKg: job.weightKg,
           requiresWeighing: job.requiresWeighing,
           freightRequested: job.freightRequested,
           minCharge: job.minCharge,
@@ -203,6 +207,7 @@ export const useIntakeStore = create<IntakeStore>()(
       setStringsRequired: (stringsRequired) => set({ stringsRequired }),
       setStringCount: (stringCount) => set({ stringCount }),
       setRequiresWeighing: (requiresWeighing) => set({ requiresWeighing }),
+      setWeightKg: (weightKg) => set({ weightKg }),
       setFreightRequested: (freightRequested) => set({ freightRequested }),
       setMinCharge: (minCharge) => set({ minCharge }),
 

@@ -718,7 +718,7 @@ export default function DispatchClient() {
 
                   {/* Job Strings */}
                   <div className="rounded-lg p-4 flex justify-between items-center">
-                    <div className="">{`Strings (${jobToDispatch.stringCount} x ${settings.stringRate})`}</div>
+                    <div className="">{`Strings (${jobToDispatch.stringCount} x $${settings.stringRate})`}</div>
                     <div className="">
                       $
                       {(
