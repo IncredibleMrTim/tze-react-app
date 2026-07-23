@@ -234,7 +234,7 @@ export function EnterJobSheet() {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Special handling or collection instructions..."
               rows={3}
-              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary resize-none"
             />
           </div>
 

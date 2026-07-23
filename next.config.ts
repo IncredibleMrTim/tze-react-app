@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.4.33",
-    "considering-defined-characteristic-contrary.trycloudflare.com",
+    "viii-palestinian-knife-display.trycloudflare.com",
   ],
   experimental: {
     serverActions: {

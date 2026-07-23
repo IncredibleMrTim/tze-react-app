@@ -282,7 +282,7 @@ export default function JobsClient() {
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
           placeholder="dd/mm/yyyy"
-          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
         />
         <span className="flex items-center text-gray-400 text-sm">to</span>
         <input
@@ -290,7 +290,7 @@ export default function JobsClient() {
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
           placeholder="dd/mm/yyyy"
-          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
         />
         <button
           onClick={handleClear}
