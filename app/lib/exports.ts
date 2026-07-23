@@ -5,7 +5,7 @@ import { CSV_HDR } from "@/constants/invoice.const";
 export const genFPN = (j: IJob): void => {
   const ch = "#3D3D3D";
   const go = "#C9A84C";
-  const pr = calcPrice(j, {} as ISettings);
+  const pr = calcPrice(j, {} as ISettings, []);
   const dt = new Date(j.dispatchedAt || Date.now()).toLocaleDateString(
     "en-NZ",
     {
