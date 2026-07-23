@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Navigation } from "./navigation";
 import { Inter } from "next/font/google";
@@ -65,6 +65,15 @@ export const metadata: Metadata = {
       },
     ],
   },
+};
+
+// interactiveWidget: "resizes-content" makes the layout viewport (and any
+// position: fixed element, like the intake drawer) shrink with the on-screen
+// keyboard instead of staying full-height while the keyboard covers it.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
