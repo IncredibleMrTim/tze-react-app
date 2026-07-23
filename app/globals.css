@@ -13,10 +13,18 @@
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 0.5rem;
-    background-color: #f0f0f0;
     color: hsl(var(--foreground));
     @apply bg-background text-foreground;
+  }
+
+  /* Below the md breakpoint the app fills the device viewport edge-to-edge.
+     At md+ (desktop) we frame it as a centered card so content doesn't
+     stretch full-width on wide screens. */
+  @media (min-width: 768px) {
+    body {
+      padding: 0.5rem;
+      background-color: #f0f0f0;
+    }
   }
 
   input[type="number"]::-webkit-inner-spin-button,

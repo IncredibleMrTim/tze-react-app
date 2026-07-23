@@ -1,6 +1,7 @@
 "use client";
 import { useIntakeStore } from "@/store/useIntakeStore";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -45,12 +46,31 @@ export function EnterJobSheet() {
     setRequiresWeighing,
   } = useIntakeStore();
   const { handleSave, isSaving } = useSaveJob();
+  const visualViewport = useVisualViewport();
 
   if (!showSheet) return null;
 
+  // Position against the true visible area (window.visualViewport) instead
+  // of vaul's own keyboard compensation, which doesn't reliably keep the
+  // drawer above the on-screen keyboard on iOS Safari.
+  const drawerStyle = visualViewport
+    ? {
+        top: `${visualViewport.offsetTop + visualViewport.height * 0.1}px`,
+        height: `${visualViewport.height * 0.9}px`,
+        bottom: "auto",
+      }
+    : undefined;
+
   return (
-    <Drawer open onOpenChange={(open) => !open && closeSheet()}>
-      <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+    <Drawer
+      open
+      onOpenChange={(open) => !open && closeSheet()}
+      repositionInputs={false}
+    >
+      <DrawerContent
+        className="mx-auto mt-0 h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white"
+        style={drawerStyle}
+      >
         <div className="px-4 pt-5 flex-1 min-h-0 overflow-y-auto">
           <DrawerTitle className="text-[17px] font-bold mb-4">
             Enter Job
@@ -214,7 +234,7 @@ export function EnterJobSheet() {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Special handling or collection instructions..."
               rows={3}
-              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary resize-none"
             />
           </div>
 

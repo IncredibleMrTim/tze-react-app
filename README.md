@@ -82,6 +82,46 @@ On your Android phone, open Chrome and go to: `http://localhost:3000`
 adb devices && adb reverse tcp:3000 tcp:3000 && npm run dev
 ```
 
+## 🌐 Remote Access for Mobile Testing (iOS / Any Device)
+
+For testing on iPhone/Safari, or any device not on the same network, expose
+your local dev server with a Cloudflare quick tunnel. Unlike the Android USB
+setup above, this gives a public **HTTPS** URL, which is required for
+testing camera-based features (PO scanning) on iOS Safari.
+
+### 1. Install cloudflared (one-time setup)
+```bash
+brew install cloudflared
+```
+
+### 2. Start your dev server, then start the tunnel
+```bash
+npm run dev
+cloudflared tunnel --url http://localhost:3000
+```
+
+### 3. Open the printed URL on your phone
+`cloudflared` prints a public URL like:
+```
+https://<random-words>.trycloudflare.com
+```
+Open that URL in Safari on your iPhone (or any browser, on any network) —
+it proxies straight through to your local `localhost:3000`.
+
+**Notes:**
+- These are anonymous "quick tunnels" — no login required, but also no
+  uptime guarantee and no access control. Anyone with the URL can reach
+  your dev server while the tunnel is running. Don't leave it running
+  unattended, and don't use it for anything containing real customer data
+  you wouldn't want exposed.
+- The URL changes every time you start a new tunnel.
+- Stop the tunnel with `Ctrl+C` (or `pkill -f "cloudflared tunnel"` if it
+  was started in the background).
+- If you're on the same WiFi network as your dev machine, you don't need a
+  tunnel at all — `npm run dev` also prints a `Network:` URL
+  (`http://<your-lan-ip>:3000`) you can open directly, though camera access
+  on iOS Safari requires HTTPS so the tunnel is still needed for that.
+
 ## 📝 First Steps
 
 1. Go to Settings (🔧)

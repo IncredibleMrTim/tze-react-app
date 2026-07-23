@@ -464,7 +464,7 @@ export default function DispatchClient() {
       {/* Dispatch Modal */}
       {jobToDispatch && (
         <Drawer open onOpenChange={(open) => !open && setJobToDispatch(null)}>
-          <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white ">
+          <DrawerContent className="mx-auto h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white ">
             <div className="p-6 flex-1 min-h-0 overflow-y-auto">
               <DrawerTitle className="text-2xl font-bold mb-4">
                 Dispatch — {jobToDispatch.po_number}
