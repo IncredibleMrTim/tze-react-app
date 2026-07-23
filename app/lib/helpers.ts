@@ -319,7 +319,11 @@ export const hasMinCharge = (j: IJob) => {
   return calcJobTotal(j) === 0;
 };
 
-export const calcPrice = (j: IJob, settings: ISettings): number => {
+export const calcPrice = (
+  j: IJob,
+  settings: ISettings,
+  jigAssignments: IJigAssignment[],
+): number => {
   const minCharges = calculateMinCharges(settings);
   const minC = minCharges[j.plating] || 60;
   const freight = j.freightRequested ? j.freightCost || 0 : 0;
@@ -331,17 +335,30 @@ export const calcPrice = (j: IJob, settings: ISettings): number => {
   // Priced parts override weight/string pricing entirely
   let sum = calcJobTotal(j);
 
+  // if the sum of all parts <  the min rate use weight/space/strings
   if (hasMinCharge(j)) {
     const rates = calculateRates(settings);
     const rate = rates[j.plating] || rates.silver;
+    let newSum = 0;
+    const weight = j.weightKg * rate.kg;
+    const strings = j.stringCount * (settings.stringRate || 25);
+    const jigPrice =
+      (jigsOf(j.id, jigAssignments).reduce((sum, j) => sum + j.pct, 0) / 100) *
+      rates[j.plating].jig;
 
     if (j.requiresWeighing && j.weightKg) {
-      sum += j.weightKg * rate.kg;
+      newSum = weight;
     }
 
-    if (j.stringsRequired && j.stringCount) {
-      sum += j.stringCount * (settings.stringRate || 25);
+    if (j.stringsRequired && j.stringCount && strings > newSum) {
+      newSum = strings;
     }
+
+    if (jigPrice > newSum) {
+      newSum = jigPrice;
+    }
+
+    sum = newSum;
   }
 
   if (sum < minC) {

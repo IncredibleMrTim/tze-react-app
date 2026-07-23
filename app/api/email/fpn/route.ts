@@ -19,7 +19,7 @@ const SMTP_CONFIG = {
 function generateFPNHTML(job: IJob): string {
   const ch = "#3D3D3D";
   const go = "#C9A84C";
-  const pr = calcPrice(job, {} as any); // Using empty settings object as fallback
+  const pr = calcPrice(job, {} as any, []); // Using empty settings object as fallback
   const dt = new Date(job.dispatchedAt || Date.now()).toLocaleDateString("en-NZ", {
     day: "numeric",
     month: "long",
