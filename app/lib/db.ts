@@ -398,7 +398,6 @@ export async function getSettings() {
     settings = await prisma.settings.create({
       data: {
         id: 1,
-        apiKey: process.env.ANTHROPIC_API_KEY || "",
         silverKg: 300,
         goldKg: 400,
         silverJig: 1,

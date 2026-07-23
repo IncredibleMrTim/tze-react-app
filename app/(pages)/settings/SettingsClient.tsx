@@ -3,21 +3,21 @@
 import { useState, useTransition } from "react";
 import { updateSettingsAction } from "@/actions/settings";
 import { useToast } from "@/hooks/useToast";
-import { saveApiKey } from "@/lib/storage";
 import type { ISettings } from "@/types/interfaces";
 
 interface SettingsClientProps {
   initialSettings: ISettings;
 }
 
-export default function SettingsClient({ initialSettings }: SettingsClientProps) {
+export default function SettingsClient({
+  initialSettings,
+}: SettingsClientProps) {
   const [isPending, startTransition] = useTransition();
   const { showToast } = useToast();
   const [settings, setSettings] = useState(initialSettings);
 
   const handleSave = () => {
     startTransition(async () => {
-      saveApiKey(settings.apiKey);
       const result = await updateSettingsAction(settings);
       if (result.success) {
         showToast("Settings saved");
@@ -29,7 +29,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
 
   const updateSetting = <K extends keyof typeof settings>(
     key: K,
-    value: typeof settings[K]
+    value: (typeof settings)[K],
   ) => {
     setSettings({ ...settings, [key]: value });
   };
@@ -37,30 +37,6 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   return (
     <div>
       <h2 className="text-lg font-bold mb-4">Settings</h2>
-
-      <div className="mb-4">
-        <label className="text-[13px] font-medium text-gray-600 mb-1.5 block">
-          Anthropic API Key
-        </label>
-        <input
-          type="password"
-          value={settings.apiKey}
-          onChange={(e) => updateSetting("apiKey", e.target.value)}
-          placeholder="sk-ant-..."
-          className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary font-mono"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Required for PO scanning. Get your key from{" "}
-          <a
-            href="https://console.anthropic.com"
-            target="_blank"
-            rel="noopener"
-            className="text-primary"
-          >
-            console.anthropic.com
-          </a>
-        </p>
-      </div>
 
       <div className="border-t pt-4 mb-4">
         <h3 className="text-sm font-semibold mb-3">Rate Card</h3>
@@ -111,7 +87,9 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             />
           </div>
           <div>
-            <label className="text-xs text-gray-600 mb-1 block">Gold JIG $</label>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Gold JIG $
+            </label>
             <input
               type="number"
               value={settings.goldJig}
@@ -123,30 +101,82 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="text-xs text-gray-600 mb-1 block">
-              String Rate $
+              Min JIG Rate Silver $
             </label>
             <input
               type="number"
-              value={settings.stringRate}
+              value={settings.silverMinCharge}
               onChange={(e) =>
-                updateSetting("stringRate", parseFloat(e.target.value) || 0)
+                updateSetting(
+                  "silverMinCharge",
+                  parseFloat(e.target.value) || 0,
+                )
               }
               className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-600 mb-1 block">Due Days</label>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Min JIG Rate Gold $
+            </label>
             <input
               type="number"
-              value={settings.dueDays}
+              value={settings.goldMinCharge}
               onChange={(e) =>
-                updateSetting("dueDays", parseInt(e.target.value) || 0)
+                updateSetting("goldMinCharge", parseFloat(e.target.value) || 0)
               }
               className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
             />
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <div className="border-t pt-4 mb-4">
+            <h3 className="text-sm font-semibold mb-3">Invoice Settings</h3>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">
+                  String Rate $
+                </label>
+                <input
+                  type="number"
+                  value={settings.stringRate}
+                  onChange={(e) =>
+                    updateSetting("stringRate", parseFloat(e.target.value) || 0)
+                  }
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">
+                  Due Days
+                </label>
+                <input
+                  type="number"
+                  value={settings.dueDays}
+                  onChange={(e) =>
+                    updateSetting("dueDays", parseInt(e.target.value) || 0)
+                  }
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">
+                  Next Invoice Number
+                </label>
+                <input
+                  type="number"
+                  value={settings.invSeqStart}
+                  onChange={(e) =>
+                    updateSetting("invSeqStart", parseInt(e.target.value) || 1)
+                  }
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -163,7 +193,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             onChange={(e) =>
               updateSetting(
                 "jigCount",
-                Math.min(20, Math.max(1, parseInt(e.target.value) || 6))
+                Math.min(20, Math.max(1, parseInt(e.target.value) || 6)),
               )
             }
             min="1"
@@ -171,23 +201,6 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
           />
           <p className="text-xs text-gray-500 mt-1">Between 1 and 20 JIGs</p>
-        </div>
-      </div>
-
-      <div className="border-t pt-4 mb-4">
-        <h3 className="text-sm font-semibold mb-3">Invoice Configuration</h3>
-        <div>
-          <label className="text-xs text-gray-600 mb-1 block">
-            Starting Invoice #
-          </label>
-          <input
-            type="number"
-            value={settings.invSeqStart}
-            onChange={(e) =>
-              updateSetting("invSeqStart", parseInt(e.target.value) || 1)
-            }
-            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
-          />
         </div>
       </div>
 

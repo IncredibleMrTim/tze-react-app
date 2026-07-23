@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { IJob } from "@/types/interfaces";
 import type { TPlating } from "@/types/types";
-import { isReady, calcPrice } from "@/lib/helpers";
+import { isReady, calcPrice, jigsOf } from "@/lib/helpers";
 import { genFPN, genBatchCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
@@ -29,6 +29,7 @@ import {
 import { useSettings } from "@/hooks/useSettings";
 import { JobCard } from "@/components/JobCard";
 import { LuRotateCcw, LuTrash } from "react-icons/lu";
+import { calculateRates } from "@/constants/settings.const";
 
 export default function DispatchClient() {
   const { showToast } = useToast();
@@ -74,6 +75,8 @@ export default function DispatchClient() {
       </div>
     );
   }
+
+  const rates = calculateRates(settings);
 
   const readyJobs = jobs.filter(
     (j) => isReady(j, jigAssignments) && !j.dispatchedAt,
@@ -676,11 +679,53 @@ export default function DispatchClient() {
                   PRICING
                 </h3>
 
-                {/* Parts Total */}
-                <div className="bg-green-50 rounded-lg p-4 mb-3 flex justify-between items-center">
-                  <div className="font-medium">Parts total</div>
-                  <div className="font-bold text-lg">
-                    ${calcPrice(jobToDispatch, settings).toFixed(2)}
+                {/* Job Parts */}
+                <div className="border rounded-lg mb-4">
+                  {/* Job Weight */}
+                  <div className="border-b p-4 flex justify-between items-center">
+                    <div className="">{`Weight (${jobToDispatch.weightKg}kg x $${rates[jobToDispatch.plating].kg})`}</div>
+                    <div className="">
+                      $
+                      {(
+                        (jobToDispatch.weightKg || 0) *
+                        rates[jobToDispatch.plating].kg
+                      ).toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* Job Jig Assignments */}
+                  <div className="border-b p-4 flex justify-between items-center">
+                    <div className="">{`Space (${jigsOf(
+                      jobToDispatch.id,
+                      jigAssignments,
+                    )
+                      .map((j) => `${j.pct}%`)
+                      .join(
+                        " + ",
+                      )} of Jig x $${rates[jobToDispatch.plating].jig})`}</div>
+                    <div className="">
+                      $
+                      {(
+                        (jigsOf(jobToDispatch.id, jigAssignments).reduce(
+                          (sum, j) => sum + j.pct,
+                          0,
+                        ) /
+                          100) *
+                        rates[jobToDispatch.plating].jig
+                      ).toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* Job Strings */}
+                  <div className="rounded-lg p-4 flex justify-between items-center">
+                    <div className="">{`Strings (${jobToDispatch.stringCount} x ${settings.stringRate})`}</div>
+                    <div className="">
+                      $
+                      {(
+                        (jobToDispatch.stringCount || 0) *
+                        (settings.stringRate || 25)
+                      ).toFixed(2)}
+                    </div>
                   </div>
                 </div>
 
