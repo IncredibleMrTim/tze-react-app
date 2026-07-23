@@ -282,7 +282,7 @@ export default function JobsClient() {
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
           placeholder="dd/mm/yyyy"
-          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
         />
         <span className="flex items-center text-gray-400 text-sm">to</span>
         <input
@@ -290,7 +290,7 @@ export default function JobsClient() {
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
           placeholder="dd/mm/yyyy"
-          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+          className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
         />
         <button
           onClick={handleClear}
@@ -429,7 +429,7 @@ export default function JobsClient() {
         open={!!viewingJob}
         onOpenChange={(open) => !open && setViewingJob(null)}
       >
-        <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+        <DrawerContent className="mx-auto h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white">
           {viewingJob && (
             <div className="px-4 pt-5 pb-6 flex-1 min-h-0 overflow-y-auto">
               <DrawerTitle className="text-[17px] font-bold mb-4">

@@ -118,7 +118,7 @@ export function PartsSection() {
                     }, 200);
                   }}
                   placeholder="Type code or description..."
-                  className="w-full border-2 border-primary rounded px-3 py-2 text-sm outline-none focus:border-primary"
+                  className="w-full border-2 border-primary rounded px-3 py-2 text-base outline-none focus:border-primary"
                 />
 
                 {partSearchIndex === i && getFilteredItems.length > 0 && (
@@ -146,7 +146,7 @@ export function PartsSection() {
                 value={part.desc}
                 onChange={(e) => updatePart(i, "desc", e.target.value)}
                 placeholder="Search or type description..."
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-2 outline-none focus:border-primary"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-base mb-2 outline-none focus:border-primary"
               />
 
               <div className="grid grid-cols-2 gap-2">
@@ -156,13 +156,13 @@ export function PartsSection() {
                   </label>
                   <Input
                     type="number"
-                    value={part.price}
+                    defaultValue={part.price}
                     onChange={(e) =>
                       updatePart(i, "price", parseFloat(e.target.value) || 0)
                     }
                     placeholder="0.00"
                     step="0.01"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-primary"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-base outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -171,13 +171,13 @@ export function PartsSection() {
                   </label>
                   <Input
                     type="number"
-                    value={part.qty}
+                    defaultValue={part.qty}
                     onChange={(e) =>
                       updatePart(i, "qty", parseInt(e.target.value) || 1)
                     }
                     placeholder="1"
                     min="1"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-primary"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-base outline-none focus:border-primary"
                   />
                 </div>
               </div>

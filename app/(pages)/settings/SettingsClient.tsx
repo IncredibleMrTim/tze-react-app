@@ -53,7 +53,7 @@ export default function SettingsClient({
                 updateSetting("silverKg", parseFloat(e.target.value) || 0)
               }
               step="0.1"
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
           <div>
@@ -67,7 +67,7 @@ export default function SettingsClient({
                 updateSetting("goldKg", parseFloat(e.target.value) || 0)
               }
               step="0.1"
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function SettingsClient({
               onChange={(e) =>
                 updateSetting("silverJig", parseFloat(e.target.value) || 0)
               }
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
           <div>
@@ -96,7 +96,7 @@ export default function SettingsClient({
               onChange={(e) =>
                 updateSetting("goldJig", parseFloat(e.target.value) || 0)
               }
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function SettingsClient({
                   parseFloat(e.target.value) || 0,
                 )
               }
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
           <div>
@@ -128,7 +128,7 @@ export default function SettingsClient({
               onChange={(e) =>
                 updateSetting("goldMinCharge", parseFloat(e.target.value) || 0)
               }
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
             />
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function SettingsClient({
                   onChange={(e) =>
                     updateSetting("stringRate", parseFloat(e.target.value) || 0)
                   }
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
                 />
               </div>
               <div>
@@ -160,7 +160,7 @@ export default function SettingsClient({
                   onChange={(e) =>
                     updateSetting("dueDays", parseInt(e.target.value) || 0)
                   }
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
                 />
               </div>
               <div>
@@ -173,7 +173,7 @@ export default function SettingsClient({
                   onChange={(e) =>
                     updateSetting("invSeqStart", parseInt(e.target.value) || 1)
                   }
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function SettingsClient({
             }
             min="1"
             max="20"
-            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1.5 text-base"
           />
           <p className="text-xs text-gray-500 mt-1">Between 1 and 20 JIGs</p>
         </div>
