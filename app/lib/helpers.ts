@@ -306,36 +306,49 @@ export const resolveCustomer = (
 
 // ================ Price Calculation ================ //
 
-export const calcPrice = (j: IJob, settings: ISettings): number => {
-  if (j.priceOverride != null) return j.priceOverride;
-
-  const rates = calculateRates(settings);
-  const minCharges = calculateMinCharges(settings);
-  const rate = rates[j.plating] || rates.silver;
-  const minC = minCharges[j.plating] || 60;
-
+export const calcJobTotal = (j: IJob): number => {
   let sum = 0;
   j.parts.forEach((p) => {
     sum += (p.price || 0) * (p.qty || 1);
   });
 
-  if (j.requiresWeighing && j.weightKg) {
-    sum += j.weightKg * rate.kg;
+  return sum;
+};
+
+export const hasMinCharge = (j: IJob) => {
+  return calcJobTotal(j) === 0;
+};
+
+export const calcPrice = (j: IJob, settings: ISettings): number => {
+  const minCharges = calculateMinCharges(settings);
+  const minC = minCharges[j.plating] || 60;
+  const freight = j.freightRequested ? j.freightCost || 0 : 0;
+
+  if (j.priceOverride != null) {
+    return Math.round((j.priceOverride + freight) * 100) / 100;
   }
 
-  if (j.stringsRequired && j.stringCount) {
-    sum += j.stringCount * (settings.stringRate || 25);
+  // Priced parts override weight/string pricing entirely
+  let sum = calcJobTotal(j);
+
+  if (hasMinCharge(j)) {
+    const rates = calculateRates(settings);
+    const rate = rates[j.plating] || rates.silver;
+
+    if (j.requiresWeighing && j.weightKg) {
+      sum += j.weightKg * rate.kg;
+    }
+
+    if (j.stringsRequired && j.stringCount) {
+      sum += j.stringCount * (settings.stringRate || 25);
+    }
   }
 
-  if (j.freightRequested && j.freightCost) {
-    sum += j.freightCost;
-  }
-
-  if (j.minCharge && sum < minC) {
+  if (sum < minC) {
     sum = minC;
   }
 
-  return Math.round(sum * 100) / 100;
+  return Math.round((sum + freight) * 100) / 100;
 };
 
 // ================ Image Processing ================ //
