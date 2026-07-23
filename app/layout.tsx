@@ -85,9 +85,9 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans", inter.variable)}>
       <body>
         <QueryProvider>
-          <div className="w-full max-w-[430px] min-h-screen bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col mx-auto">
+          <div className="w-full md:max-w-[430px] min-h-screen bg-white md:rounded-2xl overflow-hidden md:shadow-lg flex flex-col mx-auto">
             {/* Header */}
-            <div className="fixed top-0 w-full max-w-[430px] left-1/2 -translate-x-1/2 z-50 bg-white border-b border-gray-200 px-4 py-3.5 flex items-center justify-between">
+            <div className="fixed top-0 w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-50 bg-white border-b border-gray-200 px-4 py-3.5 flex items-center justify-between">
               <h1 className="text-base font-bold text-primary">
                 Tauranga Zinc Electroplaters
               </h1>
@@ -98,7 +98,7 @@ export default function RootLayout({
             <div className="flex-1 overflow-y-auto p-3 pt-16 pb-20">{children}</div>
 
             {/* Bottom Navigation */}
-            <div className="fixed bottom-0 w-full max-w-[430px] left-1/2 -translate-x-1/2 z-50">
+            <div className="fixed bottom-0 w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-50">
               <Navigation />
             </div>
           </div>

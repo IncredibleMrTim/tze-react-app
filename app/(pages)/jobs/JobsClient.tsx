@@ -429,7 +429,7 @@ export default function JobsClient() {
         open={!!viewingJob}
         onOpenChange={(open) => !open && setViewingJob(null)}
       >
-        <DrawerContent className="mx-auto h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white">
+        <DrawerContent className="mx-auto h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white">
           {viewingJob && (
             <div className="px-4 pt-5 pb-6 flex-1 min-h-0 overflow-y-auto">
               <DrawerTitle className="text-[17px] font-bold mb-4">

@@ -156,7 +156,7 @@ export function PartsSection() {
                   </label>
                   <Input
                     type="number"
-                    value={part.price}
+                    defaultValue={part.price}
                     onChange={(e) =>
                       updatePart(i, "price", parseFloat(e.target.value) || 0)
                     }
@@ -171,7 +171,7 @@ export function PartsSection() {
                   </label>
                   <Input
                     type="number"
-                    value={part.qty}
+                    defaultValue={part.qty}
                     onChange={(e) =>
                       updatePart(i, "qty", parseInt(e.target.value) || 1)
                     }

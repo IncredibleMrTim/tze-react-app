@@ -68,7 +68,7 @@ export function EnterJobSheet() {
       repositionInputs={false}
     >
       <DrawerContent
-        className="mx-auto mt-0 h-[90%] max-w-[430px] rounded-t-[20px] border-none bg-white"
+        className="mx-auto mt-0 h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white"
         style={drawerStyle}
       >
         <div className="px-4 pt-5 flex-1 min-h-0 overflow-y-auto">
