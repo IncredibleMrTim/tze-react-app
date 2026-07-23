@@ -60,7 +60,6 @@ export interface IJob {
   fpnDownloaded: boolean;
   fpnHidden: boolean;
   csvDownloaded: boolean;
-  total: number;
 }
 
 export interface IJigAssignment {
