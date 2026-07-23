@@ -33,10 +33,10 @@ import {
 export default function JobsClient() {
   const { showToast } = useToast();
 
-  // React Query hooks - auto-refresh for real-time updates
-  const { data: jobs = [], isLoading: jobsLoading } = useJobs(10000);
+  // Live updates arrive via WebSocket; hooks poll only as a backstop
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
-    useJigAssignments(5000);
+    useJigAssignments();
   const updateJobMutation = useUpdateJob();
 
   const isLoading = jobsLoading || jigsLoading;

@@ -9,8 +9,13 @@ async function ensureListener() {
   listener = new Client({ connectionString: process.env.DATABASE_URL });
   await listener.connect();
   await listener.query("LISTEN job_updates");
+  await listener.query("LISTEN jig_updates");
   listener.on("notification", (msg) => {
-    sockets.forEach((send) => send(msg.payload ?? ""));
+    const envelope = JSON.stringify({
+      channel: msg.channel,
+      payload: JSON.parse(msg.payload ?? "{}"),
+    });
+    sockets.forEach((send) => send(envelope));
   });
 }
 

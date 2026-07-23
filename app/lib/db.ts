@@ -184,7 +184,10 @@ export async function createJigAssignment(assignment: IJigAssignment) {
     },
   });
 
-  return serializeJigAssignment(created);
+  const serialized = serializeJigAssignment(created);
+  await notify("jig_updates", { type: "created", assignment: serialized });
+
+  return serialized;
 }
 
 export async function updateJigAssignment(
@@ -208,13 +211,20 @@ export async function updateJigAssignment(
     data: updateData,
   });
 
-  return serializeJigAssignment(updated);
+  const serialized = serializeJigAssignment(updated);
+  await notify("jig_updates", { type: "updated", assignment: serialized });
+
+  return serialized;
 }
 
 export async function deleteJigAssignment(assignmentId: string) {
-  return await prisma.jigAssignment.delete({
+  const deleted = await prisma.jigAssignment.delete({
     where: { id: assignmentId },
   });
+
+  await notify("jig_updates", { type: "deleted", assignmentId });
+
+  return deleted;
 }
 
 export async function getJigAssignments() {
@@ -228,9 +238,13 @@ export async function getJigAssignments() {
 }
 
 export async function deleteJigAssignmentsByJobId(jobId: string) {
-  return await prisma.jigAssignment.deleteMany({
+  const result = await prisma.jigAssignment.deleteMany({
     where: { jobId },
   });
+
+  await notify("jig_updates", { type: "deleted-by-job", jobId });
+
+  return result;
 }
 
 export async function getActiveJigAssignments(jobId: string) {

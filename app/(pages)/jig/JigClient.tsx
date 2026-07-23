@@ -40,10 +40,10 @@ import { JobCard } from "@/components/JobCard";
 export default function JigClient() {
   const { showToast } = useToast();
 
-  // React Query hooks - auto-refresh every 5 seconds for real-time monitoring
-  const { data: jobs = [], isLoading: jobsLoading } = useJobs(5000);
+  // Live updates arrive via WebSocket; hooks poll only as a backstop
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
-    useJigAssignments(5000);
+    useJigAssignments();
   const { data: settings, isLoading: settingsLoading } = useSettings();
 
   // Mutation hooks
@@ -801,11 +801,11 @@ export default function JigClient() {
               {incompleteJigInfo.percent}% loaded.
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
-              <p>JIG must be at 100% before marking complete.</p>
-              <p className="font-medium">
+              <span className="block">JIG must be at 100% before marking complete.</span>
+              <span className="block font-medium">
                 Add a Rework allocation or additional job to fill the remaining{" "}
                 {100 - incompleteJigInfo.percent}%.
-              </p>
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -823,10 +823,10 @@ export default function JigClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Mark {selectedJig} as complete?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
-              <p>
+              <span className="block">
                 This will mark the JIG as complete and move it out of the tank.
-              </p>
-              <p className="font-medium">Are you sure you want to continue?</p>
+              </span>
+              <span className="block font-medium">Are you sure you want to continue?</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
