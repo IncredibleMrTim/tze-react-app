@@ -138,7 +138,7 @@ export function DispatchActions() {
         <div className="flex justify-between items-center mb-3">
           <div className="text-sm text-gray-700">Parts total</div>
           <div className="font-bold text-lg">
-            ${calcPrice(job, settings).toFixed(2)}
+            ${calcPrice(job, settings, jigAssignments).toFixed(2)}
           </div>
         </div>
         <div className="mb-3">

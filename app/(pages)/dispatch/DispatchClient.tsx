@@ -770,7 +770,7 @@ export default function DispatchClient() {
                     {(
                       (priceOverride
                         ? parseFloat(priceOverride)
-                        : calcPrice(jobToDispatch, settings)) +
+                        : calcPrice(jobToDispatch, settings, jigAssignments)) +
                       parseFloat(freightCost || "0")
                     ).toFixed(2)}
                   </div>
