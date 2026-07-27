@@ -8,7 +8,7 @@ type PageMetadata = {
 const pageMetadata: Record<string, PageMetadata> = {
   intake: {
     title: "Intake",
-    description: "Job intake and management",
+    description: "Job intake, search, and management",
   },
   dispatch: {
     title: "Dispatch",
@@ -17,10 +17,6 @@ const pageMetadata: Record<string, PageMetadata> = {
   jig: {
     title: "JIG Management",
     description: "Manage JIG assignments and completion",
-  },
-  jobs: {
-    title: "Jobs",
-    description: "Search and view all jobs",
   },
   settings: {
     title: "Settings",

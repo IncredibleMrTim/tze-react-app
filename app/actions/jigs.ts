@@ -18,7 +18,6 @@ export async function createJigAssignmentAction(assignment: IJigAssignment) {
     const result = await createJigAssignment(assignment)
     revalidatePath('/jig')
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return { success: true, assignment: result }
   } catch (error) {
     console.error('Failed to create jig assignment:', error)
@@ -34,7 +33,6 @@ export async function updateJigAssignmentAction(
     const result = await updateJigAssignment(assignmentId, updates)
     revalidatePath('/jig')
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return { success: true, assignment: result }
   } catch (error) {
     console.error('Failed to update jig assignment:', error)
@@ -47,7 +45,6 @@ export async function deleteJigAssignmentAction(assignmentId: string) {
     await deleteJigAssignment(assignmentId)
     revalidatePath('/jig')
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete jig assignment:', error)
@@ -63,7 +60,6 @@ export async function clearJobJigsAction(jobId: string) {
     await updateJob(jobId, { poComplete: false })
     revalidatePath('/jig')
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return { success: true }
   } catch (error) {
     console.error('Failed to clear job jigs:', error)
@@ -109,7 +105,6 @@ export async function completeJigAction(jigName: string) {
 
     revalidatePath('/jig')
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     revalidatePath('/dispatch')
 
     return { success: true }
