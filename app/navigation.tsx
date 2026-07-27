@@ -9,7 +9,6 @@ export function Navigation() {
   const { setCurrentJob } = useIntakeStore();
 
   const navItems = [
-    { href: "/jobs", icon: "🏠", label: "Home" },
     { href: "/intake", icon: "📥", label: "Intake" },
     { href: "/jig", icon: "⚙️", label: "JIG" },
     { href: "/dispatch", icon: "🚚", label: "Dispatch" },

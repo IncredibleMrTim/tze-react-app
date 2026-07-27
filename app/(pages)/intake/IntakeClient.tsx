@@ -6,13 +6,16 @@ import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
 import { useJigAssignments, useJig } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/store/useIntakeStore";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
 import type { IJob } from "@/types/interfaces";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/JobCard";
-import { EnterJobSheet } from "@/components/intake/EnterJobSheet";
+import { JobSearch } from "@/components/JobSearch";
+import { EnterJobForm } from "@/components/intake/EnterJobForm";
 
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import {
   Carousel,
   CarouselContent,
@@ -30,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { jigsOf } from "@/lib/helpers";
+import { jigsOf, isReady, isDispatched } from "@/lib/helpers";
 
 export default function IntakeClient() {
   const { showToast } = useToast();
@@ -49,9 +52,17 @@ export default function IntakeClient() {
 
   const error = jobsError;
 
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
   // Zustand store - all state
-  const { currentJob, setShowSheet, setCurrentJob, openJobForEdit } =
-    useIntakeStore();
+  const {
+    currentJob,
+    showSheet,
+    setShowSheet,
+    setCurrentJob,
+    openJobForEdit,
+    closeSheet,
+  } = useIntakeStore();
 
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
@@ -59,6 +70,20 @@ export default function IntakeClient() {
   const jigPhotos = currentJob && getJigPhotosByJobId(currentJob.id);
 
   const isLoading = jobsLoading || jigsLoading || contactsLoading;
+
+  const isJobDrawerOpen = !!currentJob || showSheet;
+
+  // Position against the true visible area (window.visualViewport) instead
+  // of vaul's own keyboard compensation, which doesn't reliably keep the
+  // drawer above the on-screen keyboard on iOS Safari.
+  const visualViewport = useVisualViewport();
+  const drawerStyle = visualViewport
+    ? {
+        top: `${visualViewport.offsetTop + visualViewport.height * 0.1}px`,
+        height: `${visualViewport.height * 0.9}px`,
+        bottom: "auto",
+      }
+    : undefined;
 
   const confirmDeleteJob = () => {
     if (!currentJob) return;
@@ -98,18 +123,24 @@ export default function IntakeClient() {
       .toUpperCase();
   };
 
+  // Jobs still on the shop floor — excludes anything dispatched or already
+  // queued for dispatch. Those stages remain reachable via search.
+  const onFloorJobs = useMemo(
+    () => jobs.filter((j) => !isDispatched(j) && !isReady(j, jigAssignments)),
+    [jobs, jigAssignments],
+  );
+
   const groupJobsByDate = useMemo(() => {
     const groups: Record<string, IJob[]> = {};
-    const undispatchedJobs = jobs.filter((j) => !j.dispatchedAt);
 
-    undispatchedJobs.forEach((j) => {
+    onFloorJobs.forEach((j) => {
       const dateLabel = formatJobDate(j.createdAt);
       if (!groups[dateLabel]) groups[dateLabel] = [];
       groups[dateLabel].push(j);
     });
 
     return groups;
-  }, [jobs]);
+  }, [onFloorJobs]);
 
   // Show loading state on initial load
   if (isLoading) {
@@ -144,7 +175,7 @@ export default function IntakeClient() {
         <div className="text-base text-gray-600">
           On floor:{" "}
           <span className="font-semibold text-gray-900">
-            {jobs.length} jobs
+            {onFloorJobs.length} jobs
           </span>
         </div>
         <Button
@@ -157,7 +188,16 @@ export default function IntakeClient() {
         </Button>
       </div>
 
-      {jobs.length === 0 && (
+      <div className="mb-4">
+        <JobSearch
+          jobs={jobs}
+          jigAssignments={jigAssignments}
+          onSelectJob={setCurrentJob}
+          onActiveChange={setIsSearchActive}
+        />
+      </div>
+
+      {onFloorJobs.length === 0 && !isSearchActive && (
         <div className="text-center py-16">
           <div className="text-7xl mb-4">🏭</div>
           <div className="text-xl font-semibold text-gray-800 mb-2">
@@ -167,7 +207,7 @@ export default function IntakeClient() {
         </div>
       )}
 
-      {jobs.length > 0 && !currentJob && (
+      {onFloorJobs.length > 0 && !isSearchActive && (
         <div className="space-y-4">
           {Object.entries(groupJobsByDate).map(([dateLabel, dateJobs]) => (
             <div key={dateLabel}>
@@ -189,290 +229,318 @@ export default function IntakeClient() {
         </div>
       )}
 
-      {currentJob && (
-        <div className="pb-20">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setCurrentJob(null)}
-              className="flex items-center gap-1 text-primary font-medium text-sm"
-            >
-              ← Back to Jobs
-            </button>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={deleteJobMutation.isPending}
-                className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => {
-                  openJobForEdit(
-                    currentJob,
-                    CONTACTS.find((c) => c.name === currentJob.customer_name) ||
-                      null,
-                  );
-                  setCurrentJob(null);
-                }}
-                className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-          <JobCard
-            job={currentJob}
-            jigAssignments={jigAssignments}
-            onClick={() => {}}
-            showJigStatus={true}
-          />
-          <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">
-            CONTACT
-          </h3>
-          <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-md mb-4">
-            <span className="flex items-center gap-2">
-              <FiMail />
-              {currentJob.customer_email ? (
-                <a
-                  href={`mailto: ${currentJob.customer_email}`}
-                  className="underline"
-                >
-                  {currentJob.customer_email}
-                </a>
-              ) : (
-                "No Provided"
-              )}
-            </span>
-            <span className="flex items-center gap-2">
-              <FiPhone />
-              {currentJob.customer_contact || "Not Provided"}
-            </span>
-          </div>
-          {currentJob.parts.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PARTS
-              </h3>
-              {currentJob.parts.map((part, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
-                >
-                  <div>
-                    <div className="font-medium text-sm text-gray-900">
-                      {part.desc}
-                    </div>
-                    <div className="text-xs text-gray-500">{part.code}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">
-                      ×{part.qty}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      ${part.price.toFixed(2)}
+      <Drawer
+        open={isJobDrawerOpen}
+        onOpenChange={(open) => !open && closeSheet()}
+        repositionInputs={false}
+      >
+        <DrawerContent
+          className="mx-auto mt-0 h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white"
+          style={drawerStyle}
+        >
+          <div className="px-4 pt-5 pb-6 flex-1 min-h-0 overflow-y-auto">
+            {showSheet ? (
+              <EnterJobForm />
+            ) : (
+              currentJob && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <DrawerTitle className="text-[17px] font-bold">
+                      Job Details
+                    </DrawerTitle>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={deleteJobMutation.isPending}
+                        className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() =>
+                          openJobForEdit(
+                            currentJob,
+                            CONTACTS.find(
+                              (c) => c.name === currentJob.customer_name,
+                            ) || null,
+                          )
+                        }
+                        className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg"
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {jobImages?.poPages && jobImages.poPages.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PO DOCUMENT{" "}
-                {jobImages.poPages.length > 1 &&
-                  `(${jobImages.poPages.length} PAGES)`}
-              </h3>
-              {jobImages.poPages.length === 1 ? (
-                <img
-                  src={toBlobProxyUrl(jobImages.poPages[0])}
-                  alt="PO Document"
-                  className="w-full rounded-lg border border-gray-200"
-                />
-              ) : (
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {jobImages.poPages.map((page, index) => (
-                      <CarouselItem key={index}>
-                        <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
-                          <img
-                            src={toBlobProxyUrl(page)}
-                            alt={`PO Page ${index + 1}`}
-                            className="w-full rounded-lg"
-                          />
-                          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Page {index + 1} of {jobImages.poPages.length}
+                  <JobCard
+                    job={currentJob}
+                    jigAssignments={jigAssignments}
+                    onClick={() => {}}
+                    showJigStatus={true}
+                  />
+                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">
+                    CONTACT
+                  </h3>
+                  <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-md mb-4">
+                    <span className="flex items-center gap-2">
+                      <FiMail />
+                      {currentJob.customer_email ? (
+                        <a
+                          href={`mailto: ${currentJob.customer_email}`}
+                          className="underline"
+                        >
+                          {currentJob.customer_email}
+                        </a>
+                      ) : (
+                        "No Provided"
+                      )}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <FiPhone />
+                      {currentJob.customer_contact || "Not Provided"}
+                    </span>
+                  </div>
+                  {currentJob.parts.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        PARTS
+                      </h3>
+                      {currentJob.parts.map((part, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="font-medium text-sm text-gray-900">
+                              {part.desc}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {part.code}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-semibold text-gray-900">
+                              ×{part.qty}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              ${part.price.toFixed(2)}
+                            </div>
                           </div>
                         </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-2" />
-                  <CarouselNext className="right-2" />
-                </Carousel>
-              )}
-            </div>
-          )}
-          {jobImages?.partsOnArrivalPhotos &&
-            jobImages.partsOnArrivalPhotos.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  PARTS ON ARRIVAL{" "}
-                  {jobImages.partsOnArrivalPhotos.length > 1 &&
-                    `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
-                </h3>
-                {jobImages.partsOnArrivalPhotos.length === 1 ? (
-                  <img
-                    src={toSignedImageUrl(jobImages.partsOnArrivalPhotos[0])}
-                    alt="Parts on arrival"
-                    className="w-full rounded-lg border border-gray-200"
-                  />
-                ) : (
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      {jobImages.partsOnArrivalPhotos.map((photo, index) => (
-                        <CarouselItem key={index}>
-                          <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
-                            <img
-                              src={toSignedImageUrl(photo)}
-                              alt={`Parts photo ${index + 1}`}
-                              className="w-full rounded-lg"
-                            />
-                            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                              Part {index + 1} of{" "}
-                              {jobImages.partsOnArrivalPhotos.length}
-                            </div>
-                          </div>
-                        </CarouselItem>
                       ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </Carousel>
-                )}
-              </div>
-            )}
-
-          <div className="mb-4">
-            <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              JIG ASSIGNMENTS
-            </h3>
-            {jigAssignments.filter((j) => j.jobId === currentJob.id).length >
-            0 ? (
-              <div className="space-y-2">
-                <div className="flex-1">
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      {jigPhotos?.map((jigPic, idx) => {
-                        const jig = jigsOf(currentJob.id, jigAssignments).find(
-                          (j) => j.jigName === jigPic.jigName,
-                        );
-                        return (
-                          <CarouselItem key={idx}>
-                            <div className="relative w-full border border-gray-200 border-b-0 rounded-t-lg overflow-hidden">
-                              <img
-                                src={toSignedImageUrl(jigPic.photo!)}
-                                alt={`Parts photo ${idx + 1}`}
-                                className="w-full rounded-t-lg"
-                              />
-                              <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                                Jig {idx + 1} of {jigPhotos.length}
-                              </div>
-                            </div>
-                            {jig && (
-                              <div
-                                key={jig.id}
-                                className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3"
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <div className="font-semibold text-sm">
-                                    {jig.jigName}
-                                  </div>
-                                  <div
-                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                      jig.status === "ACTIVE"
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-gray-100 text-gray-800"
-                                    }`}
-                                  >
-                                    {jig.status}
+                    </div>
+                  )}
+                  {jobImages?.poPages && jobImages.poPages.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        PO DOCUMENT{" "}
+                        {jobImages.poPages.length > 1 &&
+                          `(${jobImages.poPages.length} PAGES)`}
+                      </h3>
+                      {jobImages.poPages.length === 1 ? (
+                        <img
+                          src={toBlobProxyUrl(jobImages.poPages[0])}
+                          alt="PO Document"
+                          className="w-full rounded-lg border border-gray-200"
+                        />
+                      ) : (
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {jobImages.poPages.map((page, index) => (
+                              <CarouselItem key={index}>
+                                <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                                  <img
+                                    src={toBlobProxyUrl(page)}
+                                    alt={`PO Page ${index + 1}`}
+                                    className="w-full rounded-lg"
+                                  />
+                                  <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                                    Page {index + 1} of{" "}
+                                    {jobImages.poPages.length}
                                   </div>
                                 </div>
-                                <div className="text-xs text-gray-600">
-                                  {jig.pct}% of jig • Loaded{" "}
-                                  {new Date(jig.loadedAt).toLocaleDateString(
-                                    "en-NZ",
-                                    {
-                                      day: "numeric",
-                                      month: "short",
-                                    },
-                                  )}
-                                </div>
-                                {jig.completedAt && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    Completed{" "}
-                                    {new Date(
-                                      jig.completedAt,
-                                    ).toLocaleDateString("en-NZ", {
-                                      day: "numeric",
-                                      month: "short",
-                                    })}
-                                  </div>
-                                )}
-                              </div>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          <CarouselPrevious className="left-2" />
+                          <CarouselNext className="right-2" />
+                        </Carousel>
+                      )}
+                    </div>
+                  )}
+                  {jobImages?.partsOnArrivalPhotos &&
+                    jobImages.partsOnArrivalPhotos.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                          PARTS ON ARRIVAL{" "}
+                          {jobImages.partsOnArrivalPhotos.length > 1 &&
+                            `(${jobImages.partsOnArrivalPhotos.length} PHOTOS)`}
+                        </h3>
+                        {jobImages.partsOnArrivalPhotos.length === 1 ? (
+                          <img
+                            src={toSignedImageUrl(
+                              jobImages.partsOnArrivalPhotos[0],
                             )}
-                          </CarouselItem>
-                        );
-                      })}
-                    </CarouselContent>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </Carousel>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-                No JIG assigned yet — assign from the JIG tab when loading.
-              </div>
+                            alt="Parts on arrival"
+                            className="w-full rounded-lg border border-gray-200"
+                          />
+                        ) : (
+                          <Carousel className="w-full">
+                            <CarouselContent>
+                              {jobImages.partsOnArrivalPhotos.map(
+                                (photo, index) => (
+                                  <CarouselItem key={index}>
+                                    <div className="relative w-full border border-gray-200 rounded-lg overflow-hidden">
+                                      <img
+                                        src={toSignedImageUrl(photo)}
+                                        alt={`Parts photo ${index + 1}`}
+                                        className="w-full rounded-lg"
+                                      />
+                                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                                        Part {index + 1} of{" "}
+                                        {jobImages.partsOnArrivalPhotos.length}
+                                      </div>
+                                    </div>
+                                  </CarouselItem>
+                                ),
+                              )}
+                            </CarouselContent>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                          </Carousel>
+                        )}
+                      </div>
+                    )}
+
+                  <div className="mb-4">
+                    <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      JIG ASSIGNMENTS
+                    </h3>
+                    {jigAssignments.filter((j) => j.jobId === currentJob.id)
+                      .length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex-1">
+                          <Carousel className="w-full">
+                            <CarouselContent>
+                              {jigPhotos?.map((jigPic, idx) => {
+                                const jig = jigsOf(
+                                  currentJob.id,
+                                  jigAssignments,
+                                ).find((j) => j.jigName === jigPic.jigName);
+                                return (
+                                  <CarouselItem key={idx}>
+                                    <div className="relative w-full border border-gray-200 border-b-0 rounded-t-lg overflow-hidden">
+                                      <img
+                                        src={toSignedImageUrl(jigPic.photo!)}
+                                        alt={`Parts photo ${idx + 1}`}
+                                        className="w-full rounded-t-lg"
+                                      />
+                                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                                        Jig {idx + 1} of {jigPhotos.length}
+                                      </div>
+                                    </div>
+                                    {jig && (
+                                      <div
+                                        key={jig.id}
+                                        className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3"
+                                      >
+                                        <div className="flex justify-between items-start mb-2">
+                                          <div className="font-semibold text-sm">
+                                            {jig.jigName}
+                                          </div>
+                                          <div
+                                            className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                              jig.status === "ACTIVE"
+                                                ? "bg-green-100 text-green-800"
+                                                : "bg-gray-100 text-gray-800"
+                                            }`}
+                                          >
+                                            {jig.status}
+                                          </div>
+                                        </div>
+                                        <div className="text-xs text-gray-600">
+                                          {jig.pct}% of jig • Loaded{" "}
+                                          {new Date(
+                                            jig.loadedAt,
+                                          ).toLocaleDateString("en-NZ", {
+                                            day: "numeric",
+                                            month: "short",
+                                          })}
+                                        </div>
+                                        {jig.completedAt && (
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            Completed{" "}
+                                            {new Date(
+                                              jig.completedAt,
+                                            ).toLocaleDateString("en-NZ", {
+                                              day: "numeric",
+                                              month: "short",
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </CarouselItem>
+                                );
+                              })}
+                            </CarouselContent>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                          </Carousel>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+                        No JIG assigned yet — assign from the JIG tab when
+                        loading.
+                      </div>
+                    )}
+                  </div>
+                  {currentJob.partDescription && (
+                    <div className="mb-4">
+                      <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        PARTS DESCRIPTION
+                      </h3>
+                      <div className="text-sm text-gray-700">
+                        {currentJob.partDescription}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      JOB TIMELINE
+                    </h3>
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">📬</span>
+                      <div>
+                        <div className="font-semibold text-sm text-gray-900">
+                          Arrived
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {new Date(currentJob.createdAt).toLocaleDateString(
+                            "en-NZ",
+                            {
+                              day: "numeric",
+                              month: "short",
+                            },
+                          )}{" "}
+                          {new Date(currentJob.createdAt).toLocaleTimeString(
+                            "en-NZ",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            },
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )
             )}
           </div>
-          {currentJob.partDescription && (
-            <div className="mb-4">
-              <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                PARTS DESCRIPTION
-              </h3>
-              <div className="text-sm text-gray-700">
-                {currentJob.partDescription}
-              </div>
-            </div>
-          )}
-          <div className="mb-4">
-            <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              JOB TIMELINE
-            </h3>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📬</span>
-              <div>
-                <div className="font-semibold text-sm text-gray-900">
-                  Arrived
-                </div>
-                <div className="text-xs text-gray-600">
-                  {new Date(currentJob.createdAt).toLocaleDateString("en-NZ", {
-                    day: "numeric",
-                    month: "short",
-                  })}{" "}
-                  {new Date(currentJob.createdAt).toLocaleTimeString("en-NZ", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        </DrawerContent>
+      </Drawer>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
@@ -495,8 +563,6 @@ export default function IntakeClient() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <EnterJobSheet />
     </div>
   );
 }

@@ -66,11 +66,12 @@ const itemsWithPrice = items.filter(item => item.price > 0);
 - Keep component files under 300 lines
 - Extract complex logic to custom hooks or utility functions
 - Props interface should be named `[ComponentName]Props`
+- Extract large sections of HTML into their own components where appropriate to minimize component size
 
 ### Design Systems
 
-- Use ShadDDN components where possible instead of writing your own.
-- Do not use the RadixUI component primitives, instead use the ShadCDN syntax.
+- Use shadcn components where possible instead of writing your own.
+- Do not use the RadixUI component primitives, instead use the shadcn syntax.
 
 ### Server Actions
 
