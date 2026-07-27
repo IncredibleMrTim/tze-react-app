@@ -47,9 +47,11 @@ export function PartsSection() {
    *
    * Returns items that match the search term (in code or description) AND are
    * allowed for the selected customer. For internal jobs, all items are allowed.
-   * Requires minimum 2 characters to search.
+   * Requires minimum 2 characters to search. Code matches are ranked above
+   * description-only matches, since a code hit is almost always what the
+   * user is actually looking for.
    *
-   * @returns Filtered array of items matching search criteria
+   * @returns Filtered array of items matching search criteria, code matches first
    */
   const getFilteredItems = useMemo(() => {
     if (!partSearchTerm || partSearchTerm.length < 2) return [];
@@ -61,9 +63,16 @@ export function PartsSection() {
         item.desc.toLowerCase().includes(term);
 
       const matchesCustomer =
-        !customer || isInternal || item.customer === customer.account;
+        !customer ||
+        isInternal ||
+        item.customer === customer.account ||
+        item.customer === "";
 
       return matchesTerm && matchesCustomer;
+    }).sort((a, b) => {
+      const aCodeMatch = a.code.toLowerCase().includes(term) ? 0 : 1;
+      const bCodeMatch = b.code.toLowerCase().includes(term) ? 0 : 1;
+      return aCodeMatch - bCodeMatch;
     });
   }, [partSearchTerm, ITEMS, customer, isInternal]);
 
