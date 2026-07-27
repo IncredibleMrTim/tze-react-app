@@ -20,7 +20,6 @@ export async function dispatchJobAction(job: IJob, invoiceNumber: string) {
     }
 
     revalidatePath('/dispatch')
-    revalidatePath('/jobs')
     revalidatePath('/intake')
     return { success: true }
   } catch (error) {

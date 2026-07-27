@@ -8,7 +8,6 @@ export async function createJobAction(job: IJob) {
   try {
     const result = await createJob(job)
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return result
   } catch (error) {
     console.error('Failed to create job:', error)
@@ -22,7 +21,6 @@ export async function createJobAction(job: IJob) {
 export async function updateJobAction(jobId: string, updates: Partial<IJob>) {
   const result = await updateJob(jobId, updates)
   revalidatePath('/intake')
-  revalidatePath('/jobs')
   revalidatePath('/jig')
   revalidatePath('/dispatch')
   return result
@@ -32,7 +30,6 @@ export async function deleteJobAction(jobId: string) {
   try {
     await deleteJob(jobId)
     revalidatePath('/intake')
-    revalidatePath('/jobs')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete job:', error)
