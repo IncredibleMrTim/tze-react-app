@@ -332,7 +332,11 @@ export async function getItems() {
 export async function getItemsByCustomer(customerAccount: string) {
   return await prisma.item.findMany({
     where: {
-      OR: [{ customer: customerAccount }, { customer: "" }],
+      OR: [
+        { customer: customerAccount },
+        { customer: "" },
+        { code: { equals: "ZINC MISCELLANEOUS", mode: "insensitive" } },
+      ],
     },
     orderBy: {
       code: "asc",
