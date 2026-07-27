@@ -58,8 +58,6 @@ export default function IntakeClient() {
 
   const jigPhotos = currentJob && getJigPhotosByJobId(currentJob.id);
 
-  const jobJigs = currentJob && jigsOf(currentJob?.id, jigAssignments);
-
   const isLoading = jobsLoading || jigsLoading || contactsLoading;
 
   const confirmDeleteJob = () => {
