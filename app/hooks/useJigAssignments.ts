@@ -306,7 +306,10 @@ export const useJig = () => {
   const getJigPhotosByJobId = (jobId: string) => {
     return jigsOf(jobId, jigAssignments).map((assignment) => ({
       ...assignment,
-      photo: jigPhotos[assignment.jigName] ?? null,
+      // Cleared assignments carry their own snapshot in `pic` (taken when
+      // the jig was completed, since the shared slot gets reset for the
+      // next load); active ones use the jig's live shared photo.
+      photo: assignment.pic ?? jigPhotos[assignment.jigName] ?? null,
     }));
   };
 

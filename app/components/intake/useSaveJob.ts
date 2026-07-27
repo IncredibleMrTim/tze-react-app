@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useCreateJob, useUpdateJob } from "@/hooks/useJobs";
 import { useIntakeStore } from "@/store/useIntakeStore";
@@ -14,12 +15,14 @@ import type { IJob } from "@/types/interfaces";
  */
 export function useSaveJob() {
   const { showToast } = useToast();
+  const router = useRouter();
   const { data: jobs = [] } = useJobs(10000);
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
 
   const {
     editingJobId,
+    returnToDispatch,
     closeSheet,
     customer,
     po_number,
@@ -91,6 +94,7 @@ export function useSaveJob() {
           onSuccess: () => {
             closeSheet();
             showToast("Job updated: " + po_number);
+            if (returnToDispatch) router.push("/dispatch");
           },
           onError: (error: Error) => {
             console.error("Update job error:", error);
