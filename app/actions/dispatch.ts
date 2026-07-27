@@ -1,11 +1,21 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { updateJob, updateSettings, getSettings } from '@/lib/db'
+import { updateJob, updateSettings, getSettings, getActiveJigAssignments } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
 
 export async function dispatchJobAction(job: IJob, invoiceNumber: string) {
   try {
+    // Guard against dispatching while the job is still loaded on another
+    // jig that hasn't been cleared yet — the UI already filters these out,
+    // but this keeps the rule enforced even if a stale client bypasses it
+    const activeAssignments = await getActiveJigAssignments(job.id)
+    if (activeAssignments.length > 0) {
+      throw new Error(
+        `Job is still active on ${activeAssignments.length > 1 ? 'jigs' : 'a jig'} that ${activeAssignments.length > 1 ? 'are' : 'is'} not yet complete`
+      )
+    }
+
     // Exclude any relation fields that might be attached (from query cache)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { jigAssignments, ...jobData } = job as IJob & { jigAssignments?: unknown }

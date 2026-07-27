@@ -6,8 +6,10 @@ import {
   updateJigAssignment,
   deleteJigAssignment,
   getJigAssignments,
+  getActiveJigAssignments,
   deleteJigAssignmentsByJobId,
   updateJob,
+  getJigPhoto,
   deleteJigPhoto,
   deleteJigRework,
 } from '@/lib/db'
@@ -75,26 +77,28 @@ export async function completeJigAction(jigName: string) {
     )
 
     const now = Date.now()
+    const photo = await getJigPhoto(jigName)
 
-    // Mark all assignments as CLEARED
+    // Mark all assignments as CLEARED, snapshotting the jig's current
+    // reference photo onto each so it stays visible for these jobs after
+    // the shared photo slot is reset below for the next load cycle
     for (const assignment of activeAssignments) {
       await updateJigAssignment(assignment.id, {
         status: 'CLEARED',
         completedAt: now,
+        pic: photo?.photoData ?? null,
       })
     }
 
     // Mark jobs as complete, unless they're still spread across another
-    // jig that hasn't been cleared yet
-    for (const assignment of activeAssignments) {
-      const stillActiveElsewhere = assignments.some(
-        (a) =>
-          a.jobId === assignment.jobId &&
-          a.status === 'ACTIVE' &&
-          a.id !== assignment.id
-      )
-      if (!stillActiveElsewhere) {
-        await updateJob(assignment.jobId, { poComplete: true })
+    // jig that hasn't been cleared yet. Re-check against the database
+    // (rather than the pre-clear snapshot above) so this reflects the
+    // state after this jig's assignments were just cleared, not before.
+    const clearedJobIds = [...new Set(activeAssignments.map((a) => a.jobId))]
+    for (const jobId of clearedJobIds) {
+      const stillActive = await getActiveJigAssignments(jobId)
+      if (stillActive.length === 0) {
+        await updateJob(jobId, { poComplete: true })
       }
     }
 

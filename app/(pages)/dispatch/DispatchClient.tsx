@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { IJob } from "@/types/interfaces";
-import type { TPlating } from "@/types/types";
 import { isReady, calcPrice, jigsOf } from "@/lib/helpers";
 import { genFPN, genBatchCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
@@ -28,11 +28,12 @@ import {
 } from "@/hooks/useJigAssignments";
 import { useSettings } from "@/hooks/useSettings";
 import { JobCard } from "@/components/JobCard";
-import { LuRotateCcw, LuTrash } from "react-icons/lu";
+import { LuRotateCcw, LuSquareCheck, LuTrash, LuTruck } from "react-icons/lu";
 import { calculateRates } from "@/constants/settings.const";
 
 export default function DispatchClient() {
   const { showToast } = useToast();
+  const router = useRouter();
 
   // Live updates arrive via WebSocket; hooks poll only as a backstop
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
@@ -55,10 +56,8 @@ export default function DispatchClient() {
   const [jobToDelete, setJobToDelete] = useState<IJob | null>(null);
   const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false);
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null);
-  const [editedJob, setEditedJob] = useState<IJob | null>(null);
   const [priceOverride, setPriceOverride] = useState("");
   const [freightCost, setFreightCost] = useState("0.00");
-  const [showJobDetails, setShowJobDetails] = useState(false);
   const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
     "FPN",
   );
@@ -87,41 +86,12 @@ export default function DispatchClient() {
 
   const openDispatchModal = (job: IJob) => {
     setJobToDispatch(job);
-    setEditedJob({ ...job });
     setPriceOverride("");
     setFreightCost("0.00");
-    setShowJobDetails(false);
   };
 
-  const applyJobChanges = () => {
-    if (editedJob) {
-      setJobToDispatch(editedJob);
-
-      // Only send the fields this panel actually edits. editedJob is seeded
-      // from the jobs list, which excludes images for size (always poPages:
-      // []), so sending the whole object would wipe out the job's real images.
-      updateJobMutation.mutate(
-        {
-          jobId: editedJob.id,
-          job: {
-            po_number: editedJob.po_number,
-            customer_contact: editedJob.customer_contact,
-            plating: editedJob.plating,
-            notes: editedJob.notes,
-            parts: editedJob.parts,
-          },
-        },
-        {
-          onSuccess: () => {
-            setShowJobDetails(false);
-            showToast("Job details updated");
-          },
-          onError: () => {
-            showToast("Failed to update job");
-          },
-        },
-      );
-    }
+  const handleEditInIntake = (job: IJob) => {
+    router.push(`/intake?referer=dispatch&jobId=${job.id}`);
   };
 
   const handleDispatchJob = () => {
@@ -471,6 +441,12 @@ export default function DispatchClient() {
               </DrawerTitle>
 
               {/* Job Info */}
+              <JobCard
+                job={jobToDispatch}
+                jigAssignments={jigAssignments}
+                onClick={() => {}}
+              />
+
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <div className="font-bold text-xl mb-1">
                   {jobToDispatch.po_number}
@@ -504,173 +480,6 @@ export default function DispatchClient() {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Check & Edit Job Details - Collapsible */}
-              <div className="mb-4 border-2 border-emerald-500 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setShowJobDetails(!showJobDetails)}
-                  className="w-full p-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 text-emerald-600 font-medium">
-                    <span>🔗</span>
-                    <span>Check & edit job details</span>
-                  </div>
-                  <span className="text-gray-400">
-                    {showJobDetails ? "▲" : "▼"}
-                  </span>
-                </button>
-
-                {showJobDetails && editedJob && (
-                  <div className="p-4 pt-0 border-t space-y-4">
-                    {/* PO Number */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 my-2 block">
-                        PO number
-                      </label>
-                      <Input
-                        type="text"
-                        value={editedJob.po_number}
-                        onChange={(e) =>
-                          setEditedJob({
-                            ...editedJob,
-                            po_number: e.target.value,
-                          })
-                        }
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Contact Number */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Contact number{" "}
-                        <span className="text-gray-400">(optional)</span>
-                      </label>
-                      <Input
-                        type="text"
-                        value={editedJob.customer_contact || ""}
-                        onChange={(e) =>
-                          setEditedJob({
-                            ...editedJob,
-                            customer_contact: e.target.value,
-                          })
-                        }
-                        placeholder="e.g. 021 123 4567"
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Plating */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Plating
-                      </label>
-                      <Input
-                        type="text"
-                        value={editedJob.plating || ""}
-                        onChange={(e) =>
-                          setEditedJob({
-                            ...editedJob,
-                            plating: e.target.value as TPlating,
-                          })
-                        }
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Notes
-                      </label>
-                      <textarea
-                        value={editedJob.notes || ""}
-                        onChange={(e) =>
-                          setEditedJob({ ...editedJob, notes: e.target.value })
-                        }
-                        placeholder="Collection instructions or special notes"
-                        className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    {/* Parts */}
-                    <div>
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                        PARTS
-                      </h4>
-                      <div className="space-y-4">
-                        {editedJob.parts.map((part, idx) => (
-                          <div
-                            key={idx}
-                            className="bg-gray-50 rounded-lg p-4 space-y-3"
-                          >
-                            <div className="font-medium">{part.code}</div>
-                            <div className="text-sm text-gray-600 mb-2">
-                              {part.desc}
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="text-xs text-gray-600 mb-1 block">
-                                  Qty
-                                </label>
-                                <Input
-                                  type="number"
-                                  value={part.qty}
-                                  onChange={(e) => {
-                                    const newParts = [...editedJob.parts];
-                                    newParts[idx] = {
-                                      ...part,
-                                      qty: parseInt(e.target.value) || 0,
-                                    };
-                                    setEditedJob({
-                                      ...editedJob,
-                                      parts: newParts,
-                                    });
-                                  }}
-                                  min="0"
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs text-gray-600 mb-1 block">
-                                  Price per part
-                                </label>
-                                <Input
-                                  type="number"
-                                  value={part.price}
-                                  onChange={(e) => {
-                                    const newParts = [...editedJob.parts];
-                                    newParts[idx] = {
-                                      ...part,
-                                      price: parseFloat(e.target.value) || 0,
-                                    };
-                                    setEditedJob({
-                                      ...editedJob,
-                                      parts: newParts,
-                                    });
-                                  }}
-                                  step="0.01"
-                                  min="0"
-                                  className="w-full"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Apply Changes Button */}
-                    <Button
-                      onClick={applyJobChanges}
-                      disabled={isPending}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3"
-                    >
-                      Apply changes
-                    </Button>
-                  </div>
-                )}
               </div>
 
               {/* Pricing */}
@@ -779,10 +588,19 @@ export default function DispatchClient() {
 
               {/* Action Buttons */}
               <Button
+                variant="outline"
+                onClick={() => handleEditInIntake(jobToDispatch)}
+                className="w-full h-14 text-base font-semibold rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-400 text-gray-600 hover:bg-emerald-100 mb-3 [&_svg]:size-5"
+              >
+                <LuSquareCheck /> Check & edit job details
+              </Button>
+
+              <Button
                 onClick={handleDispatchJob}
                 disabled={isPending}
-                className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mb-3"
+                className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mb-3 [&_svg]:size-5"
               >
+                <LuTruck />
                 Confirm & Dispatch — Generate FPN + CSV
               </Button>
 
