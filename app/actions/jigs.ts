@@ -6,7 +6,6 @@ import {
   updateJigAssignment,
   deleteJigAssignment,
   getJigAssignments,
-  getActiveJigAssignments,
   deleteJigAssignmentsByJobId,
   updateJob,
   getJigPhoto,
@@ -90,17 +89,11 @@ export async function completeJigAction(jigName: string) {
       })
     }
 
-    // Mark jobs as complete, unless they're still spread across another
-    // jig that hasn't been cleared yet. Re-check against the database
-    // (rather than the pre-clear snapshot above) so this reflects the
-    // state after this jig's assignments were just cleared, not before.
-    const clearedJobIds = [...new Set(activeAssignments.map((a) => a.jobId))]
-    for (const jobId of clearedJobIds) {
-      const stillActive = await getActiveJigAssignments(jobId)
-      if (stillActive.length === 0) {
-        await updateJob(jobId, { poComplete: true })
-      }
-    }
+    // Note: completing a jig does NOT mark the job's PO as complete.
+    // A job may still need further work on another jig, so poComplete
+    // stays a manual toggle set by staff in the assignment drawer/modal —
+    // clearing this jig's assignments must not block re-adding the job
+    // elsewhere.
 
     // Clear the jig's reference photo and rework flag so the next load
     // cycle on this jig starts clean
