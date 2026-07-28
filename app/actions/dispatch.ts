@@ -16,6 +16,12 @@ export async function dispatchJobAction(job: IJob, invoiceNumber: string) {
       )
     }
 
+    // PO complete is a manual toggle set by staff — a job can't be
+    // dispatched until it's explicitly confirmed complete
+    if (!job.poComplete) {
+      throw new Error('Job cannot be dispatched until PO complete is toggled on')
+    }
+
     // Exclude any relation fields that might be attached (from query cache)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { jigAssignments, ...jobData } = job as IJob & { jigAssignments?: unknown }
