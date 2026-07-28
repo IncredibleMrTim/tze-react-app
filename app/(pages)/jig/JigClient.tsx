@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
-import { jigsOf, jigUsed } from "@/lib/helpers";
+import { jigUsed } from "@/lib/helpers";
 import { generateJigsList } from "@/constants/settings.const";
 import {
   AlertDialog,
