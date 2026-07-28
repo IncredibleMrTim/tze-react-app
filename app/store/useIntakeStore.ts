@@ -9,6 +9,7 @@ interface IntakeFormState {
   showSheet: boolean;
   currentJob: IJob | null;
   editingJobId: string | null;
+  returnToDispatch: boolean;
 
   // Customer fields
   customer: IContact | null;
@@ -56,7 +57,11 @@ interface IntakeFormActions {
   setCurrentJob: (job: IJob | null) => void;
   setEditingJobId: (id: string | null) => void;
   openJobSheet: (job: IJob) => void;
-  openJobForEdit: (job: IJob, customer: IContact | null) => void;
+  openJobForEdit: (
+    job: IJob,
+    customer: IContact | null,
+    returnToDispatch?: boolean,
+  ) => void;
   closeSheet: () => void;
 
   // Customer actions
@@ -120,6 +125,7 @@ const initialState: IntakeFormState = {
   showSheet: false,
   currentJob: null,
   editingJobId: null,
+  returnToDispatch: false,
   customer: null,
   customerInput: "",
   showCustomerDropdown: false,
@@ -160,9 +166,10 @@ export const useIntakeStore = create<IntakeStore>()(
         set({ currentJob, isDispatched: !!currentJob?.dispatchedAt }),
       setEditingJobId: (editingJobId) => set({ editingJobId }),
       openJobSheet: (job) => set({ currentJob: job, showSheet: false }),
-      openJobForEdit: (job, customer) =>
+      openJobForEdit: (job, customer, returnToDispatch = false) =>
         set({
           editingJobId: job.id,
+          returnToDispatch,
           customer,
           customerInput: customer?.name || job.customer_name,
           po_number: job.po_number,

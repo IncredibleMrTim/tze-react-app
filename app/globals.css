@@ -8,9 +8,14 @@
     @apply box-border m-0 p-0 border-border;
   }
 
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
     font-family: system-ui, -apple-system, sans-serif;
-    min-height: 100vh;
     display: flex;
     justify-content: center;
     color: hsl(var(--foreground));

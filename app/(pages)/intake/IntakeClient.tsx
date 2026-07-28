@@ -1,9 +1,10 @@
 "use client";
 import { FiMail, FiPhone } from "react-icons/fi";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
-import { useJigAssignments, useJig } from "@/hooks/useJigAssignments";
+import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/store/useIntakeStore";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/JobCard";
 import { JobSearch } from "@/components/JobSearch";
 import { EnterJobForm } from "@/components/intake/EnterJobForm";
+import { JigAssignmentsSection } from "@/components/intake/JigAssignmentsSection";
 
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import {
@@ -33,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { jigsOf, isReady, isDispatched } from "@/lib/helpers";
+import { isReady, isDispatched } from "@/lib/helpers";
 
 export default function IntakeClient() {
   const { showToast } = useToast();
@@ -47,7 +49,6 @@ export default function IntakeClient() {
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments();
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
-  const { getJigPhotosByJobId } = useJig();
   const deleteJobMutation = useDeleteJob();
 
   const error = jobsError;
@@ -64,10 +65,26 @@ export default function IntakeClient() {
     closeSheet,
   } = useIntakeStore();
 
+  // Coming from the dispatch page's "Check & edit job details" button —
+  // open that job straight into edit mode once jobs/contacts have loaded.
+  const searchParams = useSearchParams();
+  const jobIdParam = searchParams.get("jobId");
+  const refererParam = searchParams.get("referer");
+
+  useEffect(() => {
+    if (!jobIdParam || refererParam !== "dispatch") return;
+    if (jobsLoading || contactsLoading) return;
+
+    const job = jobs.find((j) => j.id === jobIdParam);
+    if (!job) return;
+
+    const contact = CONTACTS.find((c) => c.name === job.customer_name) || null;
+    openJobForEdit(job, contact, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobIdParam, refererParam, jobsLoading, contactsLoading]);
+
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
-
-  const jigPhotos = currentJob && getJigPhotosByJobId(currentJob.id);
 
   const isLoading = jobsLoading || jigsLoading || contactsLoading;
 
@@ -252,7 +269,7 @@ export default function IntakeClient() {
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
                         disabled={deleteJobMutation.isPending}
-                        className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                        className="px-4 py-1.5 border-2 border-red-500 text-red-600 rounded-lg text-base font-medium hover:bg-red-50 disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -411,90 +428,10 @@ export default function IntakeClient() {
                       </div>
                     )}
 
-                  <div className="mb-4">
-                    <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      JIG ASSIGNMENTS
-                    </h3>
-                    {jigAssignments.filter((j) => j.jobId === currentJob.id)
-                      .length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex-1">
-                          <Carousel className="w-full">
-                            <CarouselContent>
-                              {jigPhotos?.map((jigPic, idx) => {
-                                const jig = jigsOf(
-                                  currentJob.id,
-                                  jigAssignments,
-                                ).find((j) => j.jigName === jigPic.jigName);
-                                return (
-                                  <CarouselItem key={idx}>
-                                    <div className="relative w-full border border-gray-200 border-b-0 rounded-t-lg overflow-hidden">
-                                      <img
-                                        src={toSignedImageUrl(jigPic.photo!)}
-                                        alt={`Parts photo ${idx + 1}`}
-                                        className="w-full rounded-t-lg"
-                                      />
-                                      <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                                        Jig {idx + 1} of {jigPhotos.length}
-                                      </div>
-                                    </div>
-                                    {jig && (
-                                      <div
-                                        key={jig.id}
-                                        className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3"
-                                      >
-                                        <div className="flex justify-between items-start mb-2">
-                                          <div className="font-semibold text-sm">
-                                            {jig.jigName}
-                                          </div>
-                                          <div
-                                            className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                              jig.status === "ACTIVE"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-gray-100 text-gray-800"
-                                            }`}
-                                          >
-                                            {jig.status}
-                                          </div>
-                                        </div>
-                                        <div className="text-xs text-gray-600">
-                                          {jig.pct}% of jig • Loaded{" "}
-                                          {new Date(
-                                            jig.loadedAt,
-                                          ).toLocaleDateString("en-NZ", {
-                                            day: "numeric",
-                                            month: "short",
-                                          })}
-                                        </div>
-                                        {jig.completedAt && (
-                                          <div className="text-xs text-gray-500 mt-1">
-                                            Completed{" "}
-                                            {new Date(
-                                              jig.completedAt,
-                                            ).toLocaleDateString("en-NZ", {
-                                              day: "numeric",
-                                              month: "short",
-                                            })}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </CarouselItem>
-                                );
-                              })}
-                            </CarouselContent>
-                            <CarouselPrevious className="left-2" />
-                            <CarouselNext className="right-2" />
-                          </Carousel>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-                        No JIG assigned yet — assign from the JIG tab when
-                        loading.
-                      </div>
-                    )}
-                  </div>
+                  <JigAssignmentsSection
+                    jobId={currentJob.id}
+                    jigAssignments={jigAssignments}
+                  />
                   {currentJob.partDescription && (
                     <div className="mb-4">
                       <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">

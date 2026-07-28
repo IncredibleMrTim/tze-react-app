@@ -1,5 +1,6 @@
 "use client";
 import { useIntakeStore } from "@/store/useIntakeStore";
+import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { POScanSection } from "@/components/intake/POScanSection";
 import { CustomerField } from "@/components/intake/CustomerField";
 import { PartsSection } from "@/components/intake/PartsSection";
 import { PartsPhotosSection } from "@/components/intake/PartsPhotosSection";
+import { JigAssignmentsSection } from "@/components/intake/JigAssignmentsSection";
 import { JobFlagToggles } from "@/components/intake/JobFlagToggles";
 
 import { useSaveJob } from "@/components/intake/useSaveJob";
@@ -34,6 +36,8 @@ export function EnterJobForm() {
     requiresWeighing,
     stringCount,
     weightKg,
+    returnToDispatch,
+    editingJobId,
     setPoNumber,
     setContactNumber,
     setPartsDescription,
@@ -45,6 +49,7 @@ export function EnterJobForm() {
     setRequiresWeighing,
   } = useIntakeStore();
   const { handleSave, isSaving } = useSaveJob();
+  const { data: jigAssignments = [] } = useJigAssignments();
 
   return (
     <>
@@ -199,6 +204,13 @@ export function EnterJobForm() {
 
       <PartsPhotosSection />
 
+      {editingJobId && (
+        <JigAssignmentsSection
+          jobId={editingJobId}
+          jigAssignments={jigAssignments}
+        />
+      )}
+
       <div className="mb-5">
         <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
           COLLECTION INSTRUCTIONS / NOTES
@@ -226,7 +238,11 @@ export function EnterJobForm() {
           disabled={(!customer && !isInternal) || isSaving}
           className="flex-1 bg-primary text-white rounded-lg py-3 text-base font-semibold hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          {isSaving ? "Saving..." : "Save Job"}
+          {isSaving
+            ? "Saving..."
+            : returnToDispatch
+              ? "Save & Dispatch"
+              : "Save Job"}
         </button>
       </div>
     </>
