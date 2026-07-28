@@ -606,7 +606,7 @@ export default function JigClient() {
                 className="w-full mb-4"
               />
 
-              <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+              <div className="space-y-2 mb-4">
                 {filteredJobs.map((job) => (
                   <JobCard
                     key={job.id}
