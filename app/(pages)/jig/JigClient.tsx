@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
@@ -36,6 +35,7 @@ import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
 import { useJigRework, useSetJigRework } from "@/hooks/useJigRework";
 import { uploadImageToBlob, toSignedImageUrl } from "@/lib/blob-upload";
 import { JobCard } from "@/components/JobCard";
+import { JobAssignmentPanel } from "@/components/JobAssignmentPanel";
 
 export default function JigClient() {
   const { showToast } = useToast();
@@ -133,6 +133,12 @@ export default function JigClient() {
   };
 
   const handleJobClick = (job: IJob) => {
+    // Toggle: clicking the already-expanded card closes it, clicking another
+    // job card swaps which one is expanded (only one shows the panel at a time)
+    if (selectedJobForAssignment?.id === job.id) {
+      setSelectedJobForAssignment(null);
+      return;
+    }
     setSelectedJobForAssignment(job);
     setPoComplete(job.poComplete);
   };
@@ -406,11 +412,23 @@ export default function JigClient() {
                 <div className="text-sm text-gray-500 mb-1">
                   {isEmpty ? "Empty" : `${pct}% used`}
                 </div>
-                <Progress
-                  value={pct}
-                  className={`h-2 mb-2 ${isJigRework ? "bg-red-400" : ""}`}
-                  indicatorClassName={`bg-primary ${isJigRework ? "border-r-2 border-white" : ""}`}
-                />
+                <div
+                  className={`relative h-2 mb-2 w-full overflow-hidden rounded-full bg-secondary flex ${isJigRework ? "bg-red-400" : ""}`}
+                >
+                  {jigJobs.map((assignment, index) => {
+                    const isLastJob = index === jigJobs.length - 1;
+                    // Border marks the boundary with whatever comes next —
+                    // another job's segment, or the unfilled rework remainder
+                    const showDivider = !isLastJob || (isJigRework && !isFull);
+                    return (
+                      <div
+                        key={assignment.id}
+                        className={`h-full bg-primary ${showDivider ? "border-r-2 border-white" : ""}`}
+                        style={{ width: `${assignment.pct}%` }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
               <div className="text-xs text-gray-500 w-full">
                 {isEmpty
@@ -433,7 +451,6 @@ export default function JigClient() {
               {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
             </span>
           </div>
-
           <div
             onClick={() => photoInputRef.current?.click()}
             className={`border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden ${
@@ -470,7 +487,6 @@ export default function JigClient() {
               </>
             )}
           </div>
-
           {/* Jobs on this JIG */}
           {getJigJobs(selectedJig).length > 0 && (
             <div className="space-y-3">
@@ -559,7 +575,6 @@ export default function JigClient() {
               />
             </div>
           </div>
-
           <Button
             onClick={handleAddJobClick}
             disabled={jigUsed(selectedJig, jigAssignments) >= 100 || isPending}
@@ -568,7 +583,6 @@ export default function JigClient() {
           >
             + Add job to {selectedJig}
           </Button>
-
           {/* Mark JIG Complete */}
           <Button
             onClick={handleCompleteJigClick}
@@ -623,6 +637,23 @@ export default function JigClient() {
                     jigAssignments={[]}
                     onClick={() => handleJobClick(job)}
                     showArrivalTime={true}
+                    expandedContent={
+                      selectedJobForAssignment?.id === job.id ? (
+                        <JobAssignmentPanel
+                          job={job}
+                          jigAssignments={jigAssignments}
+                          selectedJig={selectedJig}
+                          spaceRemaining={spaceRemaining}
+                          assignmentPercentage={assignmentPercentage}
+                          onPercentageChange={setAssignmentPercentage}
+                          poComplete={poComplete}
+                          onPoCompleteChange={setPoComplete}
+                          onConfirm={handleConfirmAssignment}
+                          onCancel={() => setSelectedJobForAssignment(null)}
+                          isPending={isPending}
+                        />
+                      ) : undefined
+                    }
                   />
                 ))}
 
@@ -633,84 +664,13 @@ export default function JigClient() {
                 )}
               </div>
 
-              {/* Assignment Details */}
-              {selectedJobForAssignment && (
-                <div className="border-t pt-4 space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold mb-2">
-                      Selected: {selectedJobForAssignment.po_number} —{" "}
-                      {selectedJobForAssignment.customer_name}
-                    </h3>
-                  </div>
-
-                  {(() => {
-                    const otherAssignments = jigAssignments.filter(
-                      (g) =>
-                        g.jobId === selectedJobForAssignment.id &&
-                        g.status === "ACTIVE",
-                    );
-                    if (otherAssignments.length === 0) return null;
-                    return (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-sm">
-                        Already loaded on{" "}
-                        {otherAssignments
-                          .map((g) => `${g.jigName} (${g.pct}%)`)
-                          .join(", ")}
-                        .
-                      </div>
-                    );
-                  })()}
-
-                  <div>
-                    <label className="text-sm text-gray-600 mb-2 block">
-                      Space this job takes on {selectedJig} (%)
-                    </label>
-                    <Input
-                      type="number"
-                      value={assignmentPercentage}
-                      onChange={(e) => setAssignmentPercentage(e.target.value)}
-                      placeholder="e.g. 25"
-                      min="1"
-                      max={spaceRemaining}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="text-base font-semibold text-gray-900">
-                          PO complete — all parts processed
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Job moves straight to Dispatch
-                        </div>
-                      </div>
-                      <Switch
-                        checked={poComplete}
-                        onCheckedChange={setPoComplete}
-                        className="ml-3"
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleConfirmAssignment}
-                    disabled={isPending}
-                    className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600"
-                  >
-                    Confirm — add to {selectedJig}
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedJobForAssignment(null)}
-                    className="w-full h-12 text-base"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
+              <Button
+                variant="outline"
+                onClick={() => setShowJobSelector(false)}
+                className="w-full h-12 text-base"
+              >
+                Close
+              </Button>
             </div>
           </DrawerContent>
         </Drawer>
