@@ -20,6 +20,7 @@ interface JobCardProps {
   isDispatch?: boolean;
   onSendBack?: () => void;
   isPending?: boolean;
+  expandedContent?: React.ReactNode;
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -31,6 +32,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   isDispatch = false,
   onSendBack,
   isPending = false,
+  expandedContent,
 }) => {
   const label = stageLabel(job, jigAssignments);
   const activeJigs = getActiveJigs(job.id, jigAssignments);
@@ -182,6 +184,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             ↻ Send back for another run
           </Button>
         )}
+        <div>{expandedContent}</div>
       </CardContent>
     </Card>
   );
