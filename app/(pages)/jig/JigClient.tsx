@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
-import { jigUsed } from "@/lib/helpers";
+import { jigsOf, jigUsed } from "@/lib/helpers";
 import { generateJigsList } from "@/constants/settings.const";
 import {
   AlertDialog,
@@ -384,6 +384,7 @@ export default function JigClient() {
           const isFull = pct === 100;
           const isPartial = pct > 0 && pct < 100;
           const isSelected = selectedJig === jigName;
+          const isJigRework = jigRework[jigName] ?? false;
 
           // Color based on fill percentage (selected state just adds shadow)
           const borderColor = isFull
@@ -396,19 +397,25 @@ export default function JigClient() {
             <Card
               key={jigName}
               onClick={() => handleSelectJig(jigName)}
-              className={`p-4 text-center cursor-pointer transition-all hover:shadow-md border-2 ${borderColor} ${
+              className={`px-0 py-4 text-center cursor-pointer transition-all hover:shadow-md border-2 ${borderColor} ${
                 isSelected ? "shadow-lg ring-2 ring-blue-500" : ""
               }`}
             >
-              <div className="font-bold text-lg mb-2">{jigName}</div>
-              <div className="text-sm text-gray-500 mb-1">
-                {isEmpty ? "Empty" : `${pct}% used`}
+              <div className="px-4">
+                <div className="font-bold text-lg mb-2">{jigName}</div>
+                <div className="text-sm text-gray-500 mb-1">
+                  {isEmpty ? "Empty" : `${pct}% used`}
+                </div>
+                <Progress
+                  value={pct}
+                  className={`h-2 mb-2 ${isJigRework ? "bg-red-400" : ""}`}
+                  indicatorClassName={`bg-primary ${isJigRework ? "border-r-2 border-white" : ""}`}
+                />
               </div>
-              <Progress value={pct} className="h-2 mb-2" />
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 w-full">
                 {isEmpty
                   ? "–"
-                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""}`}
+                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""} ${isSelectedJigRework ? "(Rework)" : ""}`}
               </div>
             </Card>
           );
@@ -419,7 +426,9 @@ export default function JigClient() {
       {selectedJig && (
         <div className="space-y-4 pt-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold">{selectedJig}</h3>
+            <h3 className="text-2xl font-bold">
+              {selectedJig} {jigRework[selectedJig] ? "(Rework)" : ""}
+            </h3>
             <span className="text-lg text-gray-500">
               {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
             </span>
@@ -801,7 +810,9 @@ export default function JigClient() {
               {incompleteJigInfo.percent}% loaded.
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
-              <span className="block">JIG must be at 100% before marking complete.</span>
+              <span className="block">
+                JIG must be at 100% before marking complete.
+              </span>
               <span className="block font-medium">
                 Add a Rework allocation or additional job to fill the remaining{" "}
                 {100 - incompleteJigInfo.percent}%.
@@ -826,7 +837,9 @@ export default function JigClient() {
               <span className="block">
                 This will mark the JIG as complete and move it out of the tank.
               </span>
-              <span className="block font-medium">Are you sure you want to continue?</span>
+              <span className="block font-medium">
+                Are you sure you want to continue?
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
