@@ -433,7 +433,7 @@ export default function JigClient() {
               <div className="text-xs text-gray-500 w-full">
                 {isEmpty
                   ? "–"
-                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""} ${isSelectedJigRework ? "(Rework)" : ""}`}
+                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""} ${jigRework[jigName] ? "(Rework)" : ""}`}
               </div>
             </Card>
           );
