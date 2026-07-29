@@ -413,7 +413,7 @@ export default function JigClient() {
                   {isEmpty ? "Empty" : `${pct}% used`}
                 </div>
                 <div
-                  className={`relative h-2 mb-2 w-full overflow-hidden rounded-full flex ${isJigRework ? "bg-red-400" : "bg-secondary"}`}
+                  className={`relative h-2 mb-2 w-full overflow-hidden rounded-full bg-secondary flex ${isJigRework ? "bg-red-400" : ""}`}
                 >
                   {jigJobs.map((assignment, index) => {
                     const isLastJob = index === jigJobs.length - 1;
