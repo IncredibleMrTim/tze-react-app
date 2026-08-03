@@ -1,12 +1,15 @@
 import { prisma } from "./prisma";
-import type { Job, JigAssignment } from "@prisma/client";
-import type { IJob, IJigAssignment, ISettings } from "@/types/interfaces";
+import type { Job, JigAssignment, Jig } from "@prisma/client";
+import type { IJob, IJigAssignment, IJig, ISettings } from "@/types/interfaces";
 import { notify } from "./notify";
+import { generateJigsList } from "@/constants/settings.const";
 
 // ============ BIGINT CONVERSION HELPERS ============
 
-type JobWithRelations = Job & { jigAssignments?: JigAssignment[] };
-type JigAssignmentWithRelations = JigAssignment & { job?: Job };
+type JobWithRelations = Job & {
+  jigAssignments?: JigAssignmentWithRelations[];
+};
+type JigAssignmentWithRelations = JigAssignment & { job?: Job; jig?: Jig };
 
 // Convert BigInt fields to Number for JSON serialization
 function serializeJob(job: JobWithRelations): IJob {
@@ -24,6 +27,7 @@ function serializeJigAssignment(
 ): IJigAssignment {
   return {
     ...assignment,
+    jigName: assignment.jig?.name,
     completedAt: assignment.completedAt ? Number(assignment.completedAt) : null,
     loadedAt: Number(assignment.loadedAt),
     job: assignment.job ? serializeJob(assignment.job) : undefined,
@@ -173,7 +177,7 @@ export async function createJigAssignment(assignment: IJigAssignment) {
     data: {
       id: assignment.id,
       jobId: assignment.jobId,
-      jigName: assignment.jigName,
+      jigId: assignment.jigId,
       pct: assignment.pct,
       pic: assignment.pic,
       completedAt: assignment.completedAt
@@ -182,6 +186,7 @@ export async function createJigAssignment(assignment: IJigAssignment) {
       loadedAt: BigInt(assignment.loadedAt),
       status: assignment.status,
     },
+    include: { jig: true },
   });
 
   const serialized = serializeJigAssignment(created);
@@ -196,6 +201,9 @@ export async function updateJigAssignment(
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: Record<string, any> = { ...assignment };
+  // jigName/job are derived display fields, not real columns
+  delete updateData.jigName;
+  delete updateData.job;
 
   if (assignment.completedAt !== undefined) {
     updateData.completedAt = assignment.completedAt
@@ -209,6 +217,7 @@ export async function updateJigAssignment(
   const updated = await prisma.jigAssignment.update({
     where: { id: assignmentId },
     data: updateData,
+    include: { jig: true },
   });
 
   const serialized = serializeJigAssignment(updated);
@@ -231,6 +240,7 @@ export async function getJigAssignments() {
   const assignments = await prisma.jigAssignment.findMany({
     include: {
       job: true,
+      jig: true,
     },
   });
 
@@ -253,6 +263,7 @@ export async function getActiveJigAssignments(jobId: string) {
       jobId,
       status: "ACTIVE",
     },
+    include: { jig: true },
   });
 
   return assignments.map(serializeJigAssignment);
@@ -266,6 +277,7 @@ export async function getJobWithJigs(jobId: string) {
         where: {
           status: "ACTIVE",
         },
+        include: { jig: true },
       },
     },
   });
@@ -294,11 +306,11 @@ export async function getJobJigName(jobId: string): Promise<string | null> {
       status: "ACTIVE",
     },
     select: {
-      jigName: true,
+      jig: { select: { name: true } },
     },
   });
 
-  return assignment?.jigName || null;
+  return assignment?.jig.name || null;
 }
 
 export async function getJobJigNames(jobId: string): Promise<string[]> {
@@ -308,11 +320,11 @@ export async function getJobJigNames(jobId: string): Promise<string[]> {
       status: "ACTIVE",
     },
     select: {
-      jigName: true,
+      jig: { select: { name: true } },
     },
   });
 
-  return assignments.map((a) => a.jigName);
+  return assignments.map((a) => a.jig.name);
 }
 
 // ============ ITEMS ============
@@ -425,19 +437,57 @@ export async function updateSettings(settings: Partial<ISettings>) {
   });
 }
 
-// ============ JIG PHOTOS ============
+// ============ JIGS ============
 
-export async function getJigPhoto(jigName: string) {
-  return await prisma.jigPhoto.findUnique({
-    where: { jigName },
+export async function getJigs(): Promise<IJig[]> {
+  return await prisma.jig.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function getOrCreateJigByName(name: string): Promise<IJig> {
+  return await prisma.jig.upsert({
+    where: { name },
+    update: {},
+    create: { name },
   });
 }
 
-export async function setJigPhoto(jigName: string, photoData: string) {
+// Jigs are fixed numbered slots ("JIG-01".."JIG-0{count}") — ensure a real
+// row exists for each one the current settings expect, creating any that
+// are missing, and return the full list.
+export async function ensureJigsExist(count: number): Promise<IJig[]> {
+  const names = generateJigsList(count);
+  await Promise.all(names.map((name) => getOrCreateJigByName(name)));
+  return await getJigs();
+}
+
+// A jig's photo/rework flag is "live" state for whatever is currently
+// loaded on that physical slot. Once nothing is left ACTIVE on a jig, its
+// photo/rework must be cleared — otherwise the next unrelated job assigned
+// to that same slot inherits a photo taken for a completely different
+// job's parts.
+export async function clearJigStateIfEmpty(jigId: string) {
+  const stillActive = await prisma.jigAssignment.count({
+    where: { jigId, status: "ACTIVE" },
+  });
+  if (stillActive === 0) {
+    await deleteJigPhoto(jigId);
+    await deleteJigRework(jigId);
+  }
+}
+
+// ============ JIG PHOTOS ============
+
+export async function getJigPhoto(jigId: string) {
+  return await prisma.jigPhoto.findUnique({
+    where: { jigId },
+  });
+}
+
+export async function setJigPhoto(jigId: string, photoData: string) {
   return await prisma.jigPhoto.upsert({
-    where: { jigName },
+    where: { jigId },
     update: { photoData },
-    create: { jigName, photoData },
+    create: { jigId, photoData },
   });
 }
 
@@ -446,34 +496,34 @@ export async function getAllJigPhotos() {
   return photos.reduce(
     (
       acc: Record<string, string>,
-      photo: { jigName: string; photoData: string },
+      photo: { jigId: string; photoData: string },
     ) => {
-      acc[photo.jigName] = photo.photoData;
+      acc[photo.jigId] = photo.photoData;
       return acc;
     },
     {} as Record<string, string>,
   );
 }
 
-export async function deleteJigPhoto(jigName: string) {
+export async function deleteJigPhoto(jigId: string) {
   return await prisma.jigPhoto.deleteMany({
-    where: { jigName },
+    where: { jigId },
   });
 }
 
 // ============ JIG REWORK ============
 
-export async function setJigRework(jigName: string, isRework: boolean) {
+export async function setJigRework(jigId: string, isRework: boolean) {
   return await prisma.jigRework.upsert({
-    where: { jigName },
+    where: { jigId },
     update: { isRework },
-    create: { jigName, isRework },
+    create: { jigId, isRework },
   });
 }
 
-export async function deleteJigRework(jigName: string) {
+export async function deleteJigRework(jigId: string) {
   return await prisma.jigRework.deleteMany({
-    where: { jigName },
+    where: { jigId },
   });
 }
 
@@ -482,9 +532,9 @@ export async function getAllJigRework() {
   return rows.reduce(
     (
       acc: Record<string, boolean>,
-      row: { jigName: string; isRework: boolean },
+      row: { jigId: string; isRework: boolean },
     ) => {
-      acc[row.jigName] = row.isRework;
+      acc[row.jigId] = row.isRework;
       return acc;
     },
     {} as Record<string, boolean>,

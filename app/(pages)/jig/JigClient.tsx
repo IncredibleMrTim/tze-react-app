@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
 import { jigUsed } from "@/lib/helpers";
-import { generateJigsList } from "@/constants/settings.const";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +29,7 @@ import {
   useRemoveJigAssignment,
   useCompleteJig,
 } from "@/hooks/useJigAssignments";
-import { useSettings } from "@/hooks/useSettings";
+import { useJigs } from "@/hooks/useJigs";
 import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
 import { useJigRework, useSetJigRework } from "@/hooks/useJigRework";
 import { uploadImageToBlob, toSignedImageUrl } from "@/lib/blob-upload";
@@ -44,7 +43,7 @@ export default function JigClient() {
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments();
-  const { data: settings, isLoading: settingsLoading } = useSettings();
+  const { data: jigsList = [], isLoading: jigsListLoading } = useJigs();
 
   // Mutation hooks
   const createAssignmentMutation = useCreateJigAssignment();
@@ -57,12 +56,7 @@ export default function JigClient() {
   const { data: jigRework = {} } = useJigRework();
   const setJigReworkMutation = useSetJigRework();
 
-  // Generate jigs list from settings
-  const jigsList = useMemo(() => {
-    return settings ? generateJigsList(settings.jigCount) : [];
-  }, [settings]);
-
-  const isLoading = jobsLoading || jigsLoading || settingsLoading;
+  const isLoading = jobsLoading || jigsLoading || jigsListLoading;
   const isPending =
     createAssignmentMutation.isPending ||
     updateAssignmentMutation.isPending ||
@@ -70,7 +64,7 @@ export default function JigClient() {
     completeJigMutation.isPending ||
     updateJobMutation.isPending;
 
-  const [selectedJig, setSelectedJig] = useState<string | null>(null);
+  const [selectedJigId, setSelectedJigId] = useState<string | null>(null);
   const [showJobSelector, setShowJobSelector] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJobForAssignment, setSelectedJobForAssignment] =
@@ -97,8 +91,11 @@ export default function JigClient() {
 
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const isSelectedJigRework = selectedJig
-    ? (jigRework[selectedJig] ?? false)
+  const selectedJigName =
+    jigsList.find((j) => j.id === selectedJigId)?.name ?? null;
+
+  const isSelectedJigRework = selectedJigId
+    ? (jigRework[selectedJigId] ?? false)
     : false;
 
   const availableJobs = jobs.filter((j) => {
@@ -109,19 +106,19 @@ export default function JigClient() {
     // same jig it's already loaded on
     const isOnSelectedJig = jigAssignments.some(
       (g) =>
-        g.jobId === j.id && g.jigName === selectedJig && g.status === "ACTIVE",
+        g.jobId === j.id && g.jigId === selectedJigId && g.status === "ACTIVE",
     );
     return !isOnSelectedJig;
   });
 
-  const getJigJobs = (jigName: string) => {
+  const getJigJobs = (jigId: string) => {
     return jigAssignments.filter(
-      (g) => g.jigName === jigName && g.status === "ACTIVE",
+      (g) => g.jigId === jigId && g.status === "ACTIVE",
     );
   };
 
-  const handleSelectJig = (jigName: string) => {
-    setSelectedJig(selectedJig === jigName ? null : jigName);
+  const handleSelectJig = (jigId: string) => {
+    setSelectedJigId(selectedJigId === jigId ? null : jigId);
   };
 
   const handleAddJobClick = () => {
@@ -144,14 +141,14 @@ export default function JigClient() {
   };
 
   const handleConfirmAssignment = () => {
-    if (!selectedJig || !selectedJobForAssignment) return;
+    if (!selectedJigId || !selectedJigName || !selectedJobForAssignment) return;
 
     const pct = parseInt(assignmentPercentage) || 20;
-    const used = jigUsed(selectedJig, jigAssignments);
+    const used = jigUsed(selectedJigId, jigAssignments);
     const available = 100 - used;
 
     if (pct > available) {
-      showToast(`Only ${available}% space remaining on ${selectedJig}`);
+      showToast(`Only ${available}% space remaining on ${selectedJigName}`);
       return;
     }
 
@@ -163,7 +160,8 @@ export default function JigClient() {
     // Create new assignment
     const newAssignment: IJigAssignment = {
       id: crypto.randomUUID(),
-      jigName: selectedJig,
+      jigId: selectedJigId,
+      jigName: selectedJigName,
       jobId: selectedJobForAssignment.id,
       pct,
       pic: null,
@@ -181,7 +179,7 @@ export default function JigClient() {
             // After job update, create the assignment
             createAssignmentMutation.mutate(newAssignment, {
               onSuccess: () => {
-                showToast(`Job assigned to ${selectedJig}`);
+                showToast(`Job assigned to ${selectedJigName}`);
                 setShowJobSelector(false);
                 setSelectedJobForAssignment(null);
               },
@@ -199,7 +197,7 @@ export default function JigClient() {
       // Just create the assignment
       createAssignmentMutation.mutate(newAssignment, {
         onSuccess: () => {
-          showToast(`Job assigned to ${selectedJig}`);
+          showToast(`Job assigned to ${selectedJigName}`);
           setShowJobSelector(false);
           setSelectedJobForAssignment(null);
         },
@@ -211,14 +209,14 @@ export default function JigClient() {
   };
 
   const handlePhotoUpload = async (file: File) => {
-    if (!selectedJig) return;
+    if (!selectedJigId || !selectedJigName) return;
 
     setIsUploadingJigPhoto(true);
     try {
-      const pathname = `jigs/${selectedJig}.jpg`;
+      const pathname = `jigs/${selectedJigName}.jpg`;
       const url = await uploadImageToBlob(file, pathname);
       await setJigPhotoMutation.mutateAsync({
-        jigName: selectedJig,
+        jigId: selectedJigId,
         photoUrl: url,
       });
       showToast("Photo uploaded");
@@ -258,12 +256,12 @@ export default function JigClient() {
   };
 
   const handleCompleteJigClick = () => {
-    if (!selectedJig) return;
+    if (!selectedJigId || !selectedJigName) return;
 
-    const used = jigUsed(selectedJig, jigAssignments);
+    const used = jigUsed(selectedJigId, jigAssignments);
     if (used < 100 && !isSelectedJigRework) {
       setIncompleteJigInfo({
-        name: selectedJig,
+        name: selectedJigName,
         percent: Math.round(used),
       });
       setShowIncompleteDialog(true);
@@ -274,11 +272,11 @@ export default function JigClient() {
   };
 
   const handleConfirmComplete = () => {
-    if (!selectedJig) return;
+    if (!selectedJigId || !selectedJigName) return;
 
-    completeJigMutation.mutate(selectedJig, {
+    completeJigMutation.mutate(selectedJigId, {
       onSuccess: () => {
-        showToast(`${selectedJig} marked complete`);
+        showToast(`${selectedJigName} marked complete`);
         setShowCompleteDialog(false);
       },
       onError: () => {
@@ -357,8 +355,8 @@ export default function JigClient() {
     );
   });
 
-  const spaceRemaining = selectedJig
-    ? 100 - Math.round(jigUsed(selectedJig, jigAssignments))
+  const spaceRemaining = selectedJigId
+    ? 100 - Math.round(jigUsed(selectedJigId, jigAssignments))
     : 0;
 
   // Show loading state
@@ -382,15 +380,15 @@ export default function JigClient() {
 
       {/* JIG Grid */}
       <div className="grid grid-cols-3 gap-3">
-        {jigsList.map((jigName) => {
-          const used = jigUsed(jigName, jigAssignments);
+        {jigsList.map((jig) => {
+          const used = jigUsed(jig.id, jigAssignments);
           const pct = Math.round(used);
-          const jigJobs = getJigJobs(jigName);
+          const jigJobs = getJigJobs(jig.id);
           const isEmpty = pct === 0;
           const isFull = pct === 100;
           const isPartial = pct > 0 && pct < 100;
-          const isSelected = selectedJig === jigName;
-          const isJigRework = jigRework[jigName] ?? false;
+          const isSelected = selectedJigId === jig.id;
+          const isJigRework = jigRework[jig.id] ?? false;
 
           // Color based on fill percentage (selected state just adds shadow)
           const borderColor = isFull
@@ -401,14 +399,14 @@ export default function JigClient() {
 
           return (
             <Card
-              key={jigName}
-              onClick={() => handleSelectJig(jigName)}
+              key={jig.id}
+              onClick={() => handleSelectJig(jig.id)}
               className={`px-0 py-4 text-center cursor-pointer transition-all hover:shadow-md border-2 ${borderColor} ${
                 isSelected ? "shadow-lg ring-2 ring-blue-500" : ""
               }`}
             >
               <div className="px-4">
-                <div className="font-bold text-lg mb-2">{jigName}</div>
+                <div className="font-bold text-lg mb-2">{jig.name}</div>
                 <div className="text-sm text-gray-500 mb-1">
                   {isEmpty ? "Empty" : `${pct}% used`}
                 </div>
@@ -433,7 +431,7 @@ export default function JigClient() {
               <div className="text-xs text-gray-500 w-full">
                 {isEmpty
                   ? "–"
-                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""} ${jigRework[jigName] ? "(Rework)" : ""}`}
+                  : `${jigJobs.length} job${jigJobs.length !== 1 ? "s" : ""} ${jigRework[jig.id] ? "(Rework)" : ""}`}
               </div>
             </Card>
           );
@@ -441,20 +439,20 @@ export default function JigClient() {
       </div>
 
       {/* Selected JIG Details */}
-      {selectedJig && (
+      {selectedJigId && selectedJigName && (
         <div className="space-y-4 pt-4">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold">
-              {selectedJig} {jigRework[selectedJig] ? "(Rework)" : ""}
+              {selectedJigName} {jigRework[selectedJigId] ? "(Rework)" : ""}
             </h3>
             <span className="text-lg text-gray-500">
-              {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
+              {Math.round(jigUsed(selectedJigId, jigAssignments))}% loaded
             </span>
           </div>
           <div
             onClick={() => photoInputRef.current?.click()}
             className={`border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden ${
-              jigPhotos[selectedJig] ? "" : "p-12"
+              jigPhotos[selectedJigId] ? "" : "p-12"
             }`}
           >
             <input
@@ -470,10 +468,10 @@ export default function JigClient() {
             />
             {isUploadingJigPhoto ? (
               <p className="text-gray-500">Uploading...</p>
-            ) : jigPhotos[selectedJig] ? (
+            ) : jigPhotos[selectedJigId] ? (
               <div className="relative w-full aspect-video">
                 <Image
-                  src={toSignedImageUrl(jigPhotos[selectedJig])}
+                  src={toSignedImageUrl(jigPhotos[selectedJigId])}
                   alt="Loaded JIG"
                   fill
                   className="object-cover rounded"
@@ -488,9 +486,9 @@ export default function JigClient() {
             )}
           </div>
           {/* Jobs on this JIG */}
-          {getJigJobs(selectedJig).length > 0 && (
+          {getJigJobs(selectedJigId).length > 0 && (
             <div className="space-y-3">
-              {getJigJobs(selectedJig).map((assignment) => {
+              {getJigJobs(selectedJigId).map((assignment) => {
                 const job = jobs.find((j) => j.id === assignment.jobId);
                 if (!job) return null;
 
@@ -561,7 +559,7 @@ export default function JigClient() {
                 onCheckedChange={(checked) =>
                   setJigReworkMutation.mutate(
                     {
-                      jigName: selectedJig,
+                      jigId: selectedJigId,
                       isRework: checked,
                     },
                     {
@@ -577,30 +575,33 @@ export default function JigClient() {
           </div>
           <Button
             onClick={handleAddJobClick}
-            disabled={jigUsed(selectedJig, jigAssignments) >= 100 || isPending}
+            disabled={
+              jigUsed(selectedJigId, jigAssignments) >= 100 || isPending
+            }
             className="w-full h-12 md:h-14 text-sm md:text-lg font-semibold"
             size="lg"
           >
-            + Add job to {selectedJig}
+            + Add job to {selectedJigName}
           </Button>
           {/* Mark JIG Complete */}
           <Button
             onClick={handleCompleteJigClick}
             disabled={isPending}
             className={`w-full h-12 md:h-14 text-sm md:text-lg font-semibold ${
-              jigUsed(selectedJig, jigAssignments) < 100 && !isSelectedJigRework
+              jigUsed(selectedJigId, jigAssignments) < 100 &&
+              !isSelectedJigRework
                 ? "bg-gray-300 text-gray-500 hover:bg-gray-400"
                 : "bg-emerald-600 hover:bg-emerald-700"
             }`}
             size="lg"
           >
-            ✓ Mark {selectedJig} complete — out of tank
+            ✓ Mark {selectedJigName} complete — out of tank
           </Button>
         </div>
       )}
 
       {/* Job Selector Modal */}
-      {showJobSelector && selectedJig && (
+      {showJobSelector && selectedJigId && selectedJigName && (
         <Drawer
           open
           onOpenChange={(open) => !open && setShowJobSelector(false)}
@@ -608,12 +609,12 @@ export default function JigClient() {
           <DrawerContent className="mx-auto h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white">
             <div className="p-6 flex-1 min-h-0 overflow-y-auto">
               <DrawerTitle className="text-2xl font-bold mb-4">
-                Add job to {selectedJig}
+                Add job to {selectedJigName}
               </DrawerTitle>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
                 <p className="text-blue-700 font-medium">
-                  {spaceRemaining}% space remaining on {selectedJig}
+                  {spaceRemaining}% space remaining on {selectedJigName}
                 </p>
               </div>
 
@@ -642,7 +643,7 @@ export default function JigClient() {
                         <JobAssignmentPanel
                           job={job}
                           jigAssignments={jigAssignments}
-                          selectedJig={selectedJig}
+                          selectedJigName={selectedJigName ?? ""}
                           spaceRemaining={spaceRemaining}
                           assignmentPercentage={assignmentPercentage}
                           onPercentageChange={setAssignmentPercentage}
@@ -677,7 +678,7 @@ export default function JigClient() {
       )}
 
       {/* Edit Job Assignment Modal */}
-      {showEditModal && editingAssignment && selectedJig && (
+      {showEditModal && editingAssignment && selectedJigId && selectedJigName && (
         <Drawer open onOpenChange={(open) => !open && setShowEditModal(false)}>
           <DrawerContent className="mx-auto h-[90%] md:max-w-[430px] rounded-t-[20px] border-none bg-white">
             <div className="p-6 flex-1 min-h-0 overflow-y-auto">
@@ -698,8 +699,8 @@ export default function JigClient() {
               {/* JIG Status */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
                 <p className="text-blue-700 font-medium">
-                  {selectedJig} —{" "}
-                  {Math.round(jigUsed(selectedJig, jigAssignments))}% loaded
+                  {selectedJigName} —{" "}
+                  {Math.round(jigUsed(selectedJigId, jigAssignments))}% loaded
                 </p>
               </div>
 
@@ -792,7 +793,7 @@ export default function JigClient() {
       >
         <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded">
           <AlertDialogHeader>
-            <AlertDialogTitle>Mark {selectedJig} as complete?</AlertDialogTitle>
+            <AlertDialogTitle>Mark {selectedJigName} as complete?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
               <span className="block">
                 This will mark the JIG as complete and move it out of the tank.

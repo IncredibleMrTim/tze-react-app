@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 interface JobAssignmentPanelProps {
   job: IJob;
   jigAssignments: IJigAssignment[];
-  selectedJig: string;
+  selectedJigName: string;
   spaceRemaining: number;
   assignmentPercentage: string;
   onPercentageChange: (value: string) => void;
@@ -22,7 +22,7 @@ interface JobAssignmentPanelProps {
 export const JobAssignmentPanel: React.FC<JobAssignmentPanelProps> = ({
   job,
   jigAssignments,
-  selectedJig,
+  selectedJigName,
   spaceRemaining,
   assignmentPercentage,
   onPercentageChange,
@@ -51,7 +51,7 @@ export const JobAssignmentPanel: React.FC<JobAssignmentPanelProps> = ({
 
       <div>
         <label className="text-sm text-gray-600 mb-2 block">
-          Space this job takes on {selectedJig} (%)
+          Space this job takes on {selectedJigName} (%)
         </label>
         <Input
           type="number"
@@ -86,7 +86,7 @@ export const JobAssignmentPanel: React.FC<JobAssignmentPanelProps> = ({
         disabled={isPending}
         className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-600"
       >
-        Confirm — add to {selectedJig}
+        Confirm — add to {selectedJigName}
       </Button>
 
       <Button

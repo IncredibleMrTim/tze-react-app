@@ -227,9 +227,9 @@ export function useCompleteJig() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (jigName: string) => completeJigAction(jigName),
+    mutationFn: (jigId: string) => completeJigAction(jigId),
 
-    onMutate: async (jigName: string) => {
+    onMutate: async (jigId: string) => {
       await queryClient.cancelQueries({ queryKey: ["jig-assignments"] });
       await queryClient.cancelQueries({ queryKey: ["jig-rework"] });
       await queryClient.cancelQueries({ queryKey: ["jig-photos"] });
@@ -248,7 +248,7 @@ export function useCompleteJig() {
       queryClient.setQueryData<IJigAssignment[]>(["jig-assignments"], (old) => {
         return old
           ? old.map((a) =>
-              a.jigName === jigName && a.status === "ACTIVE"
+              a.jigId === jigId && a.status === "ACTIVE"
                 ? { ...a, status: "CLEARED" as const, completedAt: now }
                 : a,
             )
@@ -260,14 +260,14 @@ export function useCompleteJig() {
         ["jig-rework"],
         (old = {}) => ({
           ...old,
-          [jigName]: false,
+          [jigId]: false,
         }),
       );
       queryClient.setQueryData<Record<string, string>>(
         ["jig-photos"],
         (old = {}) => {
           const rest = { ...old };
-          delete rest[jigName];
+          delete rest[jigId];
           return rest;
         },
       );
@@ -275,7 +275,7 @@ export function useCompleteJig() {
       return { previousAssignments, previousRework, previousPhotos };
     },
 
-    onError: (_error, _jigName, context) => {
+    onError: (_error, _jigId, context) => {
       if (context?.previousAssignments) {
         queryClient.setQueryData(
           ["jig-assignments"],
@@ -304,13 +304,15 @@ export const useJig = () => {
   const { data: jigPhotos = {} } = useJigPhotos();
 
   const getJigPhotosByJobId = (jobId: string) => {
-    return jigsOf(jobId, jigAssignments).map((assignment) => ({
-      ...assignment,
-      // Cleared assignments carry their own snapshot in `pic` (taken when
-      // the jig was completed, since the shared slot gets reset for the
-      // next load); active ones use the jig's live shared photo.
-      photo: assignment.pic ?? jigPhotos[assignment.jigName] ?? null,
-    }));
+    // Only currently-active jigs are shown — a cleared jig is done with,
+    // and its own snapshot (if any) belongs to that finished load, not to
+    // this job's current state.
+    return jigsOf(jobId, jigAssignments)
+      .filter((assignment) => assignment.status === "ACTIVE")
+      .map((assignment) => ({
+        ...assignment,
+        photo: jigPhotos[assignment.jigId] ?? null,
+      }));
   };
 
   return { getJigPhotosByJobId };
