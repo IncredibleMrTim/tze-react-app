@@ -16,6 +16,6 @@ export async function getJigReworkAction() {
   }
 }
 
-export async function setJigReworkAction(jigName: string, isRework: boolean) {
-  await setJigRework(jigName, isRework);
+export async function setJigReworkAction(jigId: string, isRework: boolean) {
+  await setJigRework(jigId, isRework);
 }

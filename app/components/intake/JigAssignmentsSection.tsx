@@ -3,6 +3,7 @@ import { useJig } from "@/hooks/useJigAssignments";
 import { toSignedImageUrl } from "@/lib/blob-upload";
 import { jigsOf } from "@/lib/helpers";
 import type { IJigAssignment } from "@/types/interfaces";
+import { LuCamera } from "react-icons/lu";
 import {
   Carousel,
   CarouselContent,
@@ -17,10 +18,9 @@ interface JigAssignmentsSectionProps {
 }
 
 /**
- * Jig assignments carousel — shows each jig a job has run on, with its
- * reference photo (live for jigs still in progress, a persisted snapshot
- * for cleared ones, since the shared photo slot is reset once a jig is
- * freed up for the next job).
+ * Jig assignments carousel — shows each jig the job is currently loaded
+ * on, with its live reference photo. Cleared jigs are done with and are
+ * not shown here.
  */
 export function JigAssignmentsSection({
   jobId,
@@ -28,7 +28,9 @@ export function JigAssignmentsSection({
 }: JigAssignmentsSectionProps) {
   const { getJigPhotosByJobId } = useJig();
   const jigPhotos = getJigPhotosByJobId(jobId);
-  const jobJigAssignments = jigsOf(jobId, jigAssignments);
+  const jobJigAssignments = jigsOf(jobId, jigAssignments).filter(
+    (assignment) => assignment.status === "ACTIVE",
+  );
 
   return (
     <div className="mb-4">
@@ -42,39 +44,39 @@ export function JigAssignmentsSection({
               <CarouselContent>
                 {jigPhotos.map((jigPic, idx) => {
                   const jig = jobJigAssignments.find(
-                    (j) => j.jigName === jigPic.jigName,
+                    (j) => j.jigId === jigPic.jigId,
                   );
                   return (
                     <CarouselItem key={idx}>
-                      {jigPic.photo && (
-                        <div className="relative w-full border border-gray-200 border-b-0 rounded-t-lg overflow-hidden">
+                      <div className="relative w-full border border-gray-200 border-b-0 rounded-t-lg overflow-hidden">
+                        {jigPic.photo ? (
                           <img
                             src={toSignedImageUrl(jigPic.photo)}
                             alt={`Parts photo ${idx + 1}`}
                             className="w-full rounded-t-lg"
                           />
-                          <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                            Jig {idx + 1} of {jigPhotos.length}
+                        ) : (
+                          // This jig hasn't been photographed yet for its current load.
+                          <div className="w-full aspect-video flex flex-col items-center justify-center bg-gray-50 rounded-t-lg text-gray-400">
+                            <LuCamera className="w-8 h-8 mb-2" />
+                            <p className="text-xs">No photo available</p>
                           </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                          Jig {idx + 1} of {jigPhotos.length}
                         </div>
-                      )}
+                      </div>
                       {jig && (
                         <div
                           key={jig.id}
-                          className={`bg-white border border-gray-200 p-3 ${jigPic.photo ? "border-t-0 rounded-b-lg" : "rounded-lg"}`}
+                          className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3"
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div className="font-semibold text-sm">
                               {jig.jigName}
                             </div>
-                            <div
-                              className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                jig.status === "ACTIVE"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {jig.status}
+                            <div className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              ACTIVE
                             </div>
                           </div>
                           <div className="text-xs text-gray-600">
@@ -87,18 +89,6 @@ export function JigAssignmentsSection({
                               },
                             )}
                           </div>
-                          {jig.completedAt && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Completed{" "}
-                              {new Date(jig.completedAt).toLocaleDateString(
-                                "en-NZ",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                },
-                              )}
-                            </div>
-                          )}
                         </div>
                       )}
                     </CarouselItem>

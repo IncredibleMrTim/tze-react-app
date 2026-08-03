@@ -89,11 +89,24 @@ enum JigAssignmentStatus {
   CLEARED   // Completed and cleared from jig
 }
 
+// Jig — a physical numbered slot (e.g. "JIG-01") that jobs get loaded onto.
+// A stable id, not the display name, is what everything else joins on.
+model Jig {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments JigAssignment[]
+  photo       JigPhoto?
+  rework      JigRework?
+}
+
 // Jig Assignments
 model JigAssignment {
   id          String              @id
   jobId       String
-  jigName     String
+  jigId       String
   pct         Float
   pic         String?
   completedAt BigInt?             // Timestamp in ms when cleared
@@ -103,9 +116,10 @@ model JigAssignment {
   updatedAt   DateTime            @updatedAt
 
   job         Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jig         Jig                 @relation(fields: [jigId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
-  @@index([jigName])
+  @@index([jigId])
   @@index([status])
 }
 
@@ -129,12 +143,12 @@ model Settings {
 // Jig Photos (storing jig images)
 model JigPhoto {
   id        String   @id @default(cuid())
-  jigName   String   @unique
+  jigId     String   @unique
   photoData String   // Base64 or URL
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([jigName])
+  jig       Jig      @relation(fields: [jigId], references: [id], onDelete: Cascade)
 }
 
 // Jig Rework flag — marks the unfilled remainder of a jig as rework so it
@@ -142,12 +156,12 @@ model JigPhoto {
 // marked complete, so the next load cycle starts clean.
 model JigRework {
   id        String   @id @default(cuid())
-  jigName   String   @unique
+  jigId     String   @unique
   isRework  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([jigName])
+  jig       Jig      @relation(fields: [jigId], references: [id], onDelete: Cascade)
 }
 
 // PO Scanning Rules (customer-specific PO scanning configurations)

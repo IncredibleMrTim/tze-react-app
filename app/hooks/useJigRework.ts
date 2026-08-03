@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getJigReworkAction, setJigReworkAction } from "@/actions/jig-rework";
 
 /**
- * Hook to fetch rework status for all jigs, keyed by jig name
+ * Hook to fetch rework status for all jigs, keyed by jig id
  */
 export function useJigRework() {
   return useQuery({
@@ -22,17 +22,17 @@ export function useSetJigRework() {
 
   return useMutation({
     mutationFn: ({
-      jigName,
+      jigId,
       isRework,
     }: {
-      jigName: string;
+      jigId: string;
       isRework: boolean;
-    }) => setJigReworkAction(jigName, isRework),
+    }) => setJigReworkAction(jigId, isRework),
 
-    onSuccess: (_data, { jigName, isRework }) => {
+    onSuccess: (_data, { jigId, isRework }) => {
       queryClient.setQueryData<Record<string, boolean>>(
         ["jig-rework"],
-        (old = {}) => ({ ...old, [jigName]: isRework }),
+        (old = {}) => ({ ...old, [jigId]: isRework }),
       );
     },
   });
