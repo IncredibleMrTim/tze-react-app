@@ -1,12 +1,22 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createJob, updateJob, deleteJob, getJobs } from '@/lib/db'
+import { updateJob, deleteJob } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
+
+const PYTHON_API_URL = process.env.PYTHON_API_URL
 
 export async function createJobAction(job: IJob) {
   try {
-    const result = await createJob(job)
+    const response = await fetch(`${PYTHON_API_URL}/api/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(job),
+    })
+    if (!response.ok) {
+      throw new Error(`Python API responded with ${response.status}`)
+    }
+    const result = await response.json()
     revalidatePath('/intake')
     return result
   } catch (error) {
@@ -39,7 +49,11 @@ export async function deleteJobAction(jobId: string) {
 
 export async function getJobsAction() {
   try {
-    const jobs = await getJobs()
+    const response = await fetch(`${PYTHON_API_URL}/api/jobs`, { cache: 'no-store' })
+    if (!response.ok) {
+      throw new Error(`Python API responded with ${response.status}`)
+    }
+    const jobs = await response.json()
     return { success: true, jobs }
   } catch (error) {
     console.error('Failed to fetch jobs:', error)
