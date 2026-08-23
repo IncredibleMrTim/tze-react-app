@@ -16,6 +16,6 @@ export async function getJigPhotosAction() {
   }
 }
 
-export async function setJigPhotoAction(jigName: string, photoUrl: string) {
-  await setJigPhoto(jigName, photoUrl);
+export async function setJigPhotoAction(jigId: string, photoUrl: string) {
+  await setJigPhoto(jigId, photoUrl);
 }

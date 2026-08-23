@@ -62,9 +62,15 @@ export interface IJob {
   csvDownloaded: boolean;
 }
 
+export interface IJig {
+  id: string;
+  name: string;
+}
+
 export interface IJigAssignment {
   id: string;
   jobId: string;
+  jigId: string;
   jigName: string;
   pct: number;
   pic: string | null;

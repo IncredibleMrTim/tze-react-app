@@ -90,11 +90,11 @@ export const jigsOf = (
 };
 
 export const jigUsed = (
-  nm: string,
+  jigId: string,
   jigAssignments: IJigAssignment[],
 ): number => {
   return jigAssignments
-    .filter((g) => g.jigName === nm && g.status === "ACTIVE")
+    .filter((g) => g.jigId === jigId && g.status === "ACTIVE")
     .reduce((s, g) => s + g.pct, 0);
 };
 

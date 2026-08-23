@@ -11,8 +11,22 @@ import {
   getJigPhoto,
   deleteJigPhoto,
   deleteJigRework,
+  clearJigStateIfEmpty,
+  ensureJigsExist,
+  getSettings,
 } from '@/lib/db'
 import type { IJigAssignment } from '@/types/interfaces'
+
+export async function getJigsAction() {
+  try {
+    const settings = await getSettings()
+    const jigs = await ensureJigsExist(settings.jigCount)
+    return { success: true, jigs }
+  } catch (error) {
+    console.error('Failed to fetch jigs:', error)
+    return { success: false, jigs: [], error: 'Failed to fetch jigs' }
+  }
+}
 
 export async function createJigAssignmentAction(assignment: IJigAssignment) {
   try {
@@ -43,7 +57,19 @@ export async function updateJigAssignmentAction(
 
 export async function deleteJigAssignmentAction(assignmentId: string) {
   try {
+    const assignments = await getJigAssignments()
+    const assignment = assignments.find((a) => a.id === assignmentId)
+
     await deleteJigAssignment(assignmentId)
+
+    // A job can also leave a jig this way (not just via "complete") — if
+    // that empties the jig out, its photo/rework must be cleared too,
+    // otherwise the next unrelated job assigned to this jig inherits a
+    // photo taken for this job's parts.
+    if (assignment) {
+      await clearJigStateIfEmpty(assignment.jigId)
+    }
+
     revalidatePath('/jig')
     revalidatePath('/intake')
     return { success: true }
@@ -55,10 +81,24 @@ export async function deleteJigAssignmentAction(assignmentId: string) {
 
 export async function clearJobJigsAction(jobId: string) {
   try {
+    const assignments = await getJigAssignments()
+    const jigIds = Array.from(
+      new Set(
+        assignments
+          .filter((a) => a.jobId === jobId && a.status === 'ACTIVE')
+          .map((a) => a.jigId)
+      )
+    )
+
     await deleteJigAssignmentsByJobId(jobId)
     // Sending a job back for re-jigging means its parts aren't processed
     // yet, so it needs to be assignable to a jig again
     await updateJob(jobId, { poComplete: false })
+
+    for (const jigId of jigIds) {
+      await clearJigStateIfEmpty(jigId)
+    }
+
     revalidatePath('/jig')
     revalidatePath('/intake')
     return { success: true }
@@ -68,15 +108,15 @@ export async function clearJobJigsAction(jobId: string) {
   }
 }
 
-export async function completeJigAction(jigName: string) {
+export async function completeJigAction(jigId: string) {
   try {
     const assignments = await getJigAssignments()
     const activeAssignments = assignments.filter(
-      (a) => a.jigName === jigName && a.status === 'ACTIVE'
+      (a) => a.jigId === jigId && a.status === 'ACTIVE'
     )
 
     const now = Date.now()
-    const photo = await getJigPhoto(jigName)
+    const photo = await getJigPhoto(jigId)
 
     // Mark all assignments as CLEARED, snapshotting the jig's current
     // reference photo onto each so it stays visible for these jobs after
@@ -97,8 +137,8 @@ export async function completeJigAction(jigName: string) {
 
     // Clear the jig's reference photo and rework flag so the next load
     // cycle on this jig starts clean
-    await deleteJigPhoto(jigName)
-    await deleteJigRework(jigName)
+    await deleteJigPhoto(jigId)
+    await deleteJigRework(jigId)
 
     revalidatePath('/jig')
     revalidatePath('/intake')
