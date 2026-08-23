@@ -428,10 +428,7 @@ export default function IntakeClient() {
                       </div>
                     )}
 
-                  <JigAssignmentsSection
-                    jobId={currentJob.id}
-                    jigAssignments={jigAssignments}
-                  />
+                  <JigAssignmentsSection jobId={currentJob.id} />
                   {currentJob.partDescription && (
                     <div className="mb-4">
                       <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
