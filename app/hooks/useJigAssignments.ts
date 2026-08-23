@@ -6,7 +6,7 @@ import {
 } from "@/actions/jigs";
 import type { IJigAssignment } from "@/types/interfaces";
 import { jigsOf } from "@/lib/helpers";
-import { useJigPhotos } from "./useJigPhotos";
+import { useJigPhotos, useJigPhotosByIds } from "./useJigPhotos";
 /**
  * Fetch all jig assignments from the API
  */
@@ -232,16 +232,12 @@ export function useCompleteJig() {
     onMutate: async (jigId: string) => {
       await queryClient.cancelQueries({ queryKey: ["jig-assignments"] });
       await queryClient.cancelQueries({ queryKey: ["jig-rework"] });
-      await queryClient.cancelQueries({ queryKey: ["jig-photos"] });
 
       const previousAssignments = queryClient.getQueryData<IJigAssignment[]>([
         "jig-assignments",
       ]);
       const previousRework = queryClient.getQueryData<Record<string, boolean>>([
         "jig-rework",
-      ]);
-      const previousPhotos = queryClient.getQueryData<Record<string, string>>([
-        "jig-photos",
       ]);
 
       const now = Date.now();
@@ -255,7 +251,12 @@ export function useCompleteJig() {
           : [];
       });
 
-      // Rework and photo are both cleared server-side once the jig is completed
+      // Rework resets server-side once the jig is completed. The photo is
+      // NOT cleared — JigPhoto is append-only, so the current photo stays
+      // as permanent history (now referenced by the cleared assignments
+      // above via photoId) and keeps showing as this jig's "live" photo
+      // in the ["jig-photos"] cache until a new one is uploaded for the
+      // next load cycle.
       queryClient.setQueryData<Record<string, boolean>>(
         ["jig-rework"],
         (old = {}) => ({
@@ -263,16 +264,8 @@ export function useCompleteJig() {
           [jigId]: false,
         }),
       );
-      queryClient.setQueryData<Record<string, string>>(
-        ["jig-photos"],
-        (old = {}) => {
-          const rest = { ...old };
-          delete rest[jigId];
-          return rest;
-        },
-      );
 
-      return { previousAssignments, previousRework, previousPhotos };
+      return { previousAssignments, previousRework };
     },
 
     onError: (_error, _jigId, context) => {
@@ -285,35 +278,43 @@ export function useCompleteJig() {
       if (context?.previousRework) {
         queryClient.setQueryData(["jig-rework"], context.previousRework);
       }
-      if (context?.previousPhotos) {
-        queryClient.setQueryData(["jig-photos"], context.previousPhotos);
-      }
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["jig-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       queryClient.invalidateQueries({ queryKey: ["jig-rework"] });
-      queryClient.invalidateQueries({ queryKey: ["jig-photos"] });
+      queryClient.invalidateQueries({ queryKey: ["jig-photos-by-id"] });
     },
   });
 }
 
-export const useJig = () => {
+// Both active and cleared jigs for the job are shown — a cleared jig is
+// done with, but its photo (referenced by photoId) is permanent history
+// and stays visible on the job even after the physical jig has moved on
+// to a different load with its own new photo.
+export const useJig = (jobId: string) => {
   const { data: jigAssignments = [] } = useJigAssignments();
   const { data: jigPhotos = {} } = useJigPhotos();
 
-  const getJigPhotosByJobId = (jobId: string) => {
-    // Only currently-active jigs are shown — a cleared jig is done with,
-    // and its own snapshot (if any) belongs to that finished load, not to
-    // this job's current state.
-    return jigsOf(jobId, jigAssignments)
-      .filter((assignment) => assignment.status === "ACTIVE")
-      .map((assignment) => ({
-        ...assignment,
-        photo: jigPhotos[assignment.jigId] ?? null,
-      }));
-  };
+  const jobAssignments = jigsOf(jobId, jigAssignments);
+  const clearedPhotoIds = jobAssignments
+    .filter(
+      (assignment): assignment is IJigAssignment & { photoId: string } =>
+        assignment.status === "CLEARED" && !!assignment.photoId,
+    )
+    .map((assignment) => assignment.photoId);
+  const { data: historicalPhotos = {} } = useJigPhotosByIds(clearedPhotoIds);
 
-  return { getJigPhotosByJobId };
+  const jigPhotosForJob = jobAssignments.map((assignment) => ({
+    ...assignment,
+    photo:
+      assignment.status === "ACTIVE"
+        ? (jigPhotos[assignment.jigId] ?? null)
+        : assignment.photoId
+          ? (historicalPhotos[assignment.photoId] ?? null)
+          : null,
+  }));
+
+  return { jigPhotosForJob };
 };

@@ -9,7 +9,6 @@ import {
   deleteJigAssignmentsByJobId,
   updateJob,
   getJigPhoto,
-  deleteJigPhoto,
   deleteJigRework,
   clearJigStateIfEmpty,
   ensureJigsExist,
@@ -118,14 +117,15 @@ export async function completeJigAction(jigId: string) {
     const now = Date.now()
     const photo = await getJigPhoto(jigId)
 
-    // Mark all assignments as CLEARED, snapshotting the jig's current
-    // reference photo onto each so it stays visible for these jobs after
-    // the shared photo slot is reset below for the next load cycle
+    // Mark all assignments as CLEARED, pointing each at the jig's current
+    // reference photo by id — the photo row itself stays put as permanent
+    // history (JigPhoto is append-only), so it remains visible for these
+    // jobs even after the jig's next load cycle gets its own new photo
     for (const assignment of activeAssignments) {
       await updateJigAssignment(assignment.id, {
         status: 'CLEARED',
         completedAt: now,
-        pic: photo?.photoData ?? null,
+        photoId: photo?.id ?? null,
       })
     }
 
@@ -135,9 +135,10 @@ export async function completeJigAction(jigId: string) {
     // clearing this jig's assignments must not block re-adding the job
     // elsewhere.
 
-    // Clear the jig's reference photo and rework flag so the next load
-    // cycle on this jig starts clean
-    await deleteJigPhoto(jigId)
+    // Reset the rework flag so the next load cycle on this jig starts
+    // clean. The photo itself is not deleted — it's now referenced by the
+    // cleared assignments above; the next photo uploaded for this jig's
+    // next load cycle is simply a new row.
     await deleteJigRework(jigId)
 
     revalidatePath('/jig')

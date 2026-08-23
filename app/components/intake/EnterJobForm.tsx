@@ -1,6 +1,5 @@
 "use client";
 import { useIntakeStore } from "@/store/useIntakeStore";
-import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,6 @@ export function EnterJobForm() {
     setRequiresWeighing,
   } = useIntakeStore();
   const { handleSave, isSaving } = useSaveJob();
-  const { data: jigAssignments = [] } = useJigAssignments();
 
   return (
     <>
@@ -204,12 +202,7 @@ export function EnterJobForm() {
 
       <PartsPhotosSection />
 
-      {editingJobId && (
-        <JigAssignmentsSection
-          jobId={editingJobId}
-          jigAssignments={jigAssignments}
-        />
-      )}
+      {editingJobId && <JigAssignmentsSection jobId={editingJobId} />}
 
       <div className="mb-5">
         <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
