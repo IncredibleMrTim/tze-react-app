@@ -9,6 +9,7 @@ import {
   deleteJigAssignmentsByJobId,
   updateJob,
   getJigPhoto,
+  clearCurrentJigPhoto,
   deleteJigRework,
   clearJigStateIfEmpty,
   ensureJigsExist,
@@ -135,11 +136,12 @@ export async function completeJigAction(jigId: string) {
     // clearing this jig's assignments must not block re-adding the job
     // elsewhere.
 
-    // Reset the rework flag so the next load cycle on this jig starts
-    // clean. The photo itself is not deleted — it's now referenced by the
-    // cleared assignments above; the next photo uploaded for this jig's
-    // next load cycle is simply a new row.
+    // Reset the rework flag and disassociate the jig's current photo so
+    // the next load cycle starts clean. The photo row itself is not
+    // deleted — it's still referenced by the cleared assignments above
+    // via photoId, and stays available as their permanent history.
     await deleteJigRework(jigId)
+    await clearCurrentJigPhoto(jigId)
 
     revalidatePath('/jig')
     revalidatePath('/intake')

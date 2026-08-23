@@ -232,12 +232,16 @@ export function useCompleteJig() {
     onMutate: async (jigId: string) => {
       await queryClient.cancelQueries({ queryKey: ["jig-assignments"] });
       await queryClient.cancelQueries({ queryKey: ["jig-rework"] });
+      await queryClient.cancelQueries({ queryKey: ["jig-photos"] });
 
       const previousAssignments = queryClient.getQueryData<IJigAssignment[]>([
         "jig-assignments",
       ]);
       const previousRework = queryClient.getQueryData<Record<string, boolean>>([
         "jig-rework",
+      ]);
+      const previousPhotos = queryClient.getQueryData<Record<string, string>>([
+        "jig-photos",
       ]);
 
       const now = Date.now();
@@ -251,12 +255,11 @@ export function useCompleteJig() {
           : [];
       });
 
-      // Rework resets server-side once the jig is completed. The photo is
-      // NOT cleared — JigPhoto is append-only, so the current photo stays
-      // as permanent history (now referenced by the cleared assignments
-      // above via photoId) and keeps showing as this jig's "live" photo
-      // in the ["jig-photos"] cache until a new one is uploaded for the
-      // next load cycle.
+      // Rework resets and the jig's photo is disassociated (not deleted —
+      // JigPhoto is append-only, and the cleared assignments above keep
+      // their own reference to it via photoId for history) server-side
+      // once the jig is completed. Mirror both here so the JIG drawer
+      // clears immediately instead of waiting on a refetch.
       queryClient.setQueryData<Record<string, boolean>>(
         ["jig-rework"],
         (old = {}) => ({
@@ -264,8 +267,16 @@ export function useCompleteJig() {
           [jigId]: false,
         }),
       );
+      queryClient.setQueryData<Record<string, string>>(
+        ["jig-photos"],
+        (old = {}) => {
+          const rest = { ...old };
+          delete rest[jigId];
+          return rest;
+        },
+      );
 
-      return { previousAssignments, previousRework };
+      return { previousAssignments, previousRework, previousPhotos };
     },
 
     onError: (_error, _jigId, context) => {
@@ -278,12 +289,16 @@ export function useCompleteJig() {
       if (context?.previousRework) {
         queryClient.setQueryData(["jig-rework"], context.previousRework);
       }
+      if (context?.previousPhotos) {
+        queryClient.setQueryData(["jig-photos"], context.previousPhotos);
+      }
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["jig-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       queryClient.invalidateQueries({ queryKey: ["jig-rework"] });
+      queryClient.invalidateQueries({ queryKey: ["jig-photos"] });
       queryClient.invalidateQueries({ queryKey: ["jig-photos-by-id"] });
     },
   });

@@ -464,58 +464,57 @@ export async function ensureJigsExist(count: number): Promise<IJig[]> {
 // A jig's rework flag is "live" state for whatever is currently loaded on
 // that physical slot. This only runs for a job leaving a jig WITHOUT
 // completing it (e.g. removed by mistake) — the assignment row is deleted
-// outright with no photoId to preserve, so any live photo genuinely has
-// nothing left pointing at it and can be dropped along with the rework
-// flag. Completing a jig normally (completeJigAction) does NOT go through
-// here — it keeps the photo row as permanent history via photoId instead.
+// outright with no photoId to preserve, so the live photo genuinely has
+// nothing left needing it and can be disassociated (not deleted) along
+// with the rework flag. Completing a jig normally (completeJigAction)
+// does NOT go through here — it keeps the photo row as permanent history
+// via photoId instead.
 export async function clearJigStateIfEmpty(jigId: string) {
   const stillActive = await prisma.jigAssignment.count({
     where: { jigId, status: "ACTIVE" },
   });
   if (stillActive === 0) {
-    await deleteJigPhoto(jigId);
+    await clearCurrentJigPhoto(jigId);
     await deleteJigRework(jigId);
   }
 }
 
 // ============ JIG PHOTOS ============
-// Append-only: one row per load cycle, never overwritten. A row only ever
-// gets linked to an assignment's photoId at the moment its jig is
-// completed (see completeJigAction) — so "the current/live photo for a
-// jig" is its most recent row that no assignment references yet. Once
-// completion sets photoId on the cleared assignments, that row is
-// "consumed" as history and stops counting as live, even though it's
-// still the most recent row by timestamp.
+// Append-only: one row per load cycle, never deleted. Jig.currentPhotoId
+// is the single source of truth for "the live photo for this jig right
+// now" — set whenever a photo is uploaded, and explicitly cleared (not
+// inferred) whenever the jig completes or empties out. Older rows stick
+// around as permanent history for whichever JigAssignments reference them
+// via photoId, entirely independent of currentPhotoId.
 
 export async function getJigPhoto(jigId: string) {
-  return await prisma.jigPhoto.findFirst({
-    where: { jigId, assignments: { none: {} } },
-    orderBy: { createdAt: "desc" },
+  const jig = await prisma.jig.findUnique({
+    where: { id: jigId },
+    include: { currentPhoto: true },
   });
+  return jig?.currentPhoto ?? null;
 }
 
 export async function setJigPhoto(jigId: string, photoData: string) {
-  return await prisma.jigPhoto.create({
+  const photo = await prisma.jigPhoto.create({
     data: { jigId, photoData },
   });
+  await prisma.jig.update({
+    where: { id: jigId },
+    data: { currentPhotoId: photo.id },
+  });
+  return photo;
 }
 
 export async function getAllJigPhotos() {
-  const photos = await prisma.jigPhoto.findMany({
-    where: { assignments: { none: {} } },
-    orderBy: { createdAt: "desc" },
-    distinct: ["jigId"],
+  const jigs = await prisma.jig.findMany({
+    where: { currentPhotoId: { not: null } },
+    include: { currentPhoto: true },
   });
-  return photos.reduce(
-    (
-      acc: Record<string, string>,
-      photo: { jigId: string; photoData: string },
-    ) => {
-      acc[photo.jigId] = photo.photoData;
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
+  return jigs.reduce((acc: Record<string, string>, jig) => {
+    if (jig.currentPhoto) acc[jig.id] = jig.currentPhoto.photoData;
+    return acc;
+  }, {});
 }
 
 export async function getJigPhotosByIds(photoIds: string[]) {
@@ -524,9 +523,12 @@ export async function getJigPhotosByIds(photoIds: string[]) {
   });
 }
 
-export async function deleteJigPhoto(jigId: string) {
-  return await prisma.jigPhoto.deleteMany({
-    where: { jigId },
+// Disassociates a jig's current photo without deleting the row — it may
+// still be permanent history for a cleared JigAssignment's photoId.
+export async function clearCurrentJigPhoto(jigId: string) {
+  return await prisma.jig.update({
+    where: { id: jigId },
+    data: { currentPhotoId: null },
   });
 }
 
