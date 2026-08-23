@@ -479,12 +479,17 @@ export async function clearJigStateIfEmpty(jigId: string) {
 }
 
 // ============ JIG PHOTOS ============
-// Append-only: one row per load cycle, never overwritten. "The current
-// photo for a jig" is its most recent row.
+// Append-only: one row per load cycle, never overwritten. A row only ever
+// gets linked to an assignment's photoId at the moment its jig is
+// completed (see completeJigAction) — so "the current/live photo for a
+// jig" is its most recent row that no assignment references yet. Once
+// completion sets photoId on the cleared assignments, that row is
+// "consumed" as history and stops counting as live, even though it's
+// still the most recent row by timestamp.
 
 export async function getJigPhoto(jigId: string) {
   return await prisma.jigPhoto.findFirst({
-    where: { jigId },
+    where: { jigId, assignments: { none: {} } },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -497,6 +502,7 @@ export async function setJigPhoto(jigId: string, photoData: string) {
 
 export async function getAllJigPhotos() {
   const photos = await prisma.jigPhoto.findMany({
+    where: { assignments: { none: {} } },
     orderBy: { createdAt: "desc" },
     distinct: ["jigId"],
   });
