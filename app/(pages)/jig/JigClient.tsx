@@ -165,6 +165,7 @@ export default function JigClient() {
       jobId: selectedJobForAssignment.id,
       pct,
       pic: null,
+      photoId: null,
       status: "ACTIVE",
       loadedAt: Date.now(),
       completedAt: null,

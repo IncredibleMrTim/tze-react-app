@@ -180,6 +180,7 @@ export async function createJigAssignment(assignment: IJigAssignment) {
       jigId: assignment.jigId,
       pct: assignment.pct,
       pic: assignment.pic,
+      photoId: assignment.photoId,
       completedAt: assignment.completedAt
         ? BigInt(assignment.completedAt)
         : null,
@@ -460,11 +461,13 @@ export async function ensureJigsExist(count: number): Promise<IJig[]> {
   return await getJigs();
 }
 
-// A jig's photo/rework flag is "live" state for whatever is currently
-// loaded on that physical slot. Once nothing is left ACTIVE on a jig, its
-// photo/rework must be cleared — otherwise the next unrelated job assigned
-// to that same slot inherits a photo taken for a completely different
-// job's parts.
+// A jig's rework flag is "live" state for whatever is currently loaded on
+// that physical slot. This only runs for a job leaving a jig WITHOUT
+// completing it (e.g. removed by mistake) — the assignment row is deleted
+// outright with no photoId to preserve, so any live photo genuinely has
+// nothing left pointing at it and can be dropped along with the rework
+// flag. Completing a jig normally (completeJigAction) does NOT go through
+// here — it keeps the photo row as permanent history via photoId instead.
 export async function clearJigStateIfEmpty(jigId: string) {
   const stillActive = await prisma.jigAssignment.count({
     where: { jigId, status: "ACTIVE" },
@@ -476,23 +479,27 @@ export async function clearJigStateIfEmpty(jigId: string) {
 }
 
 // ============ JIG PHOTOS ============
+// Append-only: one row per load cycle, never overwritten. "The current
+// photo for a jig" is its most recent row.
 
 export async function getJigPhoto(jigId: string) {
-  return await prisma.jigPhoto.findUnique({
+  return await prisma.jigPhoto.findFirst({
     where: { jigId },
+    orderBy: { createdAt: "desc" },
   });
 }
 
 export async function setJigPhoto(jigId: string, photoData: string) {
-  return await prisma.jigPhoto.upsert({
-    where: { jigId },
-    update: { photoData },
-    create: { jigId, photoData },
+  return await prisma.jigPhoto.create({
+    data: { jigId, photoData },
   });
 }
 
 export async function getAllJigPhotos() {
-  const photos = await prisma.jigPhoto.findMany();
+  const photos = await prisma.jigPhoto.findMany({
+    orderBy: { createdAt: "desc" },
+    distinct: ["jigId"],
+  });
   return photos.reduce(
     (
       acc: Record<string, string>,
@@ -503,6 +510,12 @@ export async function getAllJigPhotos() {
     },
     {} as Record<string, string>,
   );
+}
+
+export async function getJigPhotosByIds(photoIds: string[]) {
+  return await prisma.jigPhoto.findMany({
+    where: { id: { in: photoIds } },
+  });
 }
 
 export async function deleteJigPhoto(jigId: string) {

@@ -98,7 +98,7 @@ model Jig {
   updatedAt DateTime @updatedAt
 
   assignments JigAssignment[]
-  photo       JigPhoto?
+  photos      JigPhoto[]
   rework      JigRework?
 }
 
@@ -108,7 +108,8 @@ model JigAssignment {
   jobId       String
   jigId       String
   pct         Float
-  pic         String?
+  pic         String?             // Deprecated — superseded by photoId, kept unused for rollback safety
+  photoId     String?
   completedAt BigInt?             // Timestamp in ms when cleared
   loadedAt    BigInt              // Timestamp in ms when loaded
   status      JigAssignmentStatus @default(ACTIVE)
@@ -117,10 +118,12 @@ model JigAssignment {
 
   job         Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
   jig         Jig                 @relation(fields: [jigId], references: [id], onDelete: Cascade)
+  photo       JigPhoto?           @relation(fields: [photoId], references: [id], onDelete: SetNull)
 
   @@index([jobId])
   @@index([jigId])
   @@index([status])
+  @@index([photoId])
 }
 
 // Settings (singleton table)
@@ -140,15 +143,20 @@ model Settings {
   updatedAt    DateTime @updatedAt
 }
 
-// Jig Photos (storing jig images)
+// Jig Photos (storing jig images) — append-only, one row per load cycle.
+// The "current" photo for a jig is its most recent row; older rows stay
+// around as permanent history for whichever JigAssignments reference them.
 model JigPhoto {
   id        String   @id @default(cuid())
-  jigId     String   @unique
+  jigId     String
   photoData String   // Base64 or URL
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jig       Jig      @relation(fields: [jigId], references: [id], onDelete: Cascade)
+  jig         Jig             @relation(fields: [jigId], references: [id], onDelete: Cascade)
+  assignments JigAssignment[]
+
+  @@index([jigId])
 }
 
 // Jig Rework flag — marks the unfilled remainder of a jig as rework so it

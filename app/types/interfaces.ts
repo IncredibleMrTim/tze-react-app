@@ -74,9 +74,17 @@ export interface IJigAssignment {
   jigName: string;
   pct: number;
   pic: string | null;
+  photoId: string | null;
   completedAt: number | null;
   loadedAt: number;
   status: "ACTIVE" | "CLEARED";
+}
+
+export interface IJigPhoto {
+  id: string;
+  jigId: string;
+  photoData: string;
+  createdAt: number;
 }
 
 export interface ISettings {
