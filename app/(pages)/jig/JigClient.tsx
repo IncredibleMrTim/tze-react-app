@@ -214,7 +214,11 @@ export default function JigClient() {
 
     setIsUploadingJigPhoto(true);
     try {
-      const pathname = `jigs/${selectedJigName}.jpg`;
+      // A unique path per upload, not a fixed one per jig — JigPhoto rows
+      // are permanent history (see photoId on JigAssignment), so
+      // overwriting the same blob path on every upload would silently
+      // rewrite older jobs' historical photos to whatever's newest.
+      const pathname = `jigs/${selectedJigName}-${Date.now()}.jpg`;
       const url = await uploadImageToBlob(file, pathname);
       await setJigPhotoMutation.mutateAsync({
         jigId: selectedJigId,
