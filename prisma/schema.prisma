@@ -97,9 +97,14 @@ model Jig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  currentPhotoId String?
+
   assignments JigAssignment[]
-  photos      JigPhoto[]
+  photos      JigPhoto[]         @relation("JigPhotos")
+  currentPhoto JigPhoto?         @relation("JigCurrentPhoto", fields: [currentPhotoId], references: [id], onDelete: SetNull)
   rework      JigRework?
+
+  @@index([currentPhotoId])
 }
 
 // Jig Assignments
@@ -143,9 +148,13 @@ model Settings {
   updatedAt    DateTime @updatedAt
 }
 
-// Jig Photos (storing jig images) — append-only, one row per load cycle.
-// The "current" photo for a jig is its most recent row; older rows stay
-// around as permanent history for whichever JigAssignments reference them.
+// Jig Photos (storing jig images) — append-only, one row per load cycle,
+// never deleted. Jig.currentPhotoId is the only thing that says whether a
+// row is "live" right now — it's set when a photo is uploaded and cleared
+// (set to null) when the jig completes or empties out, disassociating the
+// row from the jig without deleting it. Rows also stay around as
+// permanent history for whichever JigAssignments reference them via
+// photoId, entirely independent of currentPhotoId.
 model JigPhoto {
   id        String   @id @default(cuid())
   jigId     String
@@ -153,8 +162,9 @@ model JigPhoto {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jig         Jig             @relation(fields: [jigId], references: [id], onDelete: Cascade)
-  assignments JigAssignment[]
+  jig             Jig             @relation("JigPhotos", fields: [jigId], references: [id], onDelete: Cascade)
+  assignments     JigAssignment[]
+  currentForJigs  Jig[]           @relation("JigCurrentPhoto")
 
   @@index([jigId])
 }
