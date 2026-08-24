@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { LuCamera } from "react-icons/lu";
 import { useToast } from "@/hooks/useToast";
-import { useJobs, useUpdateJob } from "@/hooks/useJobs";
+import { useAssignableJobs, useUpdateJob } from "@/hooks/useJobs";
 import {
   useJigAssignments,
   useCreateJigAssignment,
@@ -39,8 +39,11 @@ import { JobAssignmentPanel } from "@/components/JobAssignmentPanel";
 export default function JigClient() {
   const { showToast } = useToast();
 
-  // Live updates arrive via WebSocket; hooks poll only as a backstop
-  const { data: jobs = [], isLoading: jobsLoading } = useJobs();
+  // Live updates arrive via WebSocket; hooks poll only as a backstop.
+  // Server-filtered to jobs not yet dispatched/PO-complete — this is only
+  // the "add job to jig" candidate list, not every job (see assignment.job
+  // below for the jobs already loaded on a jig).
+  const { data: jobs = [], isLoading: jobsLoading } = useAssignableJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments();
   const {
@@ -86,7 +89,7 @@ export default function JigClient() {
   });
   const [editingAssignment, setEditingAssignment] = useState<{
     assignment: IJigAssignment;
-    job: IJob;
+    job: NonNullable<IJigAssignment["job"]>;
   } | null>(null);
   const [editPercentage, setEditPercentage] = useState("");
   const [editPoComplete, setEditPoComplete] = useState(false);
@@ -104,9 +107,9 @@ export default function JigClient() {
     : false;
 
   const availableJobs = jobs.filter((j) => {
-    if (j.dispatchedAt) return false;
-    // Once every part on the PO has been processed there's nothing left to jig
-    if (j.poComplete) return false;
+    // useAssignableJobs() already filters out dispatched/PO-complete jobs
+    // server-side — this only needs to exclude jobs already on THIS jig,
+    // which depends on UI state (selectedJigId), so it stays client-side.
     // Still allow it to be added elsewhere, just not a second time to the
     // same jig it's already loaded on
     const isOnSelectedJig = jigAssignments.some(
@@ -162,7 +165,10 @@ export default function JigClient() {
       return;
     }
 
-    // Create new assignment
+    // Create new assignment. `job` isn't a real column (stripped server-side
+    // before the write) — it's set here purely so the optimistic update
+    // shows this job under "jobs on this jig" immediately, instead of
+    // disappearing until the mutation round-trip lands.
     const newAssignment: IJigAssignment = {
       id: crypto.randomUUID(),
       jigId: selectedJigId,
@@ -174,6 +180,12 @@ export default function JigClient() {
       status: "ACTIVE",
       loadedAt: Date.now(),
       completedAt: null,
+      job: {
+        po_number: selectedJobForAssignment.po_number,
+        customer_name: selectedJobForAssignment.customer_name,
+        plating: selectedJobForAssignment.plating,
+        poComplete,
+      },
     };
 
     // Update job if PO complete status changed
@@ -296,7 +308,10 @@ export default function JigClient() {
     });
   };
 
-  const handleEditJobClick = (assignment: IJigAssignment, job: IJob) => {
+  const handleEditJobClick = (
+    assignment: IJigAssignment,
+    job: NonNullable<IJigAssignment["job"]>,
+  ) => {
     setEditingAssignment({ assignment, job });
     setEditPercentage(assignment.pct.toString());
     setEditPoComplete(job.poComplete);
@@ -324,7 +339,7 @@ export default function JigClient() {
           if (editPoComplete !== editingAssignment.job.poComplete) {
             updateJobMutation.mutate(
               {
-                jobId: editingAssignment.job.id,
+                jobId: editingAssignment.assignment.jobId,
                 job: { poComplete: editPoComplete },
               },
               {
@@ -515,7 +530,7 @@ export default function JigClient() {
           {getJigJobs(selectedJigId).length > 0 && (
             <div className="space-y-3">
               {getJigJobs(selectedJigId).map((assignment) => {
-                const job = jobs.find((j) => j.id === assignment.jobId);
+                const job = assignment.job;
                 if (!job) return null;
 
                 const isConfirming = confirmingRemoveId === assignment.id;

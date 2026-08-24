@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import type { IJob, IJigAssignment } from "@/types/interfaces";
 import type { OnFloorJobsPage } from "@/hooks/useJobs";
-import { isOnFloor } from "@/lib/helpers";
+import { isAssignable, isOnFloor } from "@/lib/helpers";
 
 export function useJobSocket() {
   const queryClient = useQueryClient();
@@ -40,6 +40,19 @@ export function useJobSocket() {
                 : [...old, job];
             }
             return old.map((j) => (j.id === job.id ? job : j));
+          });
+
+          // Backstop for useAssignableJobs() (the jig page's "add job to
+          // jig" selector) — same origin-echo/dedupe handling as the full
+          // ["jobs"] cache above, but also drops/adds jobs as they cross
+          // the dispatched/PO-complete boundary on "updated" events.
+          queryClient.setQueryData<IJob[]>(["jobs", "assignable"], (old) => {
+            if (!old) return old;
+            if (type === "deleted") return old.filter((j) => j.id !== jobId);
+            if (!isAssignable(job)) return old.filter((j) => j.id !== job.id);
+            return old.some((j) => j.id === job.id)
+              ? old.map((j) => (j.id === job.id ? job : j))
+              : [...old, job];
           });
 
           const jigAssignments =

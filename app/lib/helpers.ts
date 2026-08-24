@@ -232,6 +232,13 @@ export const isDispatched = (j: IJob) => !!j.dispatchedAt;
 export const isOnFloor = (j: IJob, jigAssignments: IJigAssignment[]): boolean =>
   !isDispatched(j) && !isReady(j, jigAssignments);
 
+// A job can be added to a jig while it's neither dispatched nor already
+// PO-complete. `getAssignableJobs` in `@/lib/db` re-expresses this exact
+// condition as a Prisma `where` clause — keep the two in sync if this
+// logic ever changes.
+export const isAssignable = (j: IJob): boolean =>
+  !isDispatched(j) && !j.poComplete;
+
 export const stageLabel = (
   j: IJob,
   jigAssignments: IJigAssignment[],
