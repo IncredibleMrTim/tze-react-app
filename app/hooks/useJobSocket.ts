@@ -38,8 +38,15 @@ export function useJobSocket() {
         }
 
         if (channel === "jig_updates") {
-          const { type, assignment, assignmentId, jobId, jigId, photoUrl } =
-            payload;
+          const {
+            type,
+            assignment,
+            assignmentId,
+            jobId,
+            jigId,
+            photoUrl,
+            isRework,
+          } = payload;
 
           if (type === "photo-updated") {
             queryClient.setQueryData<Record<string, string>>(
@@ -52,6 +59,26 @@ export function useJobSocket() {
           if (type === "photo-cleared") {
             queryClient.setQueryData<Record<string, string>>(
               ["jig-photos"],
+              (old = {}) => {
+                const rest = { ...old };
+                delete rest[jigId];
+                return rest;
+              },
+            );
+            return;
+          }
+
+          if (type === "rework-updated") {
+            queryClient.setQueryData<Record<string, boolean>>(
+              ["jig-rework"],
+              (old = {}) => ({ ...old, [jigId]: isRework }),
+            );
+            return;
+          }
+
+          if (type === "rework-cleared") {
+            queryClient.setQueryData<Record<string, boolean>>(
+              ["jig-rework"],
               (old = {}) => {
                 const rest = { ...old };
                 delete rest[jigId];

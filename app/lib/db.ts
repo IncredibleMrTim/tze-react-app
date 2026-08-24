@@ -542,17 +542,21 @@ export async function clearCurrentJigPhoto(jigId: string) {
 // ============ JIG REWORK ============
 
 export async function setJigRework(jigId: string, isRework: boolean) {
-  return await prisma.jigRework.upsert({
+  const rework = await prisma.jigRework.upsert({
     where: { jigId },
     update: { isRework },
     create: { jigId, isRework },
   });
+  await notify("jig_updates", { type: "rework-updated", jigId, isRework });
+  return rework;
 }
 
 export async function deleteJigRework(jigId: string) {
-  return await prisma.jigRework.deleteMany({
+  const result = await prisma.jigRework.deleteMany({
     where: { jigId },
   });
+  await notify("jig_updates", { type: "rework-cleared", jigId });
+  return result;
 }
 
 export async function getAllJigRework() {
