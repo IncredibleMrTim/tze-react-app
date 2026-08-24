@@ -11,6 +11,7 @@ export function useJigs() {
     queryKey: ["jigs"],
     queryFn: async (): Promise<IJig[]> => {
       const result = await getJigsAction();
+      if (!result.success) throw new Error(result.error);
       return result.jigs;
     },
   });
