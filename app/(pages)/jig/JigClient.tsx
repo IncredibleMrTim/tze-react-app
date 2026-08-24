@@ -43,7 +43,12 @@ export default function JigClient() {
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments();
-  const { data: jigsList = [], isLoading: jigsListLoading } = useJigs();
+  const {
+    data: jigsList = [],
+    isLoading: jigsListLoading,
+    isError: jigsListError,
+    refetch: refetchJigsList,
+  } = useJigs();
 
   // Mutation hooks
   const createAssignmentMutation = useCreateJigAssignment();
@@ -371,6 +376,22 @@ export default function JigClient() {
         <div className="text-center">
           <div className="text-5xl mb-4">⏳</div>
           <div className="text-lg text-gray-600">Loading jigs...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // getJigsAction can fail transiently (DB blip); without this the page
+  // would otherwise silently render the heading over an empty grid
+  if (jigsListError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <div className="text-lg text-gray-600 mb-4">
+            Couldn&apos;t load jigs
+          </div>
+          <Button onClick={() => refetchJigsList()}>Retry</Button>
         </div>
       </div>
     );
