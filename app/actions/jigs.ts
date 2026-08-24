@@ -6,6 +6,8 @@ import {
   updateJigAssignment,
   deleteJigAssignment,
   getJigAssignments,
+  getActiveJigAssignments,
+  getActiveJigAssignmentsByJig,
   updateJob,
   getJigPhoto,
   clearCurrentJigPhoto,
@@ -56,17 +58,14 @@ export async function updateJigAssignmentAction(
 
 export async function deleteJigAssignmentAction(assignmentId: string) {
   try {
-    const assignments = await getJigAssignments()
-    const assignment = assignments.find((a) => a.id === assignmentId)
-
-    await deleteJigAssignment(assignmentId)
+    const deleted = await deleteJigAssignment(assignmentId)
 
     // A job can also leave a jig this way (not just via "complete") — if
     // that empties the jig out, its photo/rework must be cleared too,
     // otherwise the next unrelated job assigned to this jig inherits a
     // photo taken for this job's parts.
-    if (assignment) {
-      await clearJigStateIfEmpty(assignment.jigId)
+    if (deleted) {
+      await clearJigStateIfEmpty(deleted.jigId)
     }
 
     revalidatePath('/jig')
@@ -80,10 +79,7 @@ export async function deleteJigAssignmentAction(assignmentId: string) {
 
 export async function clearJobJigsAction(jobId: string) {
   try {
-    const assignments = await getJigAssignments()
-    const activeAssignments = assignments.filter(
-      (a) => a.jobId === jobId && a.status === 'ACTIVE'
-    )
+    const activeAssignments = await getActiveJigAssignments(jobId)
     const jigIds = Array.from(new Set(activeAssignments.map((a) => a.jigId)))
 
     // Mark active assignments CLEARED (same pattern as completeJigAction)
@@ -91,22 +87,32 @@ export async function clearJobJigsAction(jobId: string) {
     // permanent jig photo history, so sending it back for another run
     // must not erase this run's photo along with the still-active one.
     const now = Date.now()
-    for (const assignment of activeAssignments) {
-      const photo = await getJigPhoto(assignment.jigId)
-      await updateJigAssignment(assignment.id, {
-        status: 'CLEARED',
-        completedAt: now,
-        photoId: photo?.id ?? null,
-      })
-    }
+
+    // Fetch each jig's photo once (not once per assignment — a job can
+    // have multiple assignments on the same jig) and in parallel.
+    const photoEntries = await Promise.all(
+      jigIds.map(async (jigId) => [jigId, await getJigPhoto(jigId)] as const)
+    )
+    const photoByJigId = new Map(photoEntries)
+
+    await Promise.all(
+      activeAssignments.map((assignment) =>
+        updateJigAssignment(assignment.id, {
+          status: 'CLEARED',
+          completedAt: now,
+          photoId: photoByJigId.get(assignment.jigId)?.id ?? null,
+        })
+      )
+    )
 
     // Sending a job back for re-jigging means its parts aren't processed
     // yet, so it needs to be assignable to a jig again
     await updateJob(jobId, { poComplete: false })
 
-    for (const jigId of jigIds) {
-      await clearJigStateIfEmpty(jigId)
-    }
+    // Must run after the status updates above have committed —
+    // clearJigStateIfEmpty counts still-ACTIVE assignments per jig, so
+    // running it concurrently with those writes could race on a stale count.
+    await Promise.all(jigIds.map((jigId) => clearJigStateIfEmpty(jigId)))
 
     revalidatePath('/jig')
     revalidatePath('/intake')
@@ -119,10 +125,7 @@ export async function clearJobJigsAction(jobId: string) {
 
 export async function completeJigAction(jigId: string) {
   try {
-    const assignments = await getJigAssignments()
-    const activeAssignments = assignments.filter(
-      (a) => a.jigId === jigId && a.status === 'ACTIVE'
-    )
+    const activeAssignments = await getActiveJigAssignmentsByJig(jigId)
 
     const now = Date.now()
     const photo = await getJigPhoto(jigId)
@@ -131,13 +134,15 @@ export async function completeJigAction(jigId: string) {
     // reference photo by id — the photo row itself stays put as permanent
     // history (JigPhoto is append-only), so it remains visible for these
     // jobs even after the jig's next load cycle gets its own new photo
-    for (const assignment of activeAssignments) {
-      await updateJigAssignment(assignment.id, {
-        status: 'CLEARED',
-        completedAt: now,
-        photoId: photo?.id ?? null,
-      })
-    }
+    await Promise.all(
+      activeAssignments.map((assignment) =>
+        updateJigAssignment(assignment.id, {
+          status: 'CLEARED',
+          completedAt: now,
+          photoId: photo?.id ?? null,
+        })
+      )
+    )
 
     // Note: completing a jig does NOT mark the job's PO as complete.
     // A job may still need further work on another jig, so poComplete

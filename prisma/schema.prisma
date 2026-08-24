@@ -129,6 +129,8 @@ model JigAssignment {
   @@index([jigId])
   @@index([status])
   @@index([photoId])
+  @@index([jigId, status])
+  @@index([jobId, status])
 }
 
 // Settings (singleton table)
