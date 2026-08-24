@@ -1,9 +1,14 @@
 "use client";
 import { FiMail, FiPhone } from "react-icons/fi";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
-import { useJobs, useDeleteJob, useJobImages } from "@/hooks/useJobs";
+import {
+  useJobs,
+  useOnFloorJobs,
+  useDeleteJob,
+  useJobImages,
+} from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/store/useIntakeStore";
@@ -35,25 +40,42 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { isReady, isDispatched } from "@/lib/helpers";
-
 export default function IntakeClient() {
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
+  // Coming from the dispatch page's "Check & edit job details" button —
+  // open that job straight into edit mode once jobs/contacts have loaded.
+  const searchParams = useSearchParams();
+  const jobIdParam = searchParams.get("jobId");
+  const refererParam = searchParams.get("referer");
+
   // React Query hooks - auto-refresh for real-time updates
+
+  // Primary list: jobs still on the shop floor, paginated in pages of 10.
+  const {
+    data: onFloorData,
+    isLoading: onFloorLoading,
+    error: onFloorError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useOnFloorJobs();
+
+  // Full job history — only needed for search and the dispatch deep-link
+  // below, so it's fetched lazily instead of on every intake page load.
   const {
     data: jobs = [],
     isLoading: jobsLoading,
     error: jobsError,
-  } = useJobs();
+  } = useJobs(undefined, isSearchActive || !!jobIdParam);
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments();
   const { data: CONTACTS = [], isLoading: contactsLoading } = useContacts();
   const deleteJobMutation = useDeleteJob();
 
-  const error = jobsError;
-
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const error = onFloorError || jobsError;
 
   // Zustand store - all state
   const {
@@ -64,12 +86,6 @@ export default function IntakeClient() {
     openJobForEdit,
     closeSheet,
   } = useIntakeStore();
-
-  // Coming from the dispatch page's "Check & edit job details" button —
-  // open that job straight into edit mode once jobs/contacts have loaded.
-  const searchParams = useSearchParams();
-  const jobIdParam = searchParams.get("jobId");
-  const refererParam = searchParams.get("referer");
 
   useEffect(() => {
     if (!jobIdParam || refererParam !== "dispatch") return;
@@ -86,7 +102,7 @@ export default function IntakeClient() {
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
 
-  const isLoading = jobsLoading || jigsLoading || contactsLoading;
+  const isLoading = onFloorLoading || jigsLoading || contactsLoading;
 
   const isJobDrawerOpen = !!currentJob || showSheet;
 
@@ -141,11 +157,14 @@ export default function IntakeClient() {
   };
 
   // Jobs still on the shop floor — excludes anything dispatched or already
-  // queued for dispatch. Those stages remain reachable via search.
+  // queued for dispatch. Those stages remain reachable via search. The
+  // status filter itself is applied server-side (getOnFloorJobs); this
+  // just flattens whatever pages have been loaded so far.
   const onFloorJobs = useMemo(
-    () => jobs.filter((j) => !isDispatched(j) && !isReady(j, jigAssignments)),
-    [jobs, jigAssignments],
+    () => onFloorData?.pages.flatMap((p) => p.jobs) ?? [],
+    [onFloorData],
   );
+  const onFloorTotalCount = onFloorData?.pages[0]?.totalCount ?? onFloorJobs.length;
 
   const groupJobsByDate = useMemo(() => {
     const groups: Record<string, IJob[]> = {};
@@ -158,6 +177,27 @@ export default function IntakeClient() {
 
     return groups;
   }, [onFloorJobs]);
+
+  // Infinite scroll: fetch the next page of on-floor jobs once the sentinel
+  // at the bottom of the list comes into view.
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasNextPage || isSearchActive) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, isSearchActive, fetchNextPage]);
 
   // Show loading state on initial load
   if (isLoading) {
@@ -192,7 +232,7 @@ export default function IntakeClient() {
         <div className="text-base text-gray-600">
           On floor:{" "}
           <span className="font-semibold text-gray-900">
-            {onFloorJobs.length} jobs
+            {onFloorTotalCount} jobs
           </span>
         </div>
         <Button
@@ -243,6 +283,11 @@ export default function IntakeClient() {
               ))}
             </div>
           ))}
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="py-4 text-center text-sm text-gray-400">
+              {isFetchingNextPage ? "Loading more…" : ""}
+            </div>
+          )}
         </div>
       )}
 

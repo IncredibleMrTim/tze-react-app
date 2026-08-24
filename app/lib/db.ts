@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import type { Job, JigAssignment, Jig } from "@prisma/client";
+import type { Job, JigAssignment, Jig, Prisma } from "@prisma/client";
 import type { IJob, IJigAssignment, IJig, ISettings } from "@/types/interfaces";
 import { notify } from "./notify";
 import { generateJigsList } from "@/constants/settings.const";
@@ -75,7 +75,7 @@ export async function createJob(job: IJob) {
   });
 
   const serialized = serializeJob(created);
-  await notify("job_updates", { type: "created", job: serialized });
+  notify("job_updates", { type: "created", job: serialized });
 
   return serialized;
 }
@@ -98,7 +98,7 @@ export async function updateJob(jobId: string, job: Partial<IJob>) {
   });
 
   const serialized = serializeJob(updated);
-  await notify("job_updates", { type: "updated", job: serialized });
+  notify("job_updates", { type: "updated", job: serialized });
 
   return serialized;
 }
@@ -108,7 +108,7 @@ export async function deleteJob(jobId: string) {
     where: { id: jobId },
   });
 
-  await notify("job_updates", { type: "deleted", jobId });
+  notify("job_updates", { type: "deleted", jobId });
 }
 
 export async function getJobs() {
@@ -157,6 +157,83 @@ export async function getJobs() {
   return jobs.map((job) => serializeJob(job as unknown as JobWithRelations));
 }
 
+// Paginated, status-filtered version of getJobs() for the intake page's
+// primary list — only jobs still "on the shop floor". The where clause is
+// the SQL equivalent of isOnFloor() in @/lib/helpers (not dispatched, and
+// not [poComplete && has an assignment && every assignment CLEARED]) —
+// keep the two in sync if that logic ever changes. Dispatched/older jobs
+// remain reachable via the unbounded getJobs()-backed search instead.
+export async function getOnFloorJobs(
+  params: { cursor?: string; take?: number } = {},
+) {
+  const { cursor, take = 10 } = params;
+
+  const onFloorWhere: Prisma.JobWhereInput = {
+    dispatchedAt: null,
+    OR: [
+      { poComplete: false },
+      { jigAssignments: { none: {} } },
+      { jigAssignments: { some: { status: { not: "CLEARED" } } } },
+    ],
+  };
+
+  const [jobs, totalCount] = await Promise.all([
+    prisma.job.findMany({
+      where: onFloorWhere,
+      select: {
+        id: true,
+        po_number: true,
+        customer_name: true,
+        customer_account: true,
+        customer_email: true,
+        customer_contact: true,
+        parts: true,
+        plating: true,
+        weightKg: true,
+        stringCount: true,
+        stringsRequired: true,
+        requiresWeighing: true,
+        freightRequested: true,
+        minCharge: true,
+        flagged: true,
+        notes: true,
+        poPages: true,
+        partsOnArrivalPhotos: true,
+        manualPO: true,
+        urgent: true,
+        isInternal: true,
+        isRework: true,
+        partDescription: true,
+        createdAt: true,
+        priceOverride: true,
+        freightCost: true,
+        dispatchedAt: true,
+        invoiceNumber: true,
+        poComplete: true,
+        fpnDownloaded: true,
+        fpnHidden: true,
+        csvDownloaded: true,
+        updatedAt: true,
+        jigAssignments: true,
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: take + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    }),
+    prisma.job.count({ where: onFloorWhere }),
+  ]);
+
+  const hasMore = jobs.length > take;
+  const page = hasMore ? jobs.slice(0, take) : jobs;
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+  return {
+    jobs: page.map((job) => serializeJob(job as unknown as JobWithRelations)),
+    nextCursor,
+    totalCount,
+  };
+}
+
 export async function getJobById(jobId: string) {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
@@ -191,7 +268,7 @@ export async function createJigAssignment(assignment: IJigAssignment) {
   });
 
   const serialized = serializeJigAssignment(created);
-  await notify("jig_updates", { type: "created", assignment: serialized });
+  notify("jig_updates", { type: "created", assignment: serialized });
 
   return serialized;
 }
@@ -222,7 +299,7 @@ export async function updateJigAssignment(
   });
 
   const serialized = serializeJigAssignment(updated);
-  await notify("jig_updates", { type: "updated", assignment: serialized });
+  notify("jig_updates", { type: "updated", assignment: serialized });
 
   return serialized;
 }
@@ -232,7 +309,7 @@ export async function deleteJigAssignment(assignmentId: string) {
     where: { id: assignmentId },
   });
 
-  await notify("jig_updates", { type: "deleted", assignmentId });
+  notify("jig_updates", { type: "deleted", assignmentId });
 
   return deleted;
 }
@@ -252,6 +329,18 @@ export async function getActiveJigAssignments(jobId: string) {
   const assignments = await prisma.jigAssignment.findMany({
     where: {
       jobId,
+      status: "ACTIVE",
+    },
+    include: { jig: true },
+  });
+
+  return assignments.map(serializeJigAssignment);
+}
+
+export async function getActiveJigAssignmentsByJig(jigId: string) {
+  const assignments = await prisma.jigAssignment.findMany({
+    where: {
+      jigId,
       status: "ACTIVE",
     },
     include: { jig: true },
@@ -493,7 +582,7 @@ export async function setJigPhoto(jigId: string, photoData: string) {
     where: { id: jigId },
     data: { currentPhotoId: photo.id },
   });
-  await notify("jig_updates", {
+  notify("jig_updates", {
     type: "photo-updated",
     jigId,
     photoUrl: photo.photoData,
@@ -525,7 +614,7 @@ export async function clearCurrentJigPhoto(jigId: string) {
     where: { id: jigId },
     data: { currentPhotoId: null },
   });
-  await notify("jig_updates", { type: "photo-cleared", jigId });
+  notify("jig_updates", { type: "photo-cleared", jigId });
   return jig;
 }
 
@@ -537,7 +626,7 @@ export async function setJigRework(jigId: string, isRework: boolean) {
     update: { isRework },
     create: { jigId, isRework },
   });
-  await notify("jig_updates", { type: "rework-updated", jigId, isRework });
+  notify("jig_updates", { type: "rework-updated", jigId, isRework });
   return rework;
 }
 
@@ -545,7 +634,7 @@ export async function deleteJigRework(jigId: string) {
   const result = await prisma.jigRework.deleteMany({
     where: { jigId },
   });
-  await notify("jig_updates", { type: "rework-cleared", jigId });
+  notify("jig_updates", { type: "rework-cleared", jigId });
   return result;
 }
 

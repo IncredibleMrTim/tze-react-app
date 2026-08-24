@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createJob, updateJob, deleteJob, getJobs } from '@/lib/db'
+import { createJob, updateJob, deleteJob, getJobs, getOnFloorJobs } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
 
 export async function createJobAction(job: IJob) {
@@ -44,5 +44,15 @@ export async function getJobsAction() {
   } catch (error) {
     console.error('Failed to fetch jobs:', error)
     return { success: false, jobs: [], error: 'Failed to fetch jobs' }
+  }
+}
+
+export async function getOnFloorJobsAction(params: { cursor?: string; take?: number } = {}) {
+  try {
+    const result = await getOnFloorJobs(params)
+    return { success: true, ...result }
+  } catch (error) {
+    console.error('Failed to fetch on-floor jobs:', error)
+    return { success: false, jobs: [], nextCursor: null, totalCount: 0, error: 'Failed to fetch on-floor jobs' }
   }
 }

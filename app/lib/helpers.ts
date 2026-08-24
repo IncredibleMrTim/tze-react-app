@@ -225,6 +225,13 @@ export const isReady = (j: IJob, jigAssignments: IJigAssignment[]): boolean => {
 
 export const isDispatched = (j: IJob) => !!j.dispatchedAt;
 
+// A job is "on the shop floor" while it's neither dispatched nor ready to
+// be. `getOnFloorJobs` in `@/lib/db` re-expresses this exact condition as a
+// Prisma `where` clause for the paginated intake list — keep the two in
+// sync if this logic ever changes.
+export const isOnFloor = (j: IJob, jigAssignments: IJigAssignment[]): boolean =>
+  !isDispatched(j) && !isReady(j, jigAssignments);
+
 export const stageLabel = (
   j: IJob,
   jigAssignments: IJigAssignment[],
