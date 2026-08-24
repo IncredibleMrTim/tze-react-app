@@ -156,8 +156,18 @@ export function useDeleteJigAssignment() {
         "jig-assignments",
       ]);
 
+      // Mark active assignments CLEARED rather than dropping them from the
+      // cache — cleared assignments are the job's permanent jig photo
+      // history and must stay visible, matching the server behavior.
+      const now = Date.now();
       queryClient.setQueryData<IJigAssignment[]>(["jig-assignments"], (old) => {
-        return old ? old.filter((a) => a.jobId !== jobId) : [];
+        return old
+          ? old.map((a) =>
+              a.jobId === jobId && a.status === "ACTIVE"
+                ? { ...a, status: "CLEARED" as const, completedAt: now }
+                : a,
+            )
+          : [];
       });
 
       return { previousAssignments };
