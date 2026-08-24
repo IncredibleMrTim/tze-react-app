@@ -9,7 +9,21 @@ import { generateJigsList } from "@/constants/settings.const";
 type JobWithRelations = Job & {
   jigAssignments?: JigAssignmentWithRelations[];
 };
-type JigAssignmentWithRelations = JigAssignment & { job?: Job; jig?: Jig };
+type JigAssignmentWithRelations = JigAssignment & {
+  job?: Pick<Job, "po_number" | "customer_name" | "plating" | "poComplete">;
+  jig?: Jig;
+};
+
+// The minimal job fields JigClient renders for "jobs on this jig" — used
+// on every query/mutation that returns a JigAssignment (including the
+// jig_updates WS broadcast) so assignment.job is always populated,
+// regardless of which client triggered the change.
+const assignmentJobSelect = {
+  po_number: true,
+  customer_name: true,
+  plating: true,
+  poComplete: true,
+} satisfies Prisma.JobSelect;
 
 // Convert BigInt fields to Number for JSON serialization
 function serializeJob(job: JobWithRelations): IJob {
@@ -30,7 +44,7 @@ function serializeJigAssignment(
     jigName: assignment.jig?.name,
     completedAt: assignment.completedAt ? Number(assignment.completedAt) : null,
     loadedAt: Number(assignment.loadedAt),
-    job: assignment.job ? serializeJob(assignment.job) : undefined,
+    job: assignment.job,
   } as unknown as IJigAssignment;
 }
 
@@ -111,44 +125,64 @@ export async function deleteJob(jobId: string) {
   notify("job_updates", { type: "deleted", jobId });
 }
 
+const jobSelect = {
+  id: true,
+  po_number: true,
+  customer_name: true,
+  customer_account: true,
+  customer_email: true,
+  customer_contact: true,
+  parts: true,
+  plating: true,
+  weightKg: true,
+  stringCount: true,
+  stringsRequired: true,
+  requiresWeighing: true,
+  freightRequested: true,
+  minCharge: true,
+  flagged: true,
+  notes: true,
+  poPages: true,
+  partsOnArrivalPhotos: true,
+  manualPO: true,
+  urgent: true,
+  isInternal: true,
+  isRework: true,
+  partDescription: true,
+  createdAt: true,
+  priceOverride: true,
+  freightCost: true,
+  dispatchedAt: true,
+  invoiceNumber: true,
+  poComplete: true,
+  fpnDownloaded: true,
+  fpnHidden: true,
+  csvDownloaded: true,
+  updatedAt: true,
+  jigAssignments: true,
+} satisfies Prisma.JobSelect;
+
 export async function getJobs() {
   const jobs = await prisma.job.findMany({
-    select: {
-      id: true,
-      po_number: true,
-      customer_name: true,
-      customer_account: true,
-      customer_email: true,
-      customer_contact: true,
-      parts: true,
-      plating: true,
-      weightKg: true,
-      stringCount: true,
-      stringsRequired: true,
-      requiresWeighing: true,
-      freightRequested: true,
-      minCharge: true,
-      flagged: true,
-      notes: true,
-      poPages: true,
-      partsOnArrivalPhotos: true,
-      manualPO: true,
-      urgent: true,
-      isInternal: true,
-      isRework: true,
-      partDescription: true,
-      createdAt: true,
-      priceOverride: true,
-      freightCost: true,
-      dispatchedAt: true,
-      invoiceNumber: true,
-      poComplete: true,
-      fpnDownloaded: true,
-      fpnHidden: true,
-      csvDownloaded: true,
-      updatedAt: true,
-      jigAssignments: true,
+    select: jobSelect,
+    orderBy: {
+      createdAt: "desc",
     },
+  });
+
+  return jobs.map((job) => serializeJob(job as unknown as JobWithRelations));
+}
+
+// Jobs still assignable to a jig — not dispatched, and not yet marked PO
+// complete. Used by the jig page's "add job to jig" selector instead of
+// fetching every job and filtering client-side.
+export async function getAssignableJobs() {
+  const jobs = await prisma.job.findMany({
+    where: {
+      dispatchedAt: null,
+      poComplete: false,
+    },
+    select: jobSelect,
     orderBy: {
       createdAt: "desc",
     },
@@ -180,42 +214,7 @@ export async function getOnFloorJobs(
   const [jobs, totalCount] = await Promise.all([
     prisma.job.findMany({
       where: onFloorWhere,
-      select: {
-        id: true,
-        po_number: true,
-        customer_name: true,
-        customer_account: true,
-        customer_email: true,
-        customer_contact: true,
-        parts: true,
-        plating: true,
-        weightKg: true,
-        stringCount: true,
-        stringsRequired: true,
-        requiresWeighing: true,
-        freightRequested: true,
-        minCharge: true,
-        flagged: true,
-        notes: true,
-        poPages: true,
-        partsOnArrivalPhotos: true,
-        manualPO: true,
-        urgent: true,
-        isInternal: true,
-        isRework: true,
-        partDescription: true,
-        createdAt: true,
-        priceOverride: true,
-        freightCost: true,
-        dispatchedAt: true,
-        invoiceNumber: true,
-        poComplete: true,
-        fpnDownloaded: true,
-        fpnHidden: true,
-        csvDownloaded: true,
-        updatedAt: true,
-        jigAssignments: true,
-      },
+      select: jobSelect,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: take + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -264,7 +263,10 @@ export async function createJigAssignment(assignment: IJigAssignment) {
       loadedAt: BigInt(assignment.loadedAt),
       status: assignment.status,
     },
-    include: { jig: true },
+    // job included so assignment.job is populated for every client
+    // receiving this over the jig_updates WS broadcast, not just the
+    // one that made the request.
+    include: { job: { select: assignmentJobSelect }, jig: true },
   });
 
   const serialized = serializeJigAssignment(created);
@@ -295,7 +297,7 @@ export async function updateJigAssignment(
   const updated = await prisma.jigAssignment.update({
     where: { id: assignmentId },
     data: updateData,
-    include: { jig: true },
+    include: { job: { select: assignmentJobSelect }, jig: true },
   });
 
   const serialized = serializeJigAssignment(updated);
@@ -317,7 +319,11 @@ export async function deleteJigAssignment(assignmentId: string) {
 export async function getJigAssignments() {
   const assignments = await prisma.jigAssignment.findMany({
     include: {
-      job: true,
+      // Only the fields JigClient renders for "jobs on this jig" — avoids
+      // pulling the full job row (parts, photos, etc.) per assignment.
+      // Only the fields JigClient renders for "jobs on this jig" — avoids
+      // pulling the full job row (parts, photos, etc.) per assignment.
+      job: { select: assignmentJobSelect },
       jig: true,
     },
   });
