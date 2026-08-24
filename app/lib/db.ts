@@ -503,6 +503,11 @@ export async function setJigPhoto(jigId: string, photoData: string) {
     where: { id: jigId },
     data: { currentPhotoId: photo.id },
   });
+  await notify("jig_updates", {
+    type: "photo-updated",
+    jigId,
+    photoUrl: photo.photoData,
+  });
   return photo;
 }
 
@@ -526,26 +531,32 @@ export async function getJigPhotosByIds(photoIds: string[]) {
 // Disassociates a jig's current photo without deleting the row — it may
 // still be permanent history for a cleared JigAssignment's photoId.
 export async function clearCurrentJigPhoto(jigId: string) {
-  return await prisma.jig.update({
+  const jig = await prisma.jig.update({
     where: { id: jigId },
     data: { currentPhotoId: null },
   });
+  await notify("jig_updates", { type: "photo-cleared", jigId });
+  return jig;
 }
 
 // ============ JIG REWORK ============
 
 export async function setJigRework(jigId: string, isRework: boolean) {
-  return await prisma.jigRework.upsert({
+  const rework = await prisma.jigRework.upsert({
     where: { jigId },
     update: { isRework },
     create: { jigId, isRework },
   });
+  await notify("jig_updates", { type: "rework-updated", jigId, isRework });
+  return rework;
 }
 
 export async function deleteJigRework(jigId: string) {
-  return await prisma.jigRework.deleteMany({
+  const result = await prisma.jigRework.deleteMany({
     where: { jigId },
   });
+  await notify("jig_updates", { type: "rework-cleared", jigId });
+  return result;
 }
 
 export async function getAllJigRework() {
