@@ -8,6 +8,7 @@ import {
   useOnFloorJobs,
   useDeleteJob,
   useJobImages,
+  useJobById,
 } from "@/hooks/useJobs";
 import { useJigAssignments } from "@/hooks/useJigAssignments";
 import { useContacts } from "@/hooks/useContacts";
@@ -102,6 +103,11 @@ export default function IntakeClient() {
 
   // Fetch images when viewing a job
   const { data: jobImages } = useJobImages(currentJob?.id || null);
+
+  // The on-floor list only carries the fields the card needs — the drawer
+  // (contact info, parts, and editing) needs the full row, fetched lazily
+  // once a job is actually opened instead of padding every list row.
+  const { data: fullCurrentJob } = useJobById(currentJob?.id || null);
 
   const isLoading = onFloorLoading || jigsLoading || contactsLoading;
 
@@ -319,14 +325,16 @@ export default function IntakeClient() {
                       </button>
                       <button
                         onClick={() =>
+                          fullCurrentJob &&
                           openJobForEdit(
-                            currentJob,
+                            fullCurrentJob,
                             CONTACTS.find(
-                              (c) => c.name === currentJob.customer_name,
+                              (c) => c.name === fullCurrentJob.customer_name,
                             ) || null,
                           )
                         }
-                        className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg"
+                        disabled={!fullCurrentJob}
+                        className="px-4 py-1.5 border-2 border-primary text-primary rounded-lg text-sm font-medium hover:bg-primary-bg disabled:opacity-50"
                       >
                         Edit
                       </button>
@@ -338,57 +346,66 @@ export default function IntakeClient() {
                     onClick={() => {}}
                     showJigStatus={true}
                   />
-                  <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">
-                    CONTACT
-                  </h3>
-                  <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-md mb-4">
-                    <span className="flex items-center gap-2">
-                      <FiMail />
-                      {currentJob.customer_email ? (
-                        <a
-                          href={`mailto: ${currentJob.customer_email}`}
-                          className="underline"
-                        >
-                          {currentJob.customer_email}
-                        </a>
-                      ) : (
-                        "No Provided"
-                      )}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <FiPhone />
-                      {currentJob.customer_contact || "Not Provided"}
-                    </span>
-                  </div>
-                  {currentJob.parts.length > 0 && (
-                    <div className="mb-4">
-                      <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        PARTS
+                  {fullCurrentJob ? (
+                    <>
+                      <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">
+                        CONTACT
                       </h3>
-                      {currentJob.parts.map((part, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
-                        >
-                          <div>
-                            <div className="font-medium text-sm text-gray-900">
-                              {part.desc}
+                      <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-md mb-4">
+                        <span className="flex items-center gap-2">
+                          <FiMail />
+                          {fullCurrentJob.customer_email ? (
+                            <a
+                              href={`mailto: ${fullCurrentJob.customer_email}`}
+                              className="underline"
+                            >
+                              {fullCurrentJob.customer_email}
+                            </a>
+                          ) : (
+                            "No Provided"
+                          )}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <FiPhone />
+                          {fullCurrentJob.customer_contact || "Not Provided"}
+                        </span>
+                      </div>
+                      {fullCurrentJob.parts.length > 0 && (
+                        <div className="mb-4">
+                          <h3 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                            PARTS
+                          </h3>
+                          {fullCurrentJob.parts.map((part, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-gray-50 rounded-lg p-3 mb-2 flex justify-between items-center"
+                            >
+                              <div>
+                                <div className="font-medium text-sm text-gray-900">
+                                  {part.desc}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {part.code}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-gray-900">
+                                  ×{part.qty}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  ${part.price.toFixed(2)}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {part.code}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-semibold text-gray-900">
-                              ×{part.qty}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              ${part.price.toFixed(2)}
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
+                  ) : (
+                    <LoadingState
+                      message="Loading details..."
+                      className="py-8 text-center"
+                    />
                   )}
                   {jobImages?.poPages && jobImages.poPages.length > 0 && (
                     <div className="mb-4">

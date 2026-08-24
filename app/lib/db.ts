@@ -162,6 +162,29 @@ const jobSelect = {
   jigAssignments: true,
 } satisfies Prisma.JobSelect;
 
+// Only what the collapsed intake job card (and the traffic-light/stage
+// helpers it calls) actually renders — the on-floor list can be long and
+// re-fetched often via infinite scroll, so it skips parts, PO/arrival
+// photos, notes, and contact details entirely. Those are fetched lazily
+// via getJobById() (useJobById on the client) once a card is opened.
+const onFloorCardSelect = {
+  id: true,
+  po_number: true,
+  customer_name: true,
+  plating: true,
+  urgent: true,
+  flagged: true,
+  isInternal: true,
+  freightRequested: true,
+  minCharge: true,
+  stringsRequired: true,
+  requiresWeighing: true,
+  partDescription: true,
+  createdAt: true,
+  dispatchedAt: true,
+  poComplete: true,
+} satisfies Prisma.JobSelect;
+
 export async function getJobs() {
   const jobs = await prisma.job.findMany({
     select: jobSelect,
@@ -214,7 +237,7 @@ export async function getOnFloorJobs(
   const [jobs, totalCount] = await Promise.all([
     prisma.job.findMany({
       where: onFloorWhere,
-      select: jobSelect,
+      select: onFloorCardSelect,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: take + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
