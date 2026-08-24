@@ -78,6 +78,9 @@ export interface IJigAssignment {
   completedAt: number | null;
   loadedAt: number;
   status: "ACTIVE" | "CLEARED";
+  // Only populated by getJigAssignments() — the minimal job fields needed
+  // to render "jobs on this jig" without a separate full-job-table fetch.
+  job?: Pick<IJob, "po_number" | "customer_name" | "plating" | "poComplete">;
 }
 
 export interface IJigPhoto {

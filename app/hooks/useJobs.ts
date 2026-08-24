@@ -45,6 +45,17 @@ async function fetchJobs(): Promise<IJob[]> {
 }
 
 /**
+ * Fetch jobs still assignable to a jig (not dispatched, not PO complete)
+ */
+async function fetchAssignableJobs(): Promise<IJob[]> {
+  const res = await fetch("/api/jobs/assignable", {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch assignable jobs: ${res.status}`);
+  return res.json();
+}
+
+/**
  * Fetch one page of on-floor jobs (not dispatched, not ready to be)
  */
 async function fetchOnFloorJobs(
@@ -105,6 +116,29 @@ export function useJobs(
     staleTime: 5000, // Consider fresh for 5 seconds
     retry: 2, // Only retry twice instead of default 3
     retryDelay: 1000, // Wait 1 second between retries
+  });
+}
+
+/**
+ * Hook to fetch jobs still assignable to a jig (not dispatched, not PO
+ * complete), filtered server-side. Used by the jig page's "add job to jig"
+ * selector instead of fetching every job and filtering client-side.
+ *
+ * Live updates arrive via the job_updates WebSocket as a backstop poll,
+ * same pattern as useJobs/useOnFloorJobs.
+ */
+export function useAssignableJobs(
+  refetchInterval: number | false = process.env.NODE_ENV === "development"
+    ? false
+    : 45000,
+) {
+  return useQuery({
+    queryKey: ["jobs", "assignable"],
+    queryFn: fetchAssignableJobs,
+    refetchInterval,
+    staleTime: 5000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 
