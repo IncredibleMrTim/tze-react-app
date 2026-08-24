@@ -34,6 +34,7 @@ import { useJigPhotos, useSetJigPhoto } from "@/hooks/useJigPhotos";
 import { useJigRework, useSetJigRework } from "@/hooks/useJigRework";
 import { uploadImageToBlob, toSignedImageUrl } from "@/lib/blob-upload";
 import { JobCard } from "@/components/JobCard";
+import { LoadingState } from "@/components/LoadingState";
 import { JobAssignmentPanel } from "@/components/JobAssignmentPanel";
 
 export default function JigClient() {
@@ -386,14 +387,7 @@ export default function JigClient() {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="text-5xl mb-4">⏳</div>
-          <div className="text-lg text-gray-600">Loading jigs...</div>
-        </div>
-      </div>
-    );
+    return <LoadingState message="Loading jigs..." />;
   }
 
   // getJigsAction can fail transiently (DB blip); without this the page

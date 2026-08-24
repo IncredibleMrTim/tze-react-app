@@ -19,6 +19,7 @@ import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/JobCard";
 import { JobSearch } from "@/components/JobSearch";
+import { LoadingState } from "@/components/LoadingState";
 import { EnterJobForm } from "@/components/intake/EnterJobForm";
 import { JigAssignmentsSection } from "@/components/intake/JigAssignmentsSection";
 
@@ -202,12 +203,10 @@ export default function IntakeClient() {
   // Show loading state on initial load
   if (isLoading) {
     return (
-      <div className="relative h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4">⏳</div>
-          <div className="text-lg text-gray-600">Loading jobs...</div>
-        </div>
-      </div>
+      <LoadingState
+        message="Loading jobs..."
+        className="relative h-full flex items-center justify-center"
+      />
     );
   }
 
