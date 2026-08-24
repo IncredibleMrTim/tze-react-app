@@ -38,7 +38,29 @@ export function useJobSocket() {
         }
 
         if (channel === "jig_updates") {
-          const { type, assignment, assignmentId, jobId } = payload;
+          const { type, assignment, assignmentId, jobId, jigId, photoUrl } =
+            payload;
+
+          if (type === "photo-updated") {
+            queryClient.setQueryData<Record<string, string>>(
+              ["jig-photos"],
+              (old = {}) => ({ ...old, [jigId]: photoUrl }),
+            );
+            return;
+          }
+
+          if (type === "photo-cleared") {
+            queryClient.setQueryData<Record<string, string>>(
+              ["jig-photos"],
+              (old = {}) => {
+                const rest = { ...old };
+                delete rest[jigId];
+                return rest;
+              },
+            );
+            return;
+          }
+
           queryClient.setQueryData<IJigAssignment[]>(
             ["jig-assignments"],
             (old = []) => {
