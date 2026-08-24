@@ -248,16 +248,6 @@ export async function getJigAssignments() {
   return assignments.map(serializeJigAssignment);
 }
 
-export async function deleteJigAssignmentsByJobId(jobId: string) {
-  const result = await prisma.jigAssignment.deleteMany({
-    where: { jobId },
-  });
-
-  await notify("jig_updates", { type: "deleted-by-job", jobId });
-
-  return result;
-}
-
 export async function getActiveJigAssignments(jobId: string) {
   const assignments = await prisma.jigAssignment.findMany({
     where: {

@@ -6,7 +6,6 @@ import {
   updateJigAssignment,
   deleteJigAssignment,
   getJigAssignments,
-  deleteJigAssignmentsByJobId,
   updateJob,
   getJigPhoto,
   clearCurrentJigPhoto,
@@ -82,15 +81,25 @@ export async function deleteJigAssignmentAction(assignmentId: string) {
 export async function clearJobJigsAction(jobId: string) {
   try {
     const assignments = await getJigAssignments()
-    const jigIds = Array.from(
-      new Set(
-        assignments
-          .filter((a) => a.jobId === jobId && a.status === 'ACTIVE')
-          .map((a) => a.jigId)
-      )
+    const activeAssignments = assignments.filter(
+      (a) => a.jobId === jobId && a.status === 'ACTIVE'
     )
+    const jigIds = Array.from(new Set(activeAssignments.map((a) => a.jigId)))
 
-    await deleteJigAssignmentsByJobId(jobId)
+    // Mark active assignments CLEARED (same pattern as completeJigAction)
+    // instead of deleting them — cleared assignments are the job's
+    // permanent jig photo history, so sending it back for another run
+    // must not erase this run's photo along with the still-active one.
+    const now = Date.now()
+    for (const assignment of activeAssignments) {
+      const photo = await getJigPhoto(assignment.jigId)
+      await updateJigAssignment(assignment.id, {
+        status: 'CLEARED',
+        completedAt: now,
+        photoId: photo?.id ?? null,
+      })
+    }
+
     // Sending a job back for re-jigging means its parts aren't processed
     // yet, so it needs to be assignable to a jig again
     await updateJob(jobId, { poComplete: false })
