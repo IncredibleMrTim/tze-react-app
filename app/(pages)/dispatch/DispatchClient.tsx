@@ -7,6 +7,7 @@ import { isReady, calcPrice, jigsOf } from "@/lib/helpers";
 import { genFPN, genBatchCSV } from "@/lib/exports";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
@@ -65,14 +66,7 @@ export default function DispatchClient() {
 
   // Show loading state
   if (isLoading || !settings) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="text-5xl mb-4">⏳</div>
-          <div className="text-lg text-gray-600">Loading dispatch...</div>
-        </div>
-      </div>
-    );
+    return <LoadingState message="Loading dispatch..." />;
   }
 
   const rates = calculateRates(settings);
