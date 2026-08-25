@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { QueryProvider } from "./providers/QueryProvider";
+import packageJson from "../package.json";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -92,7 +93,9 @@ export default function RootLayout({
               <h1 className="text-base font-bold text-primary">
                 Tauranga Zinc Electroplaters
               </h1>
-              <span className="text-[11px] text-gray-400">v0.6.0</span>
+              <span className="text-[11px] text-gray-400">
+                v{packageJson.version}
+              </span>
             </div>
 
             {/* View Area */}
