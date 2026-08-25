@@ -390,7 +390,7 @@ export default function DispatchClient() {
       >
         <div
           ref={fixedHeaderRef}
-          className="fixed top-12 left-1/2 z-40 w-full -translate-x-1/2 bg-white px-3 pb-4 pt-4 md:max-w-[430px] shadow-md rounded-b-md"
+          className="fixed top-12 left-1/2 z-40 w-full -translate-x-1/2 bg-white px-3 pb-4 pt-4 md:max-w-[430px] border-b"
         >
           <h2 className="text-lg font-bold mb-4">Dispatch</h2>
           <TabsList className="w-full grid grid-cols-2 mb-3">
