@@ -65,6 +65,28 @@ export const fmtArrived = (ts: number): string => {
   );
 };
 
+// Groups a timestamp into a date-header label ("TODAY", "YESTERDAY", or a
+// formatted date) — shared by intake's on-floor list and the dispatch
+// page's ready/downloads lists so job cards can be grouped under the same
+// date headers in both places.
+export const dateGroupLabel = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return "TODAY";
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "YESTERDAY";
+
+  return date
+    .toLocaleDateString("en-NZ", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .toUpperCase();
+};
+
 export const csvQ = (s: unknown): string => {
   return '"' + String(s).replace(/"/g, '""') + '"';
 };

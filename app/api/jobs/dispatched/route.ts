@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOnFloorJobs } from '@/lib/db'
+import { getDispatchedJobs } from '@/lib/db'
 
 // Always hit the DB fresh — see app/api/jobs/ready/route.ts for why.
 export const dynamic = 'force-dynamic'
@@ -21,11 +21,12 @@ export async function GET(request: NextRequest) {
     const cursor = searchParams.get('cursor') ?? undefined
     const takeParam = searchParams.get('take')
     const take = takeParam ? Number(takeParam) : undefined
+    const search = searchParams.get('search') ?? undefined
 
-    const result = await getOnFloorJobs({ cursor, take })
+    const result = await getDispatchedJobs({ cursor, take, search })
     return NextResponse.json(result, { headers: corsHeaders })
   } catch (error) {
-    console.error('Error fetching on-floor jobs:', error)
-    return NextResponse.json({ error: 'Failed to fetch on-floor jobs' }, { status: 500, headers: corsHeaders })
+    console.error('Error fetching dispatched jobs:', error)
+    return NextResponse.json({ error: 'Failed to fetch dispatched jobs' }, { status: 500, headers: corsHeaders })
   }
 }

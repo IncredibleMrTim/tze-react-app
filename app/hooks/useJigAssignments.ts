@@ -185,6 +185,8 @@ export function useDeleteJigAssignment() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["jig-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "ready"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] });
     },
   });
 }
