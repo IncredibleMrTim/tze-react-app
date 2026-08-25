@@ -3,6 +3,7 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
+  keepPreviousData,
 } from "@tanstack/react-query";
 import {
   createJobAction,
@@ -10,7 +11,7 @@ import {
   deleteJobAction,
 } from "@/actions/jobs";
 import { dispatchJobAction } from "@/actions/dispatch";
-import type { IJob } from "@/types/interfaces";
+import type { IJob, IDispatchedJobRow } from "@/types/interfaces";
 
 export interface OnFloorJobsPage {
   jobs: IJob[];
@@ -18,16 +19,29 @@ export interface OnFloorJobsPage {
   totalCount: number;
 }
 
+export interface ReadyJobsPage {
+  jobs: IJob[];
+  nextCursor: string | null;
+  totalCount: number;
+}
+
+export interface DispatchedJobsPage {
+  jobs: IDispatchedJobRow[];
+  nextCursor: string | null;
+  totalCount: number;
+}
+
 /**
  * Fetch all jobs from the API
  */
-async function fetchJobs(): Promise<IJob[]> {
+async function fetchJobs(signal?: AbortSignal): Promise<IJob[]> {
   console.log("Fetching jobs from /api/jobs...");
   try {
     const res = await fetch("/api/jobs", {
       headers: {
         Accept: "application/json",
       },
+      signal,
     });
     console.log("Jobs API response:", res.status, res.statusText);
     if (!res.ok) {
@@ -47,11 +61,13 @@ async function fetchJobs(): Promise<IJob[]> {
 /**
  * Fetch jobs still assignable to a jig (not dispatched, not PO complete)
  */
-async function fetchAssignableJobs(): Promise<IJob[]> {
+async function fetchAssignableJobs(signal?: AbortSignal): Promise<IJob[]> {
   const res = await fetch("/api/jobs/assignable", {
     headers: { Accept: "application/json" },
+    signal,
   });
-  if (!res.ok) throw new Error(`Failed to fetch assignable jobs: ${res.status}`);
+  if (!res.ok)
+    throw new Error(`Failed to fetch assignable jobs: ${res.status}`);
   return res.json();
 }
 
@@ -60,22 +76,69 @@ async function fetchAssignableJobs(): Promise<IJob[]> {
  */
 async function fetchOnFloorJobs(
   cursor: string | undefined,
+  signal?: AbortSignal,
 ): Promise<OnFloorJobsPage> {
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", cursor);
 
   const res = await fetch(`/api/jobs/on-floor?${params.toString()}`, {
     headers: { Accept: "application/json" },
+    signal,
   });
   if (!res.ok) throw new Error(`Failed to fetch on-floor jobs: ${res.status}`);
   return res.json();
 }
 
 /**
+ * Fetch one page of ready-to-dispatch jobs, optionally filtered by search
+ */
+async function fetchReadyJobs(
+  cursor: string | undefined,
+  search: string,
+  signal?: AbortSignal,
+): Promise<ReadyJobsPage> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  if (search) params.set("search", search);
+
+  const res = await fetch(`/api/jobs/ready?${params.toString()}`, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!res.ok) throw new Error(`Failed to fetch ready jobs: ${res.status}`);
+  return res.json();
+}
+
+/**
+ * Fetch one page of dispatched jobs (the dispatch page's downloads list),
+ * optionally filtered by search
+ */
+async function fetchDispatchedJobs(
+  cursor: string | undefined,
+  search: string,
+  signal?: AbortSignal,
+): Promise<DispatchedJobsPage> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  if (search) params.set("search", search);
+
+  const res = await fetch(`/api/jobs/dispatched?${params.toString()}`, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!res.ok)
+    throw new Error(`Failed to fetch dispatched jobs: ${res.status}`);
+  return res.json();
+}
+
+/**
  * Fetch a single job by ID with full data (including images)
  */
-async function fetchJobById(jobId: string): Promise<IJob> {
-  const res = await fetch(`/api/jobs/${jobId}`);
+export async function fetchJobById(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<IJob> {
+  const res = await fetch(`/api/jobs/${jobId}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch job");
   return res.json();
 }
@@ -85,8 +148,9 @@ async function fetchJobById(jobId: string): Promise<IJob> {
  */
 async function fetchJobImages(
   jobId: string,
+  signal?: AbortSignal,
 ): Promise<{ poPages: string[]; partsOnArrivalPhotos: string[] }> {
-  const res = await fetch(`/api/jobs/${jobId}/images`);
+  const res = await fetch(`/api/jobs/${jobId}/images`, { signal });
   if (!res.ok) throw new Error("Failed to fetch job images");
   return res.json();
 }
@@ -110,7 +174,7 @@ export function useJobs(
 ) {
   return useQuery({
     queryKey: ["jobs"],
-    queryFn: fetchJobs,
+    queryFn: ({ signal }) => fetchJobs(signal),
     refetchInterval,
     enabled,
     staleTime: 5000, // Consider fresh for 5 seconds
@@ -134,7 +198,7 @@ export function useAssignableJobs(
 ) {
   return useQuery({
     queryKey: ["jobs", "assignable"],
-    queryFn: fetchAssignableJobs,
+    queryFn: ({ signal }) => fetchAssignableJobs(signal),
     refetchInterval,
     staleTime: 5000,
     retry: 2,
@@ -155,9 +219,55 @@ export function useAssignableJobs(
 export function useOnFloorJobs() {
   return useInfiniteQuery({
     queryKey: ["jobs", "on-floor"],
-    queryFn: ({ pageParam }) => fetchOnFloorJobs(pageParam),
+    queryFn: ({ pageParam, signal }) => fetchOnFloorJobs(pageParam, signal),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    staleTime: 5000,
+    retry: 2,
+    retryDelay: 1000,
+  });
+}
+
+/**
+ * Hook to fetch ready-to-dispatch jobs in pages of 10, for the dispatch
+ * page's primary list. `search` filters server-side (po_number/customer
+ * name); changing it starts a fresh paginated query since it's part of the
+ * query key.
+ */
+export function useReadyJobs(search: string) {
+  return useInfiniteQuery({
+    queryKey: ["jobs", "ready", search],
+    queryFn: ({ pageParam, signal }) =>
+      fetchReadyJobs(pageParam, search, signal),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    // Keep showing the previous search's results while a new search term's
+    // query loads, instead of isLoading flipping back to true and the page
+    // falling back to its full-screen loading state on every keystroke.
+    placeholderData: keepPreviousData,
+    staleTime: 5000,
+    retry: 2,
+    retryDelay: 1000,
+  });
+}
+
+/**
+ * Hook to fetch dispatched jobs in pages of 10, for the dispatch page's
+ * downloads list. `search` filters server-side (po_number/customer
+ * name/invoice number); changing it starts a fresh paginated query since
+ * it's part of the query key.
+ */
+export function useDispatchedJobs(search: string) {
+  return useInfiniteQuery({
+    queryKey: ["jobs", "dispatched", search],
+    queryFn: ({ pageParam, signal }) =>
+      fetchDispatchedJobs(pageParam, search, signal),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    // Keep showing the previous search's results while a new search term's
+    // query loads, instead of isLoading flipping back to true and the page
+    // falling back to its full-screen loading state on every keystroke.
+    placeholderData: keepPreviousData,
     staleTime: 5000,
     retry: 2,
     retryDelay: 1000,
@@ -170,7 +280,7 @@ export function useOnFloorJobs() {
 export function useJobById(jobId: string | null) {
   return useQuery({
     queryKey: ["job", jobId],
-    queryFn: () => fetchJobById(jobId!),
+    queryFn: ({ signal }) => fetchJobById(jobId!, signal),
     enabled: !!jobId, // Only fetch if jobId is provided
     staleTime: 60000, // Cache for 1 minute (images don't change often)
   });
@@ -182,7 +292,7 @@ export function useJobById(jobId: string | null) {
 export function useJobImages(jobId: string | null) {
   return useQuery({
     queryKey: ["job-images", jobId],
-    queryFn: () => fetchJobImages(jobId!),
+    queryFn: ({ signal }) => fetchJobImages(jobId!, signal),
     enabled: !!jobId, // Only fetch if jobId is provided
     staleTime: 60000, // Cache for 1 minute (images don't change often)
   });
@@ -264,6 +374,8 @@ export function useUpdateJob() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "ready"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] });
     },
   });
 }
@@ -338,6 +450,8 @@ export function useDispatchJob() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "ready"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] });
       queryClient.invalidateQueries({ queryKey: ["settings"] }); // Refresh settings for invSeq update
     },
   });

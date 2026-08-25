@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getJobById, updateJob, deleteJob } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
 
+// Always hit the DB fresh — see app/api/jobs/ready/route.ts for why.
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

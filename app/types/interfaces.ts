@@ -62,6 +62,18 @@ export interface IJob {
   csvDownloaded: boolean;
 }
 
+// Trimmed row shape for the dispatch page's paginated "Downloads" list —
+// not a JobCard field set (that list renders plain rows, not JobCard), so
+// this stays a dedicated narrow type rather than a partial IJob.
+export interface IDispatchedJobRow {
+  id: string;
+  po_number: string;
+  customer_name: string;
+  invoiceNumber: string | null;
+  dispatchedAt: number;
+  fpnHidden: boolean;
+}
+
 export interface IJig {
   id: string;
   name: string;

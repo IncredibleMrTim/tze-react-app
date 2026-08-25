@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOnFloorJobs } from '@/lib/db'
+import { getReadyToDispatchJobs } from '@/lib/db'
 
-// Always hit the DB fresh — see app/api/jobs/ready/route.ts for why.
+// Always hit the DB fresh — this list is invalidated/refetched on every
+// job_updates event, so a cached response here would silently serve stale
+// data (observed: a job sent back to dispatch not reappearing).
 export const dynamic = 'force-dynamic'
 
 // CORS headers for dev mode
@@ -21,11 +23,12 @@ export async function GET(request: NextRequest) {
     const cursor = searchParams.get('cursor') ?? undefined
     const takeParam = searchParams.get('take')
     const take = takeParam ? Number(takeParam) : undefined
+    const search = searchParams.get('search') ?? undefined
 
-    const result = await getOnFloorJobs({ cursor, take })
+    const result = await getReadyToDispatchJobs({ cursor, take, search })
     return NextResponse.json(result, { headers: corsHeaders })
   } catch (error) {
-    console.error('Error fetching on-floor jobs:', error)
-    return NextResponse.json({ error: 'Failed to fetch on-floor jobs' }, { status: 500, headers: corsHeaders })
+    console.error('Error fetching ready-to-dispatch jobs:', error)
+    return NextResponse.json({ error: 'Failed to fetch ready-to-dispatch jobs' }, { status: 500, headers: corsHeaders })
   }
 }

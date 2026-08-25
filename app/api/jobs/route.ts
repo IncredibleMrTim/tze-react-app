@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getJobs, createJob } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
 
+// Always hit the DB fresh — see app/api/jobs/ready/route.ts for why.
+export const dynamic = 'force-dynamic'
+
 // CORS headers for dev mode
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
