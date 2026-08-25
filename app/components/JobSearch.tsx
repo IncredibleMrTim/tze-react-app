@@ -1,16 +1,17 @@
-"use client";
+"use client"
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { JobCard } from "@/components/JobCard";
-import { EmptyState } from "@/components/EmptyState";
-import { isReady, stageLabel } from "@/lib/helpers";
-import type { IJob, IJigAssignment } from "@/types/interfaces";
+import { useEffect, useMemo, useRef, useState } from "react"
+import { JobCard } from "@/components/JobCard"
+import { EmptyState } from "@/components/EmptyState"
+import { isReady, stageLabel } from "@/lib/helpers"
+import type { IJob, IJigAssignment } from "@/types/interfaces"
+import { LuX } from "react-icons/lu"
 
 interface JobSearchProps {
-  jobs: IJob[];
-  jigAssignments: IJigAssignment[];
-  onSelectJob: (job: IJob) => void;
-  onActiveChange?: (isActive: boolean) => void;
+  jobs: IJob[]
+  jigAssignments: IJigAssignment[]
+  onSelectJob: (job: IJob) => void
+  onActiveChange?: (isActive: boolean) => void
 }
 
 /**
@@ -25,29 +26,27 @@ export function JobSearch({
   onSelectJob,
   onActiveChange,
 }: JobSearchProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [dateMode, setDateMode] = useState<"created" | "dispatched">(
-    "created",
-  );
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [searchTerm, setSearchTerm] = useState("")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [dateMode, setDateMode] = useState<"created" | "dispatched">("created")
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const hasActiveFilters = Boolean(searchTerm || dateFrom || dateTo);
+  const hasActiveFilters = Boolean(searchTerm || dateFrom || dateTo)
 
   useEffect(() => {
-    onActiveChange?.(hasActiveFilters);
-  }, [hasActiveFilters, onActiveChange]);
+    onActiveChange?.(hasActiveFilters)
+  }, [hasActiveFilters, onActiveChange])
 
   const handleClear = () => {
-    setSearchTerm("");
-    setDateFrom("");
-    setDateTo("");
-    setShowDropdown(false);
-  };
+    setSearchTerm("")
+    setDateFrom("")
+    setDateTo("")
+    setShowDropdown(false)
+  }
 
   // Close predictive dropdown when clicking outside
   useEffect(() => {
@@ -56,33 +55,33 @@ export function JobSearch({
         searchRef.current &&
         !searchRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const filtered = useMemo(() => {
-    if (!hasActiveFilters) return [];
+    if (!hasActiveFilters) return []
 
     return jobs.filter((j) => {
       if (searchTerm) {
-        const term = searchTerm.toLowerCase();
+        const term = searchTerm.toLowerCase()
 
-        const matchesPO = j.po_number.toLowerCase().includes(term);
-        const matchesCustomer = j.customer_name.toLowerCase().includes(term);
-        const matchesAccount = j.customer_account.toLowerCase().includes(term);
-        const matchesContact = j.customer_contact.toLowerCase().includes(term);
-        const matchesEmail = j.customer_email.toLowerCase().includes(term);
-        const matchesInvoice = j.invoiceNumber?.toLowerCase().includes(term);
-        const matchesNotes = j.notes.toLowerCase().includes(term);
-        const matchesPartDesc = j.partDescription.toLowerCase().includes(term);
+        const matchesPO = j.po_number.toLowerCase().includes(term)
+        const matchesCustomer = j.customer_name.toLowerCase().includes(term)
+        const matchesAccount = j.customer_account.toLowerCase().includes(term)
+        const matchesContact = j.customer_contact.toLowerCase().includes(term)
+        const matchesEmail = j.customer_email.toLowerCase().includes(term)
+        const matchesInvoice = j.invoiceNumber?.toLowerCase().includes(term)
+        const matchesNotes = j.notes.toLowerCase().includes(term)
+        const matchesPartDesc = j.partDescription.toLowerCase().includes(term)
         const matchesParts = j.parts.some(
           (p) =>
             p.code.toLowerCase().includes(term) ||
             p.desc.toLowerCase().includes(term),
-        );
+        )
 
         if (
           !matchesPO &&
@@ -95,86 +94,93 @@ export function JobSearch({
           !matchesPartDesc &&
           !matchesParts
         ) {
-          return false;
+          return false
         }
       }
 
       const dateToCheck =
-        dateMode === "created" ? j.createdAt : j.dispatchedAt || 0;
-      if (dateFrom && dateToCheck < new Date(dateFrom).getTime()) return false;
+        dateMode === "created" ? j.createdAt : j.dispatchedAt || 0
+      if (dateFrom && dateToCheck < new Date(dateFrom).getTime()) return false
       if (dateTo && dateToCheck > new Date(dateTo).getTime() + 86400000)
-        return false;
+        return false
 
-      return true;
-    });
-  }, [jobs, searchTerm, dateFrom, dateTo, dateMode, hasActiveFilters]);
+      return true
+    })
+  }, [jobs, searchTerm, dateFrom, dateTo, dateMode, hasActiveFilters])
 
   // Predictive dropdown results (top 10 matches when typing)
   const predictions = searchTerm
     ? filtered.slice(0, 10).sort((a, b) => b.createdAt - a.createdAt)
-    : [];
+    : []
 
-  const dispatched = filtered.filter((j) => j.dispatchedAt);
+  const dispatched = filtered.filter((j) => j.dispatchedAt)
   const ready = filtered.filter(
     (j) => isReady(j, jigAssignments) && !j.dispatchedAt,
-  );
+  )
   const wip = filtered.filter(
     (j) =>
       !isReady(j, jigAssignments) &&
       !j.dispatchedAt &&
       jigAssignments.some((g) => g.jobId === j.id && g.status === "ACTIVE"),
-  );
+  )
   const intake = filtered.filter(
     (j) => !j.dispatchedAt && !jigAssignments.some((g) => g.jobId === j.id),
-  );
+  )
 
   const handleSelectJob = (job: IJob) => {
-    onSelectJob(job);
-    setShowDropdown(false);
-  };
+    onSelectJob(job)
+    setShowDropdown(false)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showDropdown || predictions.length === 0) return;
+    if (!showDropdown || predictions.length === 0) return
 
     if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % predictions.length);
+      e.preventDefault()
+      setSelectedIndex((prev) => (prev + 1) % predictions.length)
     } else if (e.key === "ArrowUp") {
-      e.preventDefault();
+      e.preventDefault()
       setSelectedIndex(
         (prev) => (prev - 1 + predictions.length) % predictions.length,
-      );
+      )
     } else if (e.key === "Enter") {
-      e.preventDefault();
+      e.preventDefault()
       if (predictions[selectedIndex]) {
-        handleSelectJob(predictions[selectedIndex]);
-        inputRef.current?.blur();
+        handleSelectJob(predictions[selectedIndex])
+        inputRef.current?.blur()
       }
     } else if (e.key === "Escape") {
-      setShowDropdown(false);
-      inputRef.current?.blur();
+      setShowDropdown(false)
+      inputRef.current?.blur()
     }
-  };
+  }
 
   return (
     <div>
       <div className="mb-3 relative" ref={searchRef}>
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="🔍 Search PO, customer, account, invoice, parts, notes..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setShowDropdown(e.target.value.length > 0);
-            setSelectedIndex(0);
-          }}
-          onFocus={() => searchTerm && setShowDropdown(true)}
-          onKeyDown={handleKeyDown}
-          className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-base outline-none focus:border-primary"
-          autoComplete="off"
-        />
-
+        <div className="flex">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="🔍 Search PO, customer, account, invoice, parts, notes..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setShowDropdown(e.target.value.length > 0)
+              setSelectedIndex(0)
+            }}
+            onFocus={() => searchTerm && setShowDropdown(true)}
+            onKeyDown={handleKeyDown}
+            className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-base outline-none focus:border-primary rounded-r-none border-r-0"
+            autoComplete="off"
+          />
+          <button
+            onClick={handleClear}
+            className="px-4 py-2 border-2 border-gray-200 bg-gray-100 rounded-lg rounded-l-none text-sm text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+          >
+            <LuX size={20} />
+          </button>
+        </div>
         {showDropdown && predictions.length > 0 && (
           <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
             {predictions.map((job, idx) => (
@@ -235,12 +241,6 @@ export function JobSearch({
           placeholder="dd/mm/yyyy"
           className="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
         />
-        <button
-          onClick={handleClear}
-          className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-        >
-          Clear
-        </button>
       </div>
 
       <div className="flex gap-2 mb-4">
@@ -350,5 +350,5 @@ export function JobSearch({
         </div>
       )}
     </div>
-  );
+  )
 }
