@@ -114,6 +114,8 @@ export default function DispatchClient() {
     () => dispatchedData?.pages.flatMap((p) => p.jobs) ?? [],
     [dispatchedData],
   )
+  const dispatchedTotalCount =
+    dispatchedData?.pages[0]?.totalCount ?? dispatchedJobs.length
 
   // Date-grouped headers (TODAY/YESTERDAY/date), same as intake's on-floor
   // list — ready jobs group by arrival date, dispatched jobs by the date
@@ -166,13 +168,23 @@ export default function DispatchClient() {
   }, [activeTab, isLoading])
 
   // Infinite scroll: fetch the next page once the sentinel at the bottom
-  // of each list comes into view.
-  const loadMoreReadyRef = useRef<HTMLDivElement>(null)
-  const loadMoreDispatchedRef = useRef<HTMLDivElement>(null)
+  // of each list comes into view. These use callback refs (stored in
+  // state) rather than plain refs — the "Ready"/"Downloads" tabs unmount
+  // their inactive content, and each list's data loads in the background
+  // regardless of which tab is active. That means hasNext*Page can already
+  // be true before a tab's sentinel div ever mounts, so an effect keyed
+  // only on hasNext*Page/isFetchingNext*Page would fire once while the
+  // node is still null and never re-run once the node actually appears —
+  // silently breaking pagination for whichever tab isn't active on first
+  // load. Keying the effect on the node itself (via state) makes it re-run
+  // exactly when the sentinel mounts.
+  const [loadMoreReadyNode, setLoadMoreReadyNode] =
+    useState<HTMLDivElement | null>(null)
+  const [loadMoreDispatchedNode, setLoadMoreDispatchedNode] =
+    useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const node = loadMoreReadyRef.current
-    if (!node || !hasNextReadyPage) return
+    if (!loadMoreReadyNode || !hasNextReadyPage) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -183,13 +195,17 @@ export default function DispatchClient() {
       { rootMargin: "200px" },
     )
 
-    observer.observe(node)
+    observer.observe(loadMoreReadyNode)
     return () => observer.disconnect()
-  }, [hasNextReadyPage, isFetchingNextReadyPage, fetchNextReadyPage])
+  }, [
+    loadMoreReadyNode,
+    hasNextReadyPage,
+    isFetchingNextReadyPage,
+    fetchNextReadyPage,
+  ])
 
   useEffect(() => {
-    const node = loadMoreDispatchedRef.current
-    if (!node || !hasNextDispatchedPage) return
+    if (!loadMoreDispatchedNode || !hasNextDispatchedPage) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -200,9 +216,10 @@ export default function DispatchClient() {
       { rootMargin: "200px" },
     )
 
-    observer.observe(node)
+    observer.observe(loadMoreDispatchedNode)
     return () => observer.disconnect()
   }, [
+    loadMoreDispatchedNode,
     hasNextDispatchedPage,
     isFetchingNextDispatchedPage,
     fetchNextDispatchedPage,
@@ -397,7 +414,9 @@ export default function DispatchClient() {
             <TabsTrigger value="ready">
               Ready to Dispatch ({readyTotalCount})
             </TabsTrigger>
-            <TabsTrigger value="downloads">Dispatched</TabsTrigger>
+            <TabsTrigger value="downloads">
+              Dispatched ({dispatchedTotalCount})
+            </TabsTrigger>
           </TabsList>
 
           {activeTab === "ready" ? (
@@ -477,7 +496,7 @@ export default function DispatchClient() {
                 )}
                 {hasNextReadyPage && (
                   <div
-                    ref={loadMoreReadyRef}
+                    ref={setLoadMoreReadyNode}
                     className="py-4 text-center text-sm text-gray-400"
                   >
                     {isFetchingNextReadyPage ? "Loading more…" : ""}
@@ -601,7 +620,7 @@ export default function DispatchClient() {
 
                 {hasNextDispatchedPage && (
                   <div
-                    ref={loadMoreDispatchedRef}
+                    ref={setLoadMoreDispatchedNode}
                     className="py-4 text-center text-sm text-gray-400"
                   >
                     {isFetchingNextDispatchedPage ? "Loading more…" : ""}
