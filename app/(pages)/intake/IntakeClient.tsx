@@ -15,6 +15,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/store/useIntakeStore";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
+import { dateGroupLabel } from "@/lib/helpers";
 import type { IJob } from "@/types/interfaces";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -143,26 +144,6 @@ export default function IntakeClient() {
     });
   };
 
-  const formatJobDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const isToday = date.toDateString() === today.toDateString();
-
-    if (isToday) return "TODAY";
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) return "YESTERDAY";
-
-    return date
-      .toLocaleDateString("en-NZ", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .toUpperCase();
-  };
-
   // Jobs still on the shop floor — excludes anything dispatched or already
   // queued for dispatch. Those stages remain reachable via search. The
   // status filter itself is applied server-side (getOnFloorJobs); this
@@ -177,7 +158,7 @@ export default function IntakeClient() {
     const groups: Record<string, IJob[]> = {};
 
     onFloorJobs.forEach((j) => {
-      const dateLabel = formatJobDate(j.createdAt);
+      const dateLabel = dateGroupLabel(j.createdAt);
       if (!groups[dateLabel]) groups[dateLabel] = [];
       groups[dateLabel].push(j);
     });

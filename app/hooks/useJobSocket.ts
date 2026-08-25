@@ -144,6 +144,14 @@ export function useJobSocket() {
           if (needsOnFloorRefetch) {
             queryClient.invalidateQueries({ queryKey: ["jobs", "on-floor"] });
           }
+
+          // Dispatch page's ready/dispatched lists — plain invalidation
+          // rather than the surgical on-floor patch above, since these are
+          // parameterized per search string and the added complexity isn't
+          // worth it for two more caches. Partial-key matching invalidates
+          // every open search variant.
+          queryClient.invalidateQueries({ queryKey: ["jobs", "ready"] });
+          queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] });
         }
 
         if (channel === "jig_updates") {
