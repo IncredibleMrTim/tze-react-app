@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LuX } from "react-icons/lu";
 
 interface PredictableJob {
   id: string;
@@ -77,23 +78,36 @@ export function PredictiveSearchInput<T extends PredictableJob>({
     }
   };
 
+  const handleClear = () => {
+    onChange("");
+    setShowDropdown(false);
+  };
+
   return (
     <div className="relative" ref={containerRef}>
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setShowDropdown(e.target.value.length > 0);
-          setSelectedIndex(0);
-        }}
-        onFocus={() => value && setShowDropdown(true)}
-        onKeyDown={handleKeyDown}
-        className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-base outline-none focus:border-primary"
-        autoComplete="off"
-      />
+      <div className="flex">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setShowDropdown(e.target.value.length > 0);
+            setSelectedIndex(0);
+          }}
+          onFocus={() => value && setShowDropdown(true)}
+          onKeyDown={handleKeyDown}
+          className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-base outline-none focus:border-primary rounded-r-none border-r-0"
+          autoComplete="off"
+        />
+        <button
+          onClick={handleClear}
+          className="px-4 py-2 border-2 border-gray-200 bg-gray-100 rounded-lg rounded-l-none text-sm text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+        >
+          <LuX size={20} />
+        </button>
+      </div>
 
       {showDropdown && predictions.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
