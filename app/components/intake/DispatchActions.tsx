@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
-import { useJobs, useUpdateJob, useDispatchJob } from "@/hooks/useJobs";
+import { useJobById, useUpdateJob, useDispatchJob } from "@/hooks/useJobs";
 import {
   useJigAssignments,
   useDeleteJigAssignment,
@@ -54,7 +54,7 @@ function buildDispatchedJob(
 export function DispatchActions() {
   const { showToast } = useToast();
   const { editingJobId, closeSheet } = useIntakeStore();
-  const { data: jobs = [] } = useJobs(10000);
+  const { data: job = null } = useJobById(editingJobId);
   const { data: jigAssignments = [] } = useJigAssignments(5000);
   const { data: settings } = useSettings();
   const updateJobMutation = useUpdateJob();
@@ -65,8 +65,6 @@ export function DispatchActions() {
   const [freightCost, setFreightCost] = useState("0.00");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showSendBackConfirm, setShowSendBackConfirm] = useState(false);
-
-  const job = jobs.find((j) => j.id === editingJobId) ?? null;
 
   if (!job || !settings) return null;
 
