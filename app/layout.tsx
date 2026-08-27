@@ -51,7 +51,7 @@ export default function RootLayout({
             </div>
 
             {/* View Area */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-16 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-16 pb-[calc(8rem+env(safe-area-inset-bottom))]">
               {children}
             </div>
 
