@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useIntakeStore } from "./store/useIntakeStore";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useIntakeStore } from "./store/useIntakeStore"
 
 export function Navigation() {
-  const pathname = usePathname();
-  const { setCurrentJob } = useIntakeStore();
+  const pathname = usePathname()
+  const { setCurrentJob } = useIntakeStore()
 
   const navItems = [
     { href: "/intake", icon: "📥", label: "Intake" },
     { href: "/jig", icon: "⚙️", label: "JIG" },
     { href: "/dispatch", icon: "🚚", label: "Dispatch" },
     { href: "/settings", icon: "🔧", label: "Settings" },
-  ];
+  ]
 
   return (
     <nav className="flex border-t border-gray-200 bg-white flex-shrink-0">
       {navItems.map(({ href, icon, label }) => {
-        const isActive = pathname === href;
+        const isActive = pathname === href
         return (
           <Link
             key={href}
@@ -33,8 +33,8 @@ export function Navigation() {
             <span className="text-xl leading-none">{icon}</span>
             <span>{label}</span>
           </Link>
-        );
+        )
       })}
     </nav>
-  );
+  )
 }

@@ -1,72 +1,18 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import { Navigation } from "./navigation";
-import { Inter } from "next/font/google";
-import { cn } from "@/lib/utils";
-import { Toaster } from "sonner";
-import { QueryProvider } from "./providers/QueryProvider";
-import packageJson from "../package.json";
+import type { Metadata, Viewport } from "next"
+import "./globals.css"
+import { Navigation } from "./navigation"
+import { Inter } from "next/font/google"
+import { cn } from "@/lib/utils"
+import { Toaster } from "sonner"
+import { QueryProvider } from "./providers/QueryProvider"
+import packageJson from "../package.json"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "Tauranga Zinc Electroplaters",
   description: "Job management system for TZE",
-  icons: {
-    icon: [
-      {
-        url: "/favicon-16x16.png",
-        sizes: "16x16",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon-32x32.png",
-        sizes: "32x32",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon-48x48.png",
-        sizes: "48x48",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon-16x16-dark.png",
-        sizes: "16x16",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/favicon-32x32-dark.png",
-        sizes: "32x32",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/favicon-48x48-dark.png",
-        sizes: "48x48",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
-    apple: [
-      {
-        url: "/favicon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon-192-dark.png",
-        sizes: "192x192",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
-  },
-};
+}
 
 // interactiveWidget: "resizes-content" makes the layout viewport (and any
 // position: fixed element, like the intake drawer) shrink with the on-screen
@@ -76,12 +22,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   interactiveWidget: "resizes-content",
   viewportFit: "cover",
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
@@ -99,7 +45,9 @@ export default function RootLayout({
             </div>
 
             {/* View Area */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-16 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">{children}</div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-16 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+              {children}
+            </div>
 
             {/* Bottom Navigation */}
             <div className="fixed bottom-0 w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-50 pb-[env(safe-area-inset-bottom)] bg-white">
@@ -112,5 +60,5 @@ export default function RootLayout({
         </QueryProvider>
       </body>
     </html>
-  );
+  )
 }
