@@ -1,6 +1,16 @@
 import { cookies } from "next/headers"
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+// Preview deployments don't have a fixed URL to put in NEXT_PUBLIC_APP_URL
+// (a new one is minted per deployment), so WebAuthn's rpID/origin would
+// mismatch on every push. VERCEL_BRANCH_URL is stable across all
+// deployments of the same git branch, so preview passkeys keep working
+// without touching env vars. Production still relies on the explicit
+// NEXT_PUBLIC_APP_URL since it must match the real custom domain.
+export const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`) ||
+  (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
+  "http://localhost:3000"
 
 export const rpName = "Tauranga Zinc Electroplaters"
 export const rpID = new URL(appUrl).hostname
@@ -12,6 +22,7 @@ const CHALLENGE_MAX_AGE_SECONDS = 300
 interface IChallengeData {
   challenge: string
   invitationToken?: string
+  userId?: string
 }
 
 /**

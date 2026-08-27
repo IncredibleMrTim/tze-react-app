@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createInvitation, revokeInvitation, deleteUser } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 import { getSession, isAdmin } from '@/lib/session'
+import { appUrl } from '@/lib/webauthn'
 import type { TUserRole } from '@/types/types'
 
 const INVITATION_EXPIRY_DAYS = 7
@@ -24,7 +25,7 @@ export async function inviteStaffAction(email: string, role: TUserRole) {
     const expiresAt = new Date(Date.now() + INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000)
     await createInvitation(email, role, token, expiresAt)
 
-    const registerUrl = `${process.env.NEXT_PUBLIC_APP_URL}/register?token=${token}`
+    const registerUrl = `${appUrl}/register?token=${token}`
     await sendEmail({
       to: email,
       subject: 'You’ve been invited to TZE',
