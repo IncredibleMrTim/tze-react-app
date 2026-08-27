@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
-import { useJobs, useCreateJob, useUpdateJob } from "@/hooks/useJobs";
+import { useJobById, useCreateJob, useUpdateJob } from "@/hooks/useJobs";
 import { useIntakeStore } from "@/store/useIntakeStore";
 import type { IJob } from "@/types/interfaces";
 
@@ -16,7 +16,6 @@ import type { IJob } from "@/types/interfaces";
 export function useSaveJob() {
   const { showToast } = useToast();
   const router = useRouter();
-  const { data: jobs = [] } = useJobs(10000);
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
 
@@ -43,6 +42,7 @@ export function useSaveJob() {
     partsOnArrivalPhotos,
     weightKg,
   } = useIntakeStore();
+  const { data: existingJob } = useJobById(editingJobId);
 
   const handleSave = () => {
     if (!customer && !isInternal) {
@@ -55,13 +55,7 @@ export function useSaveJob() {
       return;
     }
 
-    if (!editingJobId && jobs.some((j) => j.po_number === po_number)) {
-      showToast("PO number already exists");
-      return;
-    }
-
     if (editingJobId) {
-      const existingJob = jobs.find((j) => j.id === editingJobId);
       if (!existingJob) return;
 
       const updatedJob: Partial<IJob> = {
@@ -153,7 +147,11 @@ export function useSaveJob() {
         onError: (error: Error) => {
           console.error("Create job error:", error);
           const message = error?.message || "Unknown error";
-          showToast(`Failed to create job: ${message}`);
+          showToast(
+            message === "PO number already exists"
+              ? message
+              : `Failed to create job: ${message}`,
+          );
         },
       });
     }

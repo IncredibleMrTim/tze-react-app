@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { Prisma } from '@prisma/client'
 import { createJob, updateJob, deleteJob, getJobs, getOnFloorJobs } from '@/lib/db'
 import type { IJob } from '@/types/interfaces'
 
@@ -10,6 +11,13 @@ export async function createJobAction(job: IJob) {
     revalidatePath('/intake')
     return result
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      (error.meta?.target as string[] | undefined)?.includes('po_number')
+    ) {
+      throw new Error('PO number already exists', { cause: error })
+    }
     console.error('Failed to create job:', error)
     console.error('Job data size:', JSON.stringify(job).length, 'characters')
     console.error('PO pages count:', job.poPages?.length || 0)
