@@ -894,6 +894,10 @@ export async function getCredentialByCredentialId(credentialId: string) {
   })
 }
 
+export async function getCredentialsByUserId(userId: string) {
+  return await prisma.credential.findMany({ where: { userId } })
+}
+
 export async function updateCredentialCounter(credentialId: string, counter: number) {
   await prisma.credential.update({
     where: { credentialId },

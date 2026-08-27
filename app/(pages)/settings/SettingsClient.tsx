@@ -6,6 +6,7 @@ import { updateSettingsAction } from "@/actions/settings";
 import { useToast } from "@/hooks/useToast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { IPendingInvitation, ISettings, IStaffMember } from "@/types/interfaces";
+import AddPasskeyButton from "@/components/settings/AddPasskeyButton";
 import UsersTab from "./UsersTab";
 
 type SettingsClientProps =
@@ -243,7 +244,10 @@ export default function SettingsClient(props: SettingsClientProps) {
     return (
       <div>
         <h2 className="text-lg font-bold mb-4">Settings</h2>
-        <div className="pb-20">{settingsForm}</div>
+        <div className="pb-20">
+          {settingsForm}
+          <AddPasskeyButton />
+        </div>
         {signOutButton}
       </div>
     );
@@ -258,7 +262,10 @@ export default function SettingsClient(props: SettingsClientProps) {
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
         <div className="pb-20">
-          <TabsContent value="settings">{settingsForm}</TabsContent>
+          <TabsContent value="settings">
+            {settingsForm}
+            <AddPasskeyButton />
+          </TabsContent>
           <TabsContent value="users">
             <UsersTab staff={props.staff} pendingInvitations={props.pendingInvitations} />
           </TabsContent>
