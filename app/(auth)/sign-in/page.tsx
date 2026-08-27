@@ -1,12 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { startAuthentication } from "@simplewebauthn/browser"
 import { Logo } from "@/components/Logo"
 
 export default function SignInPage() {
-  const router = useRouter()
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,8 +33,11 @@ export default function SignInPage() {
       if (!verifyResponse.ok)
         throw new Error(result.error ?? "Failed to sign in")
 
-      router.push("/intake")
-      router.refresh()
+      // Hard navigation, not router.push — the session cookie was just set
+      // by the verify request above, and a client-side soft nav can race
+      // with the router cache and hit middleware before it sees the new
+      // cookie, bouncing back to /sign-in.
+      window.location.href = "/intake"
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in")
     } finally {

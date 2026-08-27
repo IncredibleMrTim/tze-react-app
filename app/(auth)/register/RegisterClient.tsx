@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { startRegistration } from "@simplewebauthn/browser";
 
 interface RegisterClientProps {
@@ -10,7 +9,6 @@ interface RegisterClientProps {
 }
 
 export default function RegisterClient({ token, email }: RegisterClientProps) {
-  const router = useRouter();
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,8 +35,11 @@ export default function RegisterClient({ token, email }: RegisterClientProps) {
       const result = await verifyResponse.json();
       if (!verifyResponse.ok) throw new Error(result.error ?? "Failed to complete registration");
 
-      router.push("/intake");
-      router.refresh();
+      // Hard navigation, not router.push — the session cookie was just set
+      // by the verify request above, and a client-side soft nav can race
+      // with the router cache and hit middleware before it sees the new
+      // cookie, bouncing back to /sign-in.
+      window.location.href = "/intake";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to register");
     } finally {
