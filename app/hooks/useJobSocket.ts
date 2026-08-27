@@ -23,6 +23,18 @@ export function useJobSocket() {
 
         if (channel === "job_updates") {
           const { type, job, jobId } = payload;
+
+          // Single-job cache used by useJobById() — keep it live so
+          // callers that only need one job (e.g. the Enter Job sheet)
+          // don't need to poll for updates made by other clients.
+          if (type === "deleted") {
+            queryClient.removeQueries({ queryKey: ["job", jobId] });
+          } else {
+            queryClient.setQueryData<IJob>(["job", job.id], (old) =>
+              old ? job : old,
+            );
+          }
+
           queryClient.setQueryData<IJob[]>(["jobs"], (old) => {
             // The full job list is now fetched lazily (only once search is
             // used) — an empty/unset cache means nobody's using it yet, so
