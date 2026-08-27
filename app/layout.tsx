@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
 import { QueryProvider } from "./providers/QueryProvider"
 import packageJson from "../package.json"
+import { Logo } from "./components/Logo"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -35,13 +36,18 @@ export default function RootLayout({
         <QueryProvider>
           <div className="w-full md:max-w-[430px] h-dvh bg-white md:rounded-2xl overflow-hidden md:shadow-lg flex flex-col mx-auto">
             {/* Header */}
-            <div className="fixed top-0 w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-50 bg-white border-b border-gray-200 px-4 py-3.5 flex items-center justify-between">
-              <h1 className="text-base font-bold text-primary">
-                Tauranga Zinc Electroplaters
-              </h1>
-              <span className="text-[11px] text-gray-400">
-                v{packageJson.version}
-              </span>
+            <div className="fixed top-0 w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-50 bg-white border-b border-gray-200 px-4 pt-2 pb-1.5 flex items-center justify-between shadow">
+              <div className="flex items-center gap-2">
+                <Logo className="h-11 w-11" />
+                <div className="flex flex-col gap-0">
+                  <h1 className="text-lg font-bold text-primary leading-6">
+                    Tauranga Zinc Electroplaters
+                  </h1>
+                  <span className="text-xs text-gray-400">
+                    v{packageJson.version}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* View Area */}
