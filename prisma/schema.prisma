@@ -65,7 +65,8 @@ model Job {
   isRework          Boolean
   partDescription   String
   createdAt         BigInt   // Storing as timestamp in ms
-  priceOverride     Float?
+  priceOverride     Boolean
+  priceOverrideValue Float
   freightCost       Float
   dispatchedAt      BigInt?
   invoiceNumber     String?

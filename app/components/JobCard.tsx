@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import type { IJob, IJigAssignment } from "@/types/interfaces";
+import type { IJob, IJigAssignment } from "@/types/interfaces"
 import {
   stageLabel,
   jobAgeTrafficLight,
   getActiveJigs,
   jobStatusTrafficLight,
-} from "@/lib/helpers";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
+} from "@/lib/helpers"
+import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { Button } from "./ui/button"
 
 interface JobCardProps {
-  job: IJob;
-  jigAssignments: IJigAssignment[];
-  onClick: () => void;
-  showArrivalTime?: boolean;
-  showJigStatus?: boolean;
-  isDispatch?: boolean;
-  onSendBack?: () => void;
-  isPending?: boolean;
-  expandedContent?: React.ReactNode;
+  job: IJob
+  jigAssignments: IJigAssignment[]
+  onClick: () => void
+  showArrivalTime?: boolean
+  showJigStatus?: boolean
+  isDispatch?: boolean
+  onSendBack?: () => void
+  isPending?: boolean
+  expandedContent?: React.ReactNode
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -34,12 +34,12 @@ export const JobCard: React.FC<JobCardProps> = ({
   isPending = false,
   expandedContent,
 }) => {
-  const label = stageLabel(job, jigAssignments);
-  const activeJigs = getActiveJigs(job.id, jigAssignments);
+  const label = stageLabel(job, jigAssignments)
+  const activeJigs = getActiveJigs(job.id, jigAssignments)
 
   // Traffic light colors based on age and status
-  const ageColors = jobAgeTrafficLight(job);
-  const labelColors = jobStatusTrafficLight(job, jigAssignments);
+  const ageColors = jobAgeTrafficLight(job)
+  const labelColors = jobStatusTrafficLight(job, jigAssignments)
   const cardColors = job.urgent
     ? "border-red-400 bg-red-50"
     : job.flagged
@@ -48,14 +48,15 @@ export const JobCard: React.FC<JobCardProps> = ({
         ? "border-green-400 bg-green-50"
         : ageColors.label === "Due soon"
           ? "border-orange-400 bg-orange-50"
-          : "border-red-400 bg-red-50";
+          : "border-red-400 bg-red-50"
 
   const showPills =
     job.isInternal ||
     job.freightRequested ||
     job.minCharge ||
     job.stringsRequired ||
-    job.requiresWeighing;
+    job.requiresWeighing ||
+    job.priceOverride
 
   return (
     <Card
@@ -143,28 +144,33 @@ export const JobCard: React.FC<JobCardProps> = ({
           {showPills && (
             <div className="flex gap-2 flex-wrap">
               {job.isInternal && (
-                <span className="px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow h-5 text-center">
+                <span className="flex items-center px-4 border rounded-full bg-blue-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Internal
                 </span>
               )}
               {job.freightRequested && (
-                <span className="px-4 border rounded-full bg-orange-200 text-[10px] md:text-xs shadow h-5 text-center">
+                <span className="flex items-center px-4 border rounded-full bg-orange-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Freight
                 </span>
               )}
               {job.requiresWeighing && (
-                <span className="px-4 border rounded-full bg-green-200 text-[10px] md:text-xs shadow h-5 text-center">
+                <span className="flex items-center px-4 border rounded-full bg-green-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Requires Weighing
                 </span>
               )}
               {job.minCharge && (
-                <span className="px-4 border rounded-full bg-red-200 text-[10px] md:text-xs shadow h-5 text-center">
+                <span className="flex items-center px-4 border rounded-full bg-red-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Min-Charge
                 </span>
               )}
               {job.stringsRequired && (
-                <span className="px-4 border rounded-full bg-purple-200 text-[10px] md:text-xs shadow h-5 text-center">
+                <span className="flex items-center px-4 border rounded-full bg-purple-200 text-[10px] md:text-xs shadow h-5 text-center">
                   Strings needed
+                </span>
+              )}
+              {job.priceOverride && (
+                <span className="flex items-center px-4 border rounded-full bg-red-400 text-[10px] md:text-xs shadow h-5 text-center text-white">
+                  Price override
                 </span>
               )}
             </div>
@@ -174,8 +180,8 @@ export const JobCard: React.FC<JobCardProps> = ({
         {isDispatch && (
           <Button
             onClick={(e) => {
-              e.stopPropagation();
-              onSendBack?.();
+              e.stopPropagation()
+              onSendBack?.()
             }}
             className="w-full mt-3 bg-white border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm font-normal hover:bg-gray-50"
             variant="outline"
@@ -187,5 +193,5 @@ export const JobCard: React.FC<JobCardProps> = ({
         <div>{expandedContent}</div>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

@@ -4,56 +4,68 @@ import type {
   IContact,
   IItem,
   ISettings,
-} from "@/types/interfaces";
-import {
-  calculateRates,
-  calculateMinCharges,
-} from "@/constants/settings.const";
+} from "@/types/interfaces"
+import { calculateRates, calculateMinCharges } from "@/constants/settings.const"
 
 // Helper function to get contacts from store
 // Note: These will be loaded from the database on app startup
-export const CONTACTS: IContact[] = [];
-export const ITEMS: IItem[] = [];
+export const CONTACTS: IContact[] = []
+export const ITEMS: IItem[] = []
 
 // ================ TZE ID Generator ================ //
 
-let nextTZECounter = 1;
+let nextTZECounter = 1
 
 export const setNextTZE = (val: number) => {
-  nextTZECounter = val;
-};
+  nextTZECounter = val
+}
 
-export const getNextTZE = () => nextTZECounter;
+export const getNextTZE = () => nextTZECounter
 
 export const tzeId = (): string => {
-  return "TZE-" + String(nextTZECounter++).padStart(4, "0");
-};
+  return "TZE-" + String(nextTZECounter++).padStart(4, "0")
+}
+
+// ================ Number Parsing Helpers ================ //
+
+export const parseClampedNumber = (
+  rawValue: string,
+  options: { integer?: boolean; min?: number; max?: number } = {},
+): number | undefined => {
+  const parsed = options.integer ? parseInt(rawValue, 10) : parseFloat(rawValue)
+  if (Number.isNaN(parsed)) return undefined
+
+  return Math.min(
+    options.max ?? Infinity,
+    Math.max(options.min ?? -Infinity, parsed),
+  )
+}
 
 // ================ Formatting Helpers ================ //
 
 export const dispCode = (code: string): string => {
-  if (!code) return code;
-  const m = code.match(/^(.+?)_[A-Z0-9]{2,6}$/);
-  return (m && m[1]) || code;
-};
+  if (!code) return code
+  const m = code.match(/^(.+?)_[A-Z0-9]{2,6}$/)
+  return (m && m[1]) || code
+}
 
 export const fmt = (ts: number): string => {
-  if (!ts) return "";
-  const d = new Date(ts);
+  if (!ts) return ""
+  const d = new Date(ts)
   return (
     d.toLocaleDateString("en-NZ", { day: "numeric", month: "short" }) +
     " " +
     d.toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })
-  );
-};
+  )
+}
 
 export const fmtDate = (ts: number): string => {
-  return ts ? new Date(ts).toISOString().slice(0, 10) : "";
-};
+  return ts ? new Date(ts).toISOString().slice(0, 10) : ""
+}
 
 export const fmtArrived = (ts: number): string => {
-  if (!ts) return "";
-  const d = new Date(ts);
+  if (!ts) return ""
+  const d = new Date(ts)
   return (
     d.toLocaleDateString("en-NZ", {
       day: "numeric",
@@ -62,21 +74,21 @@ export const fmtArrived = (ts: number): string => {
     }) +
     " " +
     d.toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })
-  );
-};
+  )
+}
 
 // Groups a timestamp into a date-header label ("TODAY", "YESTERDAY", or a
 // formatted date) — shared by intake's on-floor list and the dispatch
 // page's ready/downloads lists so job cards can be grouped under the same
 // date headers in both places.
 export const dateGroupLabel = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) return "TODAY";
+  const date = new Date(timestamp)
+  const today = new Date()
+  if (date.toDateString() === today.toDateString()) return "TODAY"
 
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return "YESTERDAY";
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (date.toDateString() === yesterday.toDateString()) return "YESTERDAY"
 
   return date
     .toLocaleDateString("en-NZ", {
@@ -84,23 +96,23 @@ export const dateGroupLabel = (timestamp: number): string => {
       month: "short",
       year: "numeric",
     })
-    .toUpperCase();
-};
+    .toUpperCase()
+}
 
 export const csvQ = (s: unknown): string => {
-  return '"' + String(s).replace(/"/g, '""') + '"';
-};
+  return '"' + String(s).replace(/"/g, '""') + '"'
+}
 
 export const due20th = (ts?: number): string => {
-  const d = new Date(ts || Date.now());
-  let y = d.getFullYear();
-  let m = d.getMonth() + 1;
+  const d = new Date(ts || Date.now())
+  let y = d.getFullYear()
+  let m = d.getMonth() + 1
   if (m > 11) {
-    m = 0;
-    y++;
+    m = 0
+    y++
   }
-  return new Date(y, m, 20).toISOString().slice(0, 10);
-};
+  return new Date(y, m, 20).toISOString().slice(0, 10)
+}
 
 // ================ JIG Helpers ================ //
 
@@ -108,8 +120,8 @@ export const jigsOf = (
   jid: string,
   jigAssignments: IJigAssignment[],
 ): IJigAssignment[] => {
-  return jigAssignments.filter((g) => g.jobId === jid);
-};
+  return jigAssignments.filter((g) => g.jobId === jid)
+}
 
 export const jigUsed = (
   jigId: string,
@@ -117,24 +129,24 @@ export const jigUsed = (
 ): number => {
   return jigAssignments
     .filter((g) => g.jigId === jigId && g.status === "ACTIVE")
-    .reduce((s, g) => s + g.pct, 0);
-};
+    .reduce((s, g) => s + g.pct, 0)
+}
 
 export const allDone = (
   jid: string,
   jigAssignments: IJigAssignment[],
 ): boolean => {
-  const gs = jigsOf(jid, jigAssignments);
-  return gs.length > 0 && gs.every((g) => g.status === "CLEARED");
-};
+  const gs = jigsOf(jid, jigAssignments)
+  return gs.length > 0 && gs.every((g) => g.status === "CLEARED")
+}
 
 // Check if a job is currently on any jig
 export const isOnJig = (
   jid: string,
   jigAssignments: IJigAssignment[],
 ): boolean => {
-  return jigAssignments.some((g) => g.jobId === jid && g.status === "ACTIVE");
-};
+  return jigAssignments.some((g) => g.jobId === jid && g.status === "ACTIVE")
+}
 
 // Get the active jig name(s) for a job
 export const getJobJigNames = (
@@ -143,8 +155,8 @@ export const getJobJigNames = (
 ): string[] => {
   return jigAssignments
     .filter((g) => g.jobId === jid && g.status === "ACTIVE")
-    .map((g) => g.jigName);
-};
+    .map((g) => g.jigName)
+}
 
 // Get the first active jig name for a job (for single jig scenarios)
 export const getJobJigName = (
@@ -153,56 +165,56 @@ export const getJobJigName = (
 ): string | null => {
   const jig = jigAssignments.find(
     (g) => g.jobId === jid && g.status === "ACTIVE",
-  );
+  )
 
   return jig?.jigName
     ? `${jig.jigName}: ${jig.pct}% - (Loaded: ${new Date(jig.loadedAt).toLocaleDateString()})`
-    : null;
-};
+    : null
+}
 
 // Get all active jig assignments for a job
 export const getActiveJigs = (
   jid: string,
   jigAssignments: IJigAssignment[],
 ): IJigAssignment[] => {
-  return jigAssignments.filter((g) => g.jobId === jid && g.status === "ACTIVE");
-};
+  return jigAssignments.filter((g) => g.jobId === jid && g.status === "ACTIVE")
+}
 
 // ================ Job Status Helpers ================ //
 
 export const jobAgeDays = (j: IJob): number => {
-  return (Date.now() - j.createdAt) / (1000 * 60 * 60 * 24);
-};
+  return (Date.now() - j.createdAt) / (1000 * 60 * 60 * 24)
+}
 
 export const jobAgeTrafficLight = (j: IJob) => {
-  const d = jobAgeDays(j);
+  const d = jobAgeDays(j)
   if (d < 2)
     return {
       color: "#16a34a",
       bg: "#f0fdf4",
       border: "#16a34a",
       label: "On time",
-    };
+    }
   if (d < 5)
     return {
       color: "#d97706",
       bg: "#fffbeb",
       border: "#d97706",
       label: "Due soon",
-    };
+    }
   return {
     color: "#dc2626",
     bg: "#fff5f5",
     border: "#dc2626",
     label: "Overdue",
-  };
-};
+  }
+}
 
 export const jobStatusTrafficLight = (
   j: IJob,
   jigAssignments: IJigAssignment[],
 ) => {
-  const status = stageLabel(j, jigAssignments);
+  const status = stageLabel(j, jigAssignments)
   switch (status) {
     case "Dispatched":
       return {
@@ -210,21 +222,21 @@ export const jobStatusTrafficLight = (
         bg: "#f9fafb",
         border: "#6b7280",
         label: "Dispatched",
-      };
+      }
     case "Ready to dispatch":
       return {
         color: "#2563eb",
         bg: "#eff6ff",
         border: "#2563eb",
         label: "Ready",
-      };
+      }
     case "WIP":
       return {
         color: "#d97706",
         bg: "#fffbeb",
         border: "#d97706",
         label: "WIP",
-      };
+      }
 
     case "Intake":
     default:
@@ -233,55 +245,55 @@ export const jobStatusTrafficLight = (
         bg: "#f0fdf4",
         border: "#16a34a",
         label: "Intake",
-      };
+      }
   }
-};
+}
 
 export const isReady = (j: IJob, jigAssignments: IJigAssignment[]): boolean => {
-  if (j.dispatchedAt || !j.poComplete) return false;
-  const gs = jigAssignments.filter((g) => g.jobId === j.id);
+  if (j.dispatchedAt || !j.poComplete) return false
+  const gs = jigAssignments.filter((g) => g.jobId === j.id)
   // Job must have at least one jig assignment to be ready for dispatch
-  if (!gs.length) return false;
-  return gs.every((g) => g.status === "CLEARED");
-};
+  if (!gs.length) return false
+  return gs.every((g) => g.status === "CLEARED")
+}
 
-export const isDispatched = (j: IJob) => !!j.dispatchedAt;
+export const isDispatched = (j: IJob) => !!j.dispatchedAt
 
 // A job is "on the shop floor" while it's neither dispatched nor ready to
 // be. `getOnFloorJobs` in `@/lib/db` re-expresses this exact condition as a
 // Prisma `where` clause for the paginated intake list — keep the two in
 // sync if this logic ever changes.
 export const isOnFloor = (j: IJob, jigAssignments: IJigAssignment[]): boolean =>
-  !isDispatched(j) && !isReady(j, jigAssignments);
+  !isDispatched(j) && !isReady(j, jigAssignments)
 
 // A job can be added to a jig while it's neither dispatched nor already
 // PO-complete. `getAssignableJobs` in `@/lib/db` re-expresses this exact
 // condition as a Prisma `where` clause — keep the two in sync if this
 // logic ever changes.
 export const isAssignable = (j: IJob): boolean =>
-  !isDispatched(j) && !j.poComplete;
+  !isDispatched(j) && !j.poComplete
 
 export const stageLabel = (
   j: IJob,
   jigAssignments: IJigAssignment[],
 ): string => {
-  if (j.dispatchedAt) return "Dispatched";
-  if (isReady(j, jigAssignments)) return "Ready to dispatch";
+  if (j.dispatchedAt) return "Dispatched"
+  if (isReady(j, jigAssignments)) return "Ready to dispatch"
   if (jigsOf(j.id, jigAssignments).some((g) => g.status === "ACTIVE"))
-    return "WIP";
-  return "Intake";
-};
+    return "WIP"
+  return "Intake"
+}
 
 export const stageBadge = (
   j: IJob,
   jigAssignments: IJigAssignment[],
 ): string => {
-  if (j.dispatchedAt) return "b-done";
-  if (isReady(j, jigAssignments)) return "b-dispatch";
+  if (j.dispatchedAt) return "b-done"
+  if (isReady(j, jigAssignments)) return "b-dispatch"
   if (jigsOf(j.id, jigAssignments).some((g) => g.status === "ACTIVE"))
-    return "b-jig";
-  return "b-intake";
-};
+    return "b-jig"
+  return "b-intake"
+}
 
 // ================ Customer Resolution ================ //
 
@@ -289,30 +301,30 @@ export const resolveCustomer = (
   n: string,
   contacts: IContact[],
 ): IContact | null => {
-  if (!n || !contacts.length) return null;
-  const trimmedName = n.trim();
-  const searchTerm = trimmedName.toLowerCase();
+  if (!n || !contacts.length) return null
+  const trimmedName = n.trim()
+  const searchTerm = trimmedName.toLowerCase()
 
-  console.log("🔍 resolveCustomer - Input:", n);
-  console.log("🔍 resolveCustomer - searchTerm (lowercased):", searchTerm);
+  console.log("🔍 resolveCustomer - Input:", n)
+  console.log("🔍 resolveCustomer - searchTerm (lowercased):", searchTerm)
 
   // Aliases
   if (searchTerm.includes("sokoza"))
-    return contacts.find((c) => c.account === "SOKO") || null;
+    return contacts.find((c) => c.account === "SOKO") || null
   if (searchTerm.includes("nz manufacturing"))
-    return contacts.find((c) => c.account === "NZMFG") || null;
+    return contacts.find((c) => c.account === "NZMFG") || null
   if (searchTerm.includes("baytex"))
-    return contacts.find((c) => c.account === "BAYT") || null;
+    return contacts.find((c) => c.account === "BAYT") || null
 
   // Exact match (name or alias)
   let c = contacts.find(
     (x) =>
       x.name.toLowerCase() === searchTerm ||
       x.alias?.some((n) => n === searchTerm),
-  );
+  )
   if (c) {
-    console.log("✅ Found exact match:", c.name);
-    return c;
+    console.log("✅ Found exact match:", c.name)
+    return c
   }
 
   // Fuzzy match (fallback) - check name and aliases
@@ -323,86 +335,86 @@ export const resolveCustomer = (
       x.alias?.some(
         (alias) => searchTerm.includes(alias) || alias.includes(searchTerm),
       ),
-  );
+  )
   if (c) {
-    console.log("✅ Found fuzzy match:", c.name);
-    return c;
+    console.log("✅ Found fuzzy match:", c.name)
+    return c
   }
 
   // Account code match
-  c = contacts.find((x) => x.account.toLowerCase() === searchTerm);
+  c = contacts.find((x) => x.account.toLowerCase() === searchTerm)
   if (c) {
-    console.log("✅ Found by account code:", c.name);
-    return c;
+    console.log("✅ Found by account code:", c.name)
+    return c
   }
 
-  console.log("❌ No match found for:", searchTerm);
-  return null;
-};
+  console.log("❌ No match found for:", searchTerm)
+  return null
+}
 
 // ================ Price Calculation ================ //
 
 export const calcJobTotal = (j: IJob): number => {
-  let sum = 0;
+  let sum = 0
   j.parts.forEach((p) => {
-    sum += (p.price || 0) * (p.qty || 1);
-  });
+    sum += (p.price || 0) * (p.qty || 1)
+  })
 
-  return sum;
-};
+  return sum
+}
 
 export const hasMinCharge = (j: IJob) => {
-  return calcJobTotal(j) === 0;
-};
+  return calcJobTotal(j) === 0
+}
 
 export const calcPrice = (
   j: IJob,
   settings: ISettings,
   jigAssignments: IJigAssignment[],
 ): number => {
-  const minCharges = calculateMinCharges(settings);
-  const minC = minCharges[j.plating] || 60;
-  const freight = j.freightRequested ? j.freightCost || 0 : 0;
+  const minCharges = calculateMinCharges(settings)
+  const minC = minCharges[j.plating] || 60
+  const freight = j.freightRequested ? j.freightCost || 0 : 0
 
-  if (j.priceOverride != null) {
-    return Math.round((j.priceOverride + freight) * 100) / 100;
+  if (j.priceOverride) {
+    return Math.round((j.priceOverrideValue + freight) * 100) / 100
   }
 
   // Priced parts override weight/string pricing entirely
-  let sum = calcJobTotal(j);
+  let sum = calcJobTotal(j)
 
   // if the sum of all parts <  the min rate use weight/space/strings
   if (hasMinCharge(j)) {
-    const rates = calculateRates(settings);
-    const rate = rates[j.plating] || rates.silver;
-    let newSum = 0;
-    const weight = j.weightKg * rate.kg;
-    const strings = j.stringCount * (settings.stringRate || 25);
+    const rates = calculateRates(settings)
+    const rate = rates[j.plating] || rates.silver
+    let newSum = 0
+    const weight = j.weightKg * rate.kg
+    const strings = j.stringCount * (settings.stringRate || 25)
     const jigPrice =
       (jigsOf(j.id, jigAssignments).reduce((sum, j) => sum + j.pct, 0) / 100) *
-      rates[j.plating].jig;
+      rates[j.plating].jig
 
     if (j.requiresWeighing && j.weightKg) {
-      newSum = weight;
+      newSum = weight
     }
 
     if (j.stringsRequired && j.stringCount && strings > newSum) {
-      newSum = strings;
+      newSum = strings
     }
 
     if (jigPrice > newSum) {
-      newSum = jigPrice;
+      newSum = jigPrice
     }
 
-    sum = newSum;
+    sum = newSum
   }
 
   if (sum < minC) {
-    sum = minC;
+    sum = minC
   }
 
-  return Math.round((sum + freight) * 100) / 100;
-};
+  return Math.round((sum + freight) * 100) / 100
+}
 
 // ================ Image Processing ================ //
 
@@ -410,45 +422,45 @@ export const fixOrientation = (
   dataUrl: string,
   cb: (processed: string, rotated: boolean) => void,
 ) => {
-  const img = new Image();
+  const img = new Image()
   img.onload = () => {
-    const w = img.width;
-    const h = img.height;
-    const isLandscape = w > h;
+    const w = img.width
+    const h = img.height
+    const isLandscape = w > h
 
-    let canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
+    let canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")!
 
     // Don't auto-rotate - keep original orientation
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(img, 0, 0);
+    canvas.width = w
+    canvas.height = h
+    ctx.drawImage(img, 0, 0)
 
     // Cap dimension (reduced for mobile compatibility and faster server action serialization)
-    const maxDim = 1600; // Reduced from 2400 - still excellent quality for OCR
+    const maxDim = 1600 // Reduced from 2400 - still excellent quality for OCR
     if (canvas.width > maxDim || canvas.height > maxDim) {
-      const scale = maxDim / Math.max(canvas.width, canvas.height);
-      const newW = Math.floor(canvas.width * scale);
-      const newH = Math.floor(canvas.height * scale);
-      const canvas2 = document.createElement("canvas");
-      canvas2.width = newW;
-      canvas2.height = newH;
-      const ctx2 = canvas2.getContext("2d")!;
-      ctx2.drawImage(canvas, 0, 0, newW, newH);
-      canvas = canvas2;
+      const scale = maxDim / Math.max(canvas.width, canvas.height)
+      const newW = Math.floor(canvas.width * scale)
+      const newH = Math.floor(canvas.height * scale)
+      const canvas2 = document.createElement("canvas")
+      canvas2.width = newW
+      canvas2.height = newH
+      const ctx2 = canvas2.getContext("2d")!
+      ctx2.drawImage(canvas, 0, 0, newW, newH)
+      canvas = canvas2
     }
 
     // Compress (reduced for mobile - prevents RSC "Maximum array nesting" error)
-    let quality = 0.75; // Reduced from 0.82
-    let result = canvas.toDataURL("image/jpeg", quality);
-    const maxSize = 1.5 * 1024 * 1024; // Reduced from 5.4MB to 1.5MB per image
+    let quality = 0.75 // Reduced from 0.82
+    let result = canvas.toDataURL("image/jpeg", quality)
+    const maxSize = 1.5 * 1024 * 1024 // Reduced from 5.4MB to 1.5MB per image
 
     while (result.length > maxSize && quality > 0.3) {
-      quality -= 0.05;
-      result = canvas.toDataURL("image/jpeg", quality);
+      quality -= 0.05
+      result = canvas.toDataURL("image/jpeg", quality)
     }
 
-    cb(result, isLandscape);
-  };
-  img.src = dataUrl;
-};
+    cb(result, isLandscape)
+  }
+  img.src = dataUrl
+}

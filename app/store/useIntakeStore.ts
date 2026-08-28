@@ -1,125 +1,131 @@
-import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-import type { IContact, IPart, IJob } from "@/types/interfaces";
-import type { TPlating } from "@/types/types";
-import type { ScanPOResponse } from "@/api/scan-po/route";
+import { create } from "zustand"
+import { devtools } from "zustand/middleware"
+import type { IContact, IPart, IJob } from "@/types/interfaces"
+import type { TPlating } from "@/types/types"
+import type { ScanPOResponse } from "@/api/scan-po/route"
 
 interface IntakeFormState {
   // UI state
-  showSheet: boolean;
-  currentJob: IJob | null;
-  editingJobId: string | null;
-  returnToDispatch: boolean;
+  showSheet: boolean
+  currentJob: IJob | null
+  editingJobId: string | null
+  returnToDispatch: boolean
 
   // Customer fields
-  customer: IContact | null;
-  customerInput: string;
-  showCustomerDropdown: boolean;
+  customer: IContact | null
+  customerInput: string
+  showCustomerDropdown: boolean
 
   // Job details
-  po_number: string;
-  contactNumber: string;
-  partsDescription: string;
-  parts: IPart[];
-  plating: TPlating;
-  notes: string;
-  isDispatched: boolean;
+  po_number: string
+  contactNumber: string
+  partsDescription: string
+  parts: IPart[]
+  plating: TPlating
+  notes: string
+  isDispatched: boolean
+  freightCost: string
+  priceOverrideValue: string
 
   // Flags
-  urgent: boolean;
-  isInternal: boolean;
-  flagged: boolean;
-  stringsRequired: boolean;
-  stringCount: number;
-  requiresWeighing: boolean;
-  weightKg: number;
-  freightRequested: boolean;
-  minCharge: boolean;
+  urgent: boolean
+  isInternal: boolean
+  flagged: boolean
+  stringsRequired: boolean
+  stringCount: number
+  requiresWeighing: boolean
+  weightKg: number
+  freightRequested: boolean
+  minCharge: boolean
+  priceOverride: boolean
 
   // Images
-  poPages: string[];
-  partsOnArrivalPhotos: string[];
+  poPages: string[]
+  partsOnArrivalPhotos: string[]
 
   // Scan state
-  scanning: boolean;
-  scanResult: string;
-  scanData: ScanPOResponse | null;
-  showRawData: boolean;
+  scanning: boolean
+  scanResult: string
+  scanData: ScanPOResponse | null
+  showRawData: boolean
 
   // Part search
-  partSearchIndex: number | null;
-  partSearchTerm: string;
+  partSearchIndex: number | null
+  partSearchTerm: string
 }
 
 interface IntakeFormActions {
   // UI actions
-  setShowSheet: (show: boolean) => void;
-  setCurrentJob: (job: IJob | null) => void;
-  setEditingJobId: (id: string | null) => void;
-  openJobSheet: (job: IJob) => void;
+  setShowSheet: (show: boolean) => void
+  setCurrentJob: (job: IJob | null) => void
+  setEditingJobId: (id: string | null) => void
+  openJobSheet: (job: IJob) => void
   openJobForEdit: (
     job: IJob,
     customer: IContact | null,
     returnToDispatch?: boolean,
-  ) => void;
-  closeSheet: () => void;
+  ) => void
+  closeSheet: () => void
 
   // Customer actions
-  setCustomer: (customer: IContact | null) => void;
-  setCustomerInput: (input: string) => void;
-  setShowCustomerDropdown: (show: boolean) => void;
+  setCustomer: (customer: IContact | null) => void
+  setCustomerInput: (input: string) => void
+  setShowCustomerDropdown: (show: boolean) => void
 
   // Job detail actions
-  setPoNumber: (po: string) => void;
-  setContactNumber: (contact: string) => void;
-  setPartsDescription: (desc: string) => void;
-  setParts: (parts: IPart[]) => void;
-  setPlating: (plating: TPlating) => void;
-  setNotes: (notes: string) => void;
+  setPoNumber: (po: string) => void
+  setContactNumber: (contact: string) => void
+  setPartsDescription: (desc: string) => void
+  setParts: (parts: IPart[]) => void
+  setPlating: (plating: TPlating) => void
+  setNotes: (notes: string) => void
+  setFreightCost: (freightCost: string) => void
+  setPriceOverrideValue: (priceOverrideValue: string) => void
 
   // Flag actions
-  setUrgent: (urgent: boolean) => void;
-  setIsInternal: (isInternal: boolean) => void;
-  setFlagged: (flagged: boolean) => void;
-  setStringsRequired: (required: boolean) => void;
-  setStringCount: (count: number) => void;
-  setRequiresWeighing: (required: boolean) => void;
-  setWeightKg: (weight: number) => void;
-  setFreightRequested: (requested: boolean) => void;
-  setMinCharge: (minCharge: boolean) => void;
+  setUrgent: (urgent: boolean) => void
+  setIsInternal: (isInternal: boolean) => void
+  setFlagged: (flagged: boolean) => void
+  setStringsRequired: (required: boolean) => void
+  setStringCount: (count: number) => void
+  setRequiresWeighing: (required: boolean) => void
+  setWeightKg: (weight: number) => void
+  setFreightRequested: (requested: boolean) => void
+  setMinCharge: (minCharge: boolean) => void
+  setPriceOverride: (priceOverride: boolean) => void
 
   // Image actions
-  setPoPages: (pages: string[]) => void;
-  addPoPages: (pages: string[]) => void;
-  removePoPage: (index: number) => void;
-  setPartsOnArrivalPhotos: (photos: string[]) => void;
-  addPartsPhotos: (photos: string[]) => void;
-  removePartsPhoto: (index: number) => void;
+  setPoPages: (pages: string[]) => void
+  addPoPages: (pages: string[]) => void
+  removePoPage: (index: number) => void
+  setPartsOnArrivalPhotos: (photos: string[]) => void
+  addPartsPhotos: (photos: string[]) => void
+  removePartsPhoto: (index: number) => void
 
   // Scan actions
-  setScanning: (scanning: boolean) => void;
-  setScanResult: (result: string) => void;
-  setScanData: (data: ScanPOResponse | null) => void;
-  setShowRawData: (show: boolean) => void;
-  applyScanResult: (result: ScanPOResponse) => void;
-  setScanError: (error: string) => void;
+  setScanning: (scanning: boolean) => void
+  setScanResult: (result: string) => void
+  setScanData: (data: ScanPOResponse | null) => void
+  setShowRawData: (show: boolean) => void
+  applyScanResult: (result: ScanPOResponse) => void
+  setScanError: (error: string) => void
 
   // Part search actions
-  setPartSearchIndex: (index: number | null) => void;
-  setPartSearchTerm: (term: string) => void;
+  setPartSearchIndex: (index: number | null) => void
+  setPartSearchTerm: (term: string) => void
   updatePart: (
     index: number,
     field: keyof IPart,
     value: IPart[keyof IPart],
-  ) => void;
-  addPart: () => void;
-  removePart: (index: number) => void;
+  ) => void
+  addPart: () => void
+  removePart: (index: number) => void
 
   // Reset
-  resetForm: () => void;
+  resetForm: () => void
 }
 
-type IntakeStore = IntakeFormState & IntakeFormActions;
+type IntakeStore = IntakeFormState & IntakeFormActions
 
 const initialState: IntakeFormState = {
   showSheet: false,
@@ -153,7 +159,10 @@ const initialState: IntakeFormState = {
   partSearchTerm: "",
   isDispatched: false,
   weightKg: 0,
-};
+  freightCost: "0",
+  priceOverrideValue: "0",
+  priceOverride: false,
+}
 
 export const useIntakeStore = create<IntakeStore>()(
   devtools(
@@ -186,10 +195,13 @@ export const useIntakeStore = create<IntakeStore>()(
           weightKg: job.weightKg,
           requiresWeighing: job.requiresWeighing,
           freightRequested: job.freightRequested,
+          freightCost: String(job.freightCost),
           minCharge: job.minCharge,
           poPages: job.poPages || [],
           partsOnArrivalPhotos: job.partsOnArrivalPhotos || [],
           showSheet: true,
+          priceOverride: job.priceOverride,
+          priceOverrideValue: String(job.priceOverrideValue),
         }),
       closeSheet: () => set({ ...initialState }),
 
@@ -206,6 +218,8 @@ export const useIntakeStore = create<IntakeStore>()(
       setParts: (parts) => set({ parts }),
       setPlating: (plating) => set({ plating }),
       setNotes: (notes) => set({ notes }),
+      setFreightCost: (freightCost) => set({ freightCost }),
+      setPriceOverrideValue: (priceOverrideValue) => set({ priceOverrideValue }),
 
       // Flag actions
       setUrgent: (urgent) => set({ urgent }),
@@ -217,6 +231,7 @@ export const useIntakeStore = create<IntakeStore>()(
       setWeightKg: (weightKg) => set({ weightKg }),
       setFreightRequested: (freightRequested) => set({ freightRequested }),
       setMinCharge: (minCharge) => set({ minCharge }),
+      setPriceOverride: (priceOverride) => set({ priceOverride }),
 
       // Image actions
       setPoPages: (poPages) => set({ poPages }),
@@ -267,9 +282,9 @@ export const useIntakeStore = create<IntakeStore>()(
       setPartSearchTerm: (partSearchTerm) => set({ partSearchTerm }),
       updatePart: (index, field, value) =>
         set((state) => {
-          const updated = [...state.parts];
-          updated[index] = { ...updated[index], [field]: value };
-          return { parts: updated };
+          const updated = [...state.parts]
+          updated[index] = { ...updated[index], [field]: value }
+          return { parts: updated }
         }),
       addPart: () =>
         set((state) => ({
@@ -283,4 +298,4 @@ export const useIntakeStore = create<IntakeStore>()(
     }),
     { name: "IntakeStore" },
   ),
-);
+)

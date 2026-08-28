@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState, type ReactNode } from 'react'
 import { useJobSocket } from '../hooks/useJobSocket'
+import { StartupPrefetch } from './StartupPrefetch'
 
 function JobSocketListener() {
   useJobSocket()
@@ -31,6 +32,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <JobSocketListener />
+      <StartupPrefetch />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

@@ -134,7 +134,7 @@ const csvRows = (
   const rows: string[] = [];
   const isGold = j.plating === "gold";
 
-  if (j.priceOverride != null) {
+  if (j.priceOverride) {
     const ic = isGold ? "ZINC GOLD STANDARD" : "ZINC SILVER STANDARD";
     const row = [
       csvQ(j.customer_name),
@@ -154,7 +154,7 @@ const csvRows = (
       csvQ(ic),
       csvQ("Zinc Electroplating - Price override"),
       "1",
-      csvQ(j.priceOverride),
+      csvQ(j.priceOverrideValue),
       "",
       "200",
       csvQ("15% GST on Income"),

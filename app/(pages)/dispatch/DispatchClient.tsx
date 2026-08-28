@@ -10,7 +10,6 @@ import { INV_PREFIX } from "@/constants/invoice.const"
 import { EmptyState } from "@/components/EmptyState"
 import { LoadingState } from "@/components/LoadingState"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
@@ -91,8 +90,6 @@ export default function DispatchClient() {
   const [jobToDelete, setJobToDelete] = useState<IDispatchedJobRow | null>(null)
   const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false)
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null)
-  const [priceOverride, setPriceOverride] = useState("")
-  const [freightCost, setFreightCost] = useState("0.00")
   const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
     "FPN",
   )
@@ -234,8 +231,6 @@ export default function DispatchClient() {
 
   const openDispatchModal = (job: IJob) => {
     setJobToDispatch(job)
-    setPriceOverride("")
-    setFreightCost("0.00")
   }
 
   const handleEditInIntake = (job: IJob) => {
@@ -256,8 +251,6 @@ export default function DispatchClient() {
       invoiceNumber,
       fpnDownloaded: false,
       csvDownloaded: false,
-      priceOverride: priceOverride ? parseFloat(priceOverride) : null,
-      freightCost: parseFloat(freightCost || "0"),
     }
 
     dispatchJobMutation.mutate(
@@ -767,7 +760,10 @@ export default function DispatchClient() {
                             <div className="text-sm text-gray-500">
                               {part.code}
                             </div>
-                            <div className="text-gray-700">
+
+                            <div
+                              className={`text-gray-700 ${fullJobToDispatch.priceOverride && parseFloat((part.price * part.qty).toFixed(2)) > 0 ? "line-through" : ""}`}
+                            >
                               ${(part.price * part.qty).toFixed(2)}
                             </div>
                           </div>
@@ -787,7 +783,9 @@ export default function DispatchClient() {
                       {/* Job Weight */}
                       <div className="border-b p-4 flex justify-between items-center">
                         <div className="">{`Weight (${fullJobToDispatch.weightKg}kg x $${rates[fullJobToDispatch.plating].kg})`}</div>
-                        <div className="">
+                        <div
+                          className={`${fullJobToDispatch.priceOverride && fullJobToDispatch.weightKg > 0 ? "line-through" : ""}`}
+                        >
                           $
                           {(
                             (fullJobToDispatch.weightKg || 0) *
@@ -798,7 +796,7 @@ export default function DispatchClient() {
 
                       {/* Job Jig Assignments */}
                       <div className="border-b p-4 flex justify-between items-center">
-                        <div className="">{`Space (${jigsOf(
+                        <div>{`Space (${jigsOf(
                           fullJobToDispatch.id,
                           jigAssignments,
                         )
@@ -806,7 +804,9 @@ export default function DispatchClient() {
                           .join(
                             " + ",
                           )} of Jig x $${rates[fullJobToDispatch.plating].jig})`}</div>
-                        <div className="">
+                        <div
+                          className={`${fullJobToDispatch.priceOverride ? "line-through" : ""}`}
+                        >
                           $
                           {(
                             (jigsOf(
@@ -820,9 +820,11 @@ export default function DispatchClient() {
                       </div>
 
                       {/* Job Strings */}
-                      <div className="rounded-lg p-4 flex justify-between items-center">
+                      <div className="border-b p-4 flex justify-between items-center">
                         <div className="">{`Strings (${fullJobToDispatch.stringCount} x $${settings.stringRate})`}</div>
-                        <div className="">
+                        <div
+                          className={`${fullJobToDispatch.priceOverride && fullJobToDispatch.stringCount > 0 ? "line-through" : ""}`}
+                        >
                           $
                           {(
                             (fullJobToDispatch.stringCount || 0) *
@@ -830,37 +832,28 @@ export default function DispatchClient() {
                           ).toFixed(2)}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Price Override */}
-                    <div className="mb-3">
-                      <label className="text-sm text-gray-600 mb-2 block">
-                        Price override ($){" "}
-                        <span className="text-gray-400">optional</span>
-                      </label>
-                      <Input
-                        type="text"
-                        value={priceOverride}
-                        onChange={(e) => setPriceOverride(e.target.value)}
-                        placeholder="Leave blank to use calculated"
-                        className="w-full"
-                      />
-                    </div>
+                      {/* Freight Cost — set at intake, read-only here */}
+                      {fullJobToDispatch.freightRequested && (
+                        <div className="rounded-lg p-4 flex justify-between items-center">
+                          <div className="">Freight cost</div>
+                          <div
+                            className={`${fullJobToDispatch.priceOverride && fullJobToDispatch.freightCost > 0 ? "line-through" : ""}`}
+                          >
+                            ${fullJobToDispatch.freightCost.toFixed(2)}
+                          </div>
+                        </div>
+                      )}
 
-                    {/* Freight Cost */}
-                    <div className="mb-3">
-                      <label className="text-sm text-gray-600 mb-2 block">
-                        Freight cost ($)
-                      </label>
-                      <Input
-                        type="number"
-                        value={freightCost}
-                        onChange={(e) => setFreightCost(e.target.value)}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                        className="w-full"
-                      />
+                      {/* Price Override — set at intake, read-only here */}
+                      {fullJobToDispatch.priceOverride && (
+                        <div className="rounded-lg p-4 flex justify-between items-center text-red-600">
+                          <div className="">Price override</div>
+                          <div className="">
+                            ${fullJobToDispatch.priceOverrideValue.toFixed(2)}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Invoice Total */}
@@ -870,14 +863,10 @@ export default function DispatchClient() {
                       </div>
                       <div className="font-bold text-xl">
                         $
-                        {(
-                          (priceOverride
-                            ? parseFloat(priceOverride)
-                            : calcPrice(
-                                fullJobToDispatch,
-                                settings,
-                                jigAssignments,
-                              )) + parseFloat(freightCost || "0")
+                        {calcPrice(
+                          fullJobToDispatch,
+                          settings,
+                          jigAssignments,
                         ).toFixed(2)}
                       </div>
                     </div>
