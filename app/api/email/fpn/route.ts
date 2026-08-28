@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 import type { IJob } from "@/types/interfaces";
 import { calcPrice } from "@/lib/helpers";
 import { LOGO } from "@/lib/logo";
-
-// SMTP Configuration from environment variables
-const SMTP_CONFIG = {
-  host: process.env.SMTP_HOST || "smtp-relay.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false, // true for 465, false for 587
-  auth: {
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
-  },
-};
+import { sendEmail } from "@/lib/email";
 
 // Generate FPN HTML content (matching original design exactly)
 function generateFPNHTML(job: IJob): string {
@@ -107,15 +96,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Customer email not found" }, { status: 400 });
     }
 
-    // Create transporter
-    const transporter = nodemailer.createTransport(SMTP_CONFIG);
-
     // Generate FPN HTML
     const fpnHTML = generateFPNHTML(job);
 
     // Send email
-    const info = await transporter.sendMail({
-      from: '"TGA Electroplaters" <sales@tgaelectroplaters.co.nz>',
+    const info = await sendEmail({
       to: job.customer_email,
       subject: `Parts Ready for Collection - PO ${job.po_number}`,
       html: fpnHTML,

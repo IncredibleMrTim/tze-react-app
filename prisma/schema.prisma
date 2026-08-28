@@ -74,6 +74,7 @@ model Job {
   fpnHidden         Boolean  @default(false)
   csvDownloaded     Boolean  @default(false)
   updatedAt         DateTime @updatedAt
+  createdByUserId   String?  // Clerk user id of the staff member who created the job
 
   jigAssignments    JigAssignment[]
 
@@ -81,6 +82,7 @@ model Job {
   @@index([customer_account])
   @@index([poComplete])
   @@index([dispatchedAt])
+  @@index([createdByUserId])
 }
 
 // Jig Assignment Status
@@ -182,6 +184,69 @@ model JigRework {
   updatedAt DateTime @updatedAt
 
   jig       Jig      @relation(fields: [jigId], references: [id], onDelete: Cascade)
+}
+
+// Staff accounts (passkey authentication)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  credentials Credential[]
+  sessions    Session[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// WebAuthn passkey credentials
+model Credential {
+  id           String   @id @default(cuid())
+  credentialId String   @unique
+  userId       String
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  transports   String[] @default([])
+  deviceType   String
+  backedUp     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Staff invitations — admin-created, accepted via passkey registration
+model Invitation {
+  id         String    @id @default(cuid())
+  email      String
+  role       String
+  token      String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+// DB-backed sessions — deleting a row instantly revokes access
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
 }
 
 // PO Scanning Rules (customer-specific PO scanning configurations)

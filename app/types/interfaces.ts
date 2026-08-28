@@ -1,4 +1,19 @@
-import type { TPlating } from "@/types/types";
+import type { TPlating, TUserRole } from "@/types/types";
+
+export interface IStaffMember {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: TUserRole;
+}
+
+export interface IPendingInvitation {
+  id: string;
+  email: string;
+  role: TUserRole;
+  expiresAt: number;
+}
 
 export interface IContact {
   name: string;

@@ -1,6 +1,6 @@
 import { prisma } from "./prisma"
 import type { Job, JigAssignment, Jig, Prisma } from "@prisma/client"
-import type { IJob, IJigAssignment, IJig, ISettings } from "@/types/interfaces"
+import type { IJob, IJigAssignment, IJig, ISettings, IStaffMember, IPendingInvitation } from "@/types/interfaces"
 import { notify } from "./notify"
 import { generateJigsList } from "@/constants/settings.const"
 
@@ -812,5 +812,95 @@ export async function getPoRulesByAccount(contactAccount: string) {
     orderBy: {
       priority: "asc",
     },
+  })
+}
+
+// ============ AUTH ============
+
+export async function getUserByEmail(email: string) {
+  return await prisma.user.findUnique({ where: { email } })
+}
+
+export async function createUser(email: string, role: string) {
+  return await prisma.user.create({ data: { email, role } })
+}
+
+export async function deleteUser(userId: string) {
+  await prisma.user.delete({ where: { id: userId } })
+}
+
+export async function getStaff(): Promise<IStaffMember[]> {
+  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } })
+  return users.map((user) => ({
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role as IStaffMember["role"],
+  }))
+}
+
+export async function getPendingInvitations(): Promise<IPendingInvitation[]> {
+  const invitations = await prisma.invitation.findMany({
+    where: { acceptedAt: null, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: "asc" },
+  })
+  return invitations.map((invitation) => ({
+    id: invitation.id,
+    email: invitation.email,
+    role: invitation.role as IPendingInvitation["role"],
+    expiresAt: invitation.expiresAt.getTime(),
+  }))
+}
+
+export async function createInvitation(email: string, role: string, token: string, expiresAt: Date) {
+  return await prisma.invitation.create({ data: { email, role, token, expiresAt } })
+}
+
+export async function getInvitationByToken(token: string) {
+  return await prisma.invitation.findUnique({ where: { token } })
+}
+
+export async function markInvitationAccepted(id: string) {
+  await prisma.invitation.update({ where: { id }, data: { acceptedAt: new Date() } })
+}
+
+export async function revokeInvitation(id: string) {
+  await prisma.invitation.delete({ where: { id } })
+}
+
+export async function createCredential(data: {
+  userId: string
+  credentialId: string
+  publicKey: Uint8Array
+  counter: number
+  transports: string[]
+  deviceType: string
+  backedUp: boolean
+}) {
+  return await prisma.credential.create({
+    data: {
+      ...data,
+      publicKey: Buffer.from(data.publicKey),
+      counter: BigInt(data.counter),
+    },
+  })
+}
+
+export async function getCredentialByCredentialId(credentialId: string) {
+  return await prisma.credential.findUnique({
+    where: { credentialId },
+    include: { user: true },
+  })
+}
+
+export async function getCredentialsByUserId(userId: string) {
+  return await prisma.credential.findMany({ where: { userId } })
+}
+
+export async function updateCredentialCounter(credentialId: string, counter: number) {
+  await prisma.credential.update({
+    where: { credentialId },
+    data: { counter: BigInt(counter) },
   })
 }

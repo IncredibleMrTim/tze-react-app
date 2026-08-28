@@ -2,8 +2,11 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
+import { randomBytes } from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'timsmarttechnology@gmail.com'
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
@@ -66,7 +69,6 @@ async function main() {
     },
     create: {
       id: 1,
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
       silverKg: 2.60,
       goldKg: 2.90,
       silverJig: 360,
@@ -79,6 +81,30 @@ async function main() {
     },
   })
   console.log('✓ Created default settings')
+
+  // Bootstrap the first admin invitation, if one doesn't already exist
+  console.log('Checking for bootstrap admin invitation...')
+  const existingAdmin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } })
+  const existingInvitation = await prisma.invitation.findFirst({
+    where: { email: ADMIN_EMAIL, acceptedAt: null, expiresAt: { gt: new Date() } },
+  })
+
+  if (existingAdmin) {
+    console.log(`✓ Admin user already exists for ${ADMIN_EMAIL}`)
+  } else if (existingInvitation) {
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/register?token=${existingInvitation.token}`
+    console.log(`✓ Admin invitation already pending for ${ADMIN_EMAIL}`)
+    console.log(`  Register at: ${url}`)
+  } else {
+    const token = randomBytes(32).toString('base64url')
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    await prisma.invitation.create({
+      data: { email: ADMIN_EMAIL, role: 'admin', token, expiresAt },
+    })
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/register?token=${token}`
+    console.log(`✓ Created admin invitation for ${ADMIN_EMAIL}`)
+    console.log(`  Register at: ${url}`)
+  }
 
   console.log('✅ Seed completed successfully!')
 }
