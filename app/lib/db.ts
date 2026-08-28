@@ -1,6 +1,6 @@
 import { prisma } from "./prisma"
 import type { Job, JigAssignment, Jig, Prisma } from "@prisma/client"
-import type { IJob, IJigAssignment, IJig, ISettings, IStaffMember, IPendingInvitation } from "@/types/interfaces"
+import type { IJob, IJigAssignment, IJig, IJigAtRisk, ISettings, IStaffMember, IPendingInvitation } from "@/types/interfaces"
 import { notify } from "./notify"
 import { generateJigsList } from "@/constants/settings.const"
 
@@ -78,6 +78,7 @@ export async function createJob(job: IJob) {
       partDescription: job.partDescription,
       createdAt: BigInt(job.createdAt),
       priceOverride: job.priceOverride,
+      priceOverrideValue: job.priceOverrideValue,
       freightCost: job.freightCost,
       dispatchedAt: job.dispatchedAt ? BigInt(job.dispatchedAt) : null,
       invoiceNumber: job.invoiceNumber,
@@ -149,6 +150,7 @@ const jobSelect = {
   partDescription: true,
   createdAt: true,
   priceOverride: true,
+  priceOverrideValue: true,
   freightCost: true,
   dispatchedAt: true,
   invoiceNumber: true,
@@ -177,6 +179,7 @@ const onFloorCardSelect = {
   minCharge: true,
   stringsRequired: true,
   requiresWeighing: true,
+  priceOverride: true,
   partDescription: true,
   createdAt: true,
   dispatchedAt: true,
@@ -677,11 +680,86 @@ export async function getOrCreateJigByName(name: string): Promise<IJig> {
 
 // Jigs are fixed numbered slots ("JIG-01".."JIG-0{count}") — ensure a real
 // row exists for each one the current settings expect, creating any that
-// are missing, and return the full list.
+// are missing. Jigs beyond `count` are never deleted (their JigAssignment
+// history — pricing, jig photos — must survive a later reduction), just
+// filtered out of what's returned, so they simply stop appearing until
+// jigCount grows back to include them again.
 export async function ensureJigsExist(count: number): Promise<IJig[]> {
   const names = generateJigsList(count)
   await Promise.all(names.map((name) => getOrCreateJigByName(name)))
-  return await getJigs()
+
+  const nameSet = new Set(names)
+  const allJigs = await getJigs()
+  return allJigs.filter((jig) => nameSet.has(jig.name))
+}
+
+// Jigs that would disappear from the JIG page if jigCount were reduced to
+// `newCount`, filtered to just the ones that still have a job actively
+// loaded — used by the settings page to confirm before sending those jobs
+// back to intake.
+export async function getJigsAtRiskOfReduction(
+  newCount: number,
+): Promise<IJigAtRisk[]> {
+  const keepNames = new Set(generateJigsList(newCount))
+  const allJigs = await getJigs()
+  const excessJigs = allJigs.filter((jig) => !keepNames.has(jig.name))
+  if (excessJigs.length === 0) return []
+
+  const excessJigIds = excessJigs.map((jig) => jig.id)
+  const activeAssignments = await prisma.jigAssignment.findMany({
+    where: { jigId: { in: excessJigIds }, status: "ACTIVE" },
+    select: { jigId: true, jobId: true, job: { select: assignmentJobSelect } },
+  })
+
+  const jobsByJigId = new Map<string, IJigAtRisk["jobs"]>()
+  for (const assignment of activeAssignments) {
+    const jobs = jobsByJigId.get(assignment.jigId) ?? []
+    jobs.push({
+      id: assignment.jobId,
+      po_number: assignment.job.po_number,
+      customer_name: assignment.job.customer_name,
+    })
+    jobsByJigId.set(assignment.jigId, jobs)
+  }
+
+  return excessJigs
+    .filter((jig) => jobsByJigId.has(jig.id))
+    .map((jig) => ({ jigName: jig.name, jobs: jobsByJigId.get(jig.id)! }))
+}
+
+// Sends any job still actively loaded on a jig that's about to disappear
+// (jigCount shrinking past it) back to intake: clears its assignment on
+// that jig — same as the JIG page's "Remove from JIG" (a correction, not a
+// completion, so no history is preserved for it) — and marks the job
+// assignable again. Must run before the new jigCount is persisted, so the
+// jig never briefly disappears from the JIG page while still holding an
+// active job.
+export async function removeExcessJigAssignments(
+  newCount: number,
+): Promise<void> {
+  const keepNames = new Set(generateJigsList(newCount))
+  const allJigs = await getJigs()
+  const excessJigIds = allJigs
+    .filter((jig) => !keepNames.has(jig.name))
+    .map((jig) => jig.id)
+  if (excessJigIds.length === 0) return
+
+  const activeAssignments = await prisma.jigAssignment.findMany({
+    where: { jigId: { in: excessJigIds }, status: "ACTIVE" },
+  })
+  if (activeAssignments.length === 0) return
+
+  const affectedJobIds = new Set(activeAssignments.map((a) => a.jobId))
+
+  await Promise.all(
+    activeAssignments.map((assignment) => deleteJigAssignment(assignment.id)),
+  )
+  await Promise.all(
+    Array.from(affectedJobIds).map((jobId) =>
+      updateJob(jobId, { poComplete: false }),
+    ),
+  )
+  await Promise.all(excessJigIds.map((jigId) => clearJigStateIfEmpty(jigId)))
 }
 
 // A jig's rework flag is "live" state for whatever is currently loaded on

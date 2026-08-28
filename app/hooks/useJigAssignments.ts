@@ -10,7 +10,7 @@ import { useJigPhotos, useJigPhotosByIds } from "./useJigPhotos";
 /**
  * Fetch all jig assignments from the API
  */
-async function fetchJigAssignments(): Promise<IJigAssignment[]> {
+export async function fetchJigAssignments(): Promise<IJigAssignment[]> {
   const res = await fetch("/api/jigs");
   if (!res.ok) throw new Error("Failed to fetch jig assignments");
   return res.json();

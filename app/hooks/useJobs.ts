@@ -61,7 +61,7 @@ async function fetchJobs(signal?: AbortSignal): Promise<IJob[]> {
 /**
  * Fetch jobs still assignable to a jig (not dispatched, not PO complete)
  */
-async function fetchAssignableJobs(signal?: AbortSignal): Promise<IJob[]> {
+export async function fetchAssignableJobs(signal?: AbortSignal): Promise<IJob[]> {
   const res = await fetch("/api/jobs/assignable", {
     headers: { Accept: "application/json" },
     signal,
@@ -74,7 +74,7 @@ async function fetchAssignableJobs(signal?: AbortSignal): Promise<IJob[]> {
 /**
  * Fetch one page of on-floor jobs (not dispatched, not ready to be)
  */
-async function fetchOnFloorJobs(
+export async function fetchOnFloorJobs(
   cursor: string | undefined,
   signal?: AbortSignal,
 ): Promise<OnFloorJobsPage> {
@@ -92,7 +92,7 @@ async function fetchOnFloorJobs(
 /**
  * Fetch one page of ready-to-dispatch jobs, optionally filtered by search
  */
-async function fetchReadyJobs(
+export async function fetchReadyJobs(
   cursor: string | undefined,
   search: string,
   signal?: AbortSignal,
@@ -113,7 +113,7 @@ async function fetchReadyJobs(
  * Fetch one page of dispatched jobs (the dispatch page's downloads list),
  * optionally filtered by search
  */
-async function fetchDispatchedJobs(
+export async function fetchDispatchedJobs(
   cursor: string | undefined,
   search: string,
   signal?: AbortSignal,
@@ -372,10 +372,19 @@ export function useUpdateJob() {
       }
     },
 
-    onSettled: () => {
+    onSettled: (_data, _error, { jobId }) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       queryClient.invalidateQueries({ queryKey: ["jobs", "ready"] });
       queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", "on-floor"] });
+      // Drop the cache entry instead of invalidating it — the intake drawer
+      // closes as soon as save succeeds, which removes the only observer of
+      // this query, so there's nothing left to consume a forced background
+      // refetch (and cancelling that dangling fetch on cleanup surfaces as
+      // an unhandled-rejection error in dev). Removing it means the next
+      // time the job is reopened, the query has no cached data and fetches
+      // cleanly under a real observer instead of reading a stale snapshot.
+      queryClient.removeQueries({ queryKey: ["job", jobId] });
     },
   });
 }

@@ -14,6 +14,8 @@ import {
   deleteJigRework,
   clearJigStateIfEmpty,
   ensureJigsExist,
+  getJigsAtRiskOfReduction,
+  removeExcessJigAssignments,
   getSettings,
 } from '@/lib/db'
 import type { IJigAssignment } from '@/types/interfaces'
@@ -26,6 +28,39 @@ export async function getJigsAction() {
   } catch (error) {
     console.error('Failed to fetch jigs:', error)
     return { success: false, jigs: [], error: 'Failed to fetch jigs' }
+  }
+}
+
+// Read-only check for the settings page: which jigs would disappear if
+// jigCount were reduced to `newCount`, and do any of them still have a job
+// actively loaded — used to decide whether to show a confirmation before
+// saving.
+export async function checkJigCountReductionAction(newCount: number) {
+  try {
+    const atRiskJigs = await getJigsAtRiskOfReduction(newCount)
+    return { success: true, atRiskJigs }
+  } catch (error) {
+    console.error('Failed to check jig count reduction:', error)
+    return {
+      success: false,
+      atRiskJigs: [],
+      error: 'Failed to check jig count reduction',
+    }
+  }
+}
+
+// Sends any jobs on soon-to-disappear jigs back to intake. Called right
+// before persisting a reduced jigCount, once the user has confirmed (or
+// immediately if nothing was at risk).
+export async function resolveJigCountReductionAction(newCount: number) {
+  try {
+    await removeExcessJigAssignments(newCount)
+    revalidatePath('/jig')
+    revalidatePath('/intake')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to resolve jig count reduction:', error)
+    return { success: false, error: 'Failed to resolve jig count reduction' }
   }
 }
 

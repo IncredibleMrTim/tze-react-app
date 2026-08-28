@@ -4,7 +4,7 @@ import type { ISettings } from '@/types/interfaces'
 /**
  * Fetch settings from the API
  */
-async function fetchSettings(): Promise<ISettings> {
+export async function fetchSettings(): Promise<ISettings> {
   const res = await fetch('/api/settings')
   if (!res.ok) throw new Error('Failed to fetch settings')
   return res.json()
