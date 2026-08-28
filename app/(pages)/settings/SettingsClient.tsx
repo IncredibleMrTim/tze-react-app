@@ -1,54 +1,59 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { updateSettingsAction } from "@/actions/settings";
-import { useToast } from "@/hooks/useToast";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { IPendingInvitation, ISettings, IStaffMember } from "@/types/interfaces";
-import AddPasskeyButton from "@/components/settings/AddPasskeyButton";
-import UsersTab from "./UsersTab";
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { updateSettingsAction } from "@/actions/settings"
+import { useToast } from "@/hooks/useToast"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import type {
+  IPendingInvitation,
+  ISettings,
+  IStaffMember,
+} from "@/types/interfaces"
+import AddPasskeyButton from "@/components/settings/AddPasskeyButton"
+import UsersTab from "./UsersTab"
+import { Button } from "@/components/ui/button"
 
 type SettingsClientProps =
   | { initialSettings: ISettings; isAdmin: false }
   | {
-      initialSettings: ISettings;
-      isAdmin: true;
-      staff: IStaffMember[];
-      pendingInvitations: IPendingInvitation[];
-    };
+      initialSettings: ISettings
+      isAdmin: true
+      staff: IStaffMember[]
+      pendingInvitations: IPendingInvitation[]
+    }
 
 export default function SettingsClient(props: SettingsClientProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const { showToast } = useToast();
-  const [settings, setSettings] = useState(props.initialSettings);
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { showToast } = useToast()
+  const [settings, setSettings] = useState(props.initialSettings)
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await updateSettingsAction(settings);
+      const result = await updateSettingsAction(settings)
       if (result.success) {
-        showToast("Settings saved");
+        showToast("Settings saved")
       } else {
-        showToast("Failed to save settings");
+        showToast("Failed to save settings")
       }
-    });
-  };
+    })
+  }
 
   const handleSignOut = async () => {
-    setIsSigningOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/sign-in");
-    router.refresh();
-  };
+    setIsSigningOut(true)
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/sign-in")
+    router.refresh()
+  }
 
   const updateSetting = <K extends keyof typeof settings>(
     key: K,
     value: (typeof settings)[K],
   ) => {
-    setSettings({ ...settings, [key]: value });
-  };
+    setSettings({ ...settings, [key]: value })
+  }
 
   const settingsForm = (
     <div>
@@ -226,31 +231,32 @@ export default function SettingsClient(props: SettingsClientProps) {
         {isPending ? "Saving..." : "Save Settings"}
       </button>
     </div>
-  );
+  )
 
   const signOutButton = (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] w-full md:max-w-[430px] left-1/2 -translate-x-1/2 z-40 bg-white px-3 pt-3">
-      <button
+    <div className="flex justify-center w-full">
+      <Button
+        variant="link"
         onClick={handleSignOut}
         disabled={isSigningOut}
-        className="w-full border border-red-300 text-red-600 rounded-xl py-3 text-base font-semibold disabled:opacity-50"
+        className="text-sm disabled:opacity-50 text-gray-600 underline"
       >
         {isSigningOut ? "Signing out..." : "Sign Out"}
-      </button>
+      </Button>
     </div>
-  );
+  )
 
   if (!props.isAdmin) {
     return (
       <div>
         <h2 className="text-lg font-bold mb-4">Settings</h2>
-        <div className="pb-20">
+        <div>
           {settingsForm}
           <AddPasskeyButton />
         </div>
         {signOutButton}
       </div>
-    );
+    )
   }
 
   return (
@@ -267,11 +273,14 @@ export default function SettingsClient(props: SettingsClientProps) {
             <AddPasskeyButton />
           </TabsContent>
           <TabsContent value="users">
-            <UsersTab staff={props.staff} pendingInvitations={props.pendingInvitations} />
+            <UsersTab
+              staff={props.staff}
+              pendingInvitations={props.pendingInvitations}
+            />
           </TabsContent>
         </div>
       </Tabs>
       {signOutButton}
     </div>
-  );
+  )
 }
