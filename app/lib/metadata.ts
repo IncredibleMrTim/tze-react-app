@@ -22,6 +22,14 @@ const pageMetadata: Record<string, PageMetadata> = {
     title: "Settings",
     description: "Configure application settings and rates",
   },
+  "sign-in": {
+    title: "Sign In",
+    description: "Sign in to your account",
+  },
+  register: {
+    title: "Register",
+    description: "Set up your account",
+  },
 };
 
 export function createPageMetadata(page: keyof typeof pageMetadata): Metadata {
