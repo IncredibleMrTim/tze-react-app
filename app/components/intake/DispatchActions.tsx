@@ -13,7 +13,6 @@ import { isReady, calcPrice } from "@/lib/helpers";
 import { INV_PREFIX } from "@/constants/invoice.const";
 import type { IJob } from "@/types/interfaces";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +24,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function buildDispatchedJob(
-  job: IJob,
-  invoiceNumber: string,
-  priceOverride: string,
-  freightCost: string,
-): IJob {
+function buildDispatchedJob(job: IJob, invoiceNumber: string): IJob {
   return {
     ...job,
     dispatchedAt: Date.now(),
     invoiceNumber,
     fpnDownloaded: false,
     csvDownloaded: false,
-    priceOverride: priceOverride ? parseFloat(priceOverride) : null,
-    freightCost: parseFloat(freightCost || "0"),
   };
 }
 
@@ -61,8 +53,6 @@ export function DispatchActions() {
   const dispatchJobMutation = useDispatchJob();
   const deleteAssignmentMutation = useDeleteJigAssignment();
 
-  const [priceOverride, setPriceOverride] = useState("");
-  const [freightCost, setFreightCost] = useState("0.00");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showSendBackConfirm, setShowSendBackConfirm] = useState(false);
 
@@ -108,12 +98,7 @@ export function DispatchActions() {
         ? "INTERNAL"
         : `${INV_PREFIX}-${new Date().getFullYear()}-${String(settings.invSeq).padStart(4, "0")}`;
 
-    const dispatchedJob = buildDispatchedJob(
-      job,
-      invoiceNumber,
-      priceOverride,
-      freightCost,
-    );
+    const dispatchedJob = buildDispatchedJob(job, invoiceNumber);
 
     dispatchJobMutation.mutate(
       { job: dispatchedJob, invoiceNumber },
@@ -139,31 +124,22 @@ export function DispatchActions() {
             ${calcPrice(job, settings, jigAssignments).toFixed(2)}
           </div>
         </div>
-        <div className="mb-3">
-          <label className="text-xs text-gray-600 mb-1 block">
-            Price override ($) <span className="text-gray-400">optional</span>
-          </label>
-          <Input
-            type="text"
-            value={priceOverride}
-            onChange={(e) => setPriceOverride(e.target.value)}
-            placeholder="Leave blank to use calculated"
-            className="w-full"
-          />
-        </div>
-        <div className="mb-3">
-          <label className="text-xs text-gray-600 mb-1 block">
-            Freight cost ($)
-          </label>
-          <Input
-            type="number"
-            value={freightCost}
-            onChange={(e) => setFreightCost(e.target.value)}
-            step="0.01"
-            min="0"
-            className="w-full"
-          />
-        </div>
+        {job.priceOverride && (
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-xs text-gray-600">Price override</div>
+            <div className="font-semibold text-sm">
+              ${job.priceOverrideValue.toFixed(2)}
+            </div>
+          </div>
+        )}
+        {job.freightRequested && (
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-xs text-gray-600">Freight cost</div>
+            <div className="font-semibold text-sm">
+              ${job.freightCost.toFixed(2)}
+            </div>
+          </div>
+        )}
         <Button
           onClick={handleDispatch}
           disabled={dispatchJobMutation.isPending}

@@ -4,7 +4,7 @@ import type { IContact } from '@/types/interfaces'
 /**
  * Fetch all contacts from the API
  */
-async function fetchContacts(): Promise<IContact[]> {
+export async function fetchContacts(): Promise<IContact[]> {
   const res = await fetch('/api/contacts')
   if (!res.ok) throw new Error('Failed to fetch contacts')
   return res.json()

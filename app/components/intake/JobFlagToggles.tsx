@@ -1,6 +1,7 @@
-"use client";
-import { useIntakeStore } from "@/store/useIntakeStore";
-import { Switch } from "@/components/ui/switch";
+"use client"
+import { useIntakeStore } from "@/store/useIntakeStore"
+import { Switch } from "@/components/ui/switch"
+import { Input } from "../ui/input"
 
 /**
  * Job flag toggles for the Enter Job sheet: urgent, internal, freight,
@@ -12,13 +13,19 @@ export function JobFlagToggles() {
     isInternal,
     flagged,
     freightRequested,
+    freightCost,
     minCharge,
+    priceOverride,
+    priceOverrideValue,
     setUrgent,
     setIsInternal,
     setFlagged,
     setFreightRequested,
+    setFreightCost,
     setMinCharge,
-  } = useIntakeStore();
+    setPriceOverride,
+    setPriceOverrideValue,
+  } = useIntakeStore()
 
   return (
     <div className="space-y-3 mb-5">
@@ -58,7 +65,7 @@ export function JobFlagToggles() {
         </div>
       </div>
 
-      <div className="border border-gray-300 rounded-lg p-3">
+      <div className="flex flex-col gap-2 border border-gray-300 rounded-lg p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="text-sm font-medium text-gray-900">
@@ -70,11 +77,52 @@ export function JobFlagToggles() {
           </div>
           <Switch
             checked={freightRequested}
-            onCheckedChange={setFreightRequested}
+            onCheckedChange={() => {
+              setFreightRequested(!freightRequested)
+              setFreightCost("0")
+            }}
             className="ml-3"
             aria-label="Toggle freight requested"
           />
         </div>
+        {freightRequested && (
+          <div>
+            <Input
+              value={freightCost}
+              onChange={(e) => setFreightCost(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 border border-gray-300 rounded-lg p-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="text-sm font-medium text-gray-900">
+              Price Override
+            </div>
+            <div className="text-xs text-gray-500">
+              All other pricing will be ignored
+            </div>
+          </div>
+          <Switch
+            checked={priceOverride}
+            onCheckedChange={() => {
+              setPriceOverride(!priceOverride)
+              setPriceOverrideValue("0")
+            }}
+            className="ml-3"
+            aria-label="Toggle price override"
+          />
+        </div>
+        {priceOverride && (
+          <div>
+            <Input
+              value={priceOverrideValue}
+              onChange={(e) => setPriceOverrideValue(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="border border-gray-300 rounded-lg p-3">
@@ -115,5 +163,5 @@ export function JobFlagToggles() {
         </div>
       </div>
     </div>
-  );
+  )
 }
