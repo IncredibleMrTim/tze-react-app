@@ -62,6 +62,9 @@
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
+  "resolutions": {
+    "@radix-ui/react-dismissable-layer": "1.1.19"
+  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
