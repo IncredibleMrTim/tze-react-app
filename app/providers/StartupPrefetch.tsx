@@ -8,6 +8,9 @@ import {
   fetchReadyJobs,
   fetchDispatchedJobs,
   fetchAssignableJobs,
+  type OnFloorJobsPage,
+  type ReadyJobsPage,
+  type DispatchedJobsPage,
 } from "@/hooks/useJobs";
 import { fetchJigAssignments } from "@/hooks/useJigAssignments";
 import { fetchContacts } from "@/hooks/useContacts";
@@ -46,6 +49,8 @@ export function StartupPrefetch() {
         queryFn: ({ pageParam, signal }) =>
           fetchOnFloorJobs(pageParam, signal),
         initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: OnFloorJobsPage) =>
+          lastPage.nextCursor ?? undefined,
       });
       queryClient.prefetchQuery({
         queryKey: ["contacts"],
@@ -61,12 +66,16 @@ export function StartupPrefetch() {
         queryFn: ({ pageParam, signal }) =>
           fetchReadyJobs(pageParam, "", signal),
         initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: ReadyJobsPage) =>
+          lastPage.nextCursor ?? undefined,
       });
       queryClient.prefetchInfiniteQuery({
         queryKey: ["jobs", "dispatched", ""],
         queryFn: ({ pageParam, signal }) =>
           fetchDispatchedJobs(pageParam, "", signal),
         initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: DispatchedJobsPage) =>
+          lastPage.nextCursor ?? undefined,
       });
       queryClient.prefetchQuery({
         queryKey: ["settings"],
