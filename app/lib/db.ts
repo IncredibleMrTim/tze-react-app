@@ -320,6 +320,8 @@ const dispatchedRowSelect = {
   invoiceNumber: true,
   dispatchedAt: true,
   fpnHidden: true,
+  fpnDownloaded: true,
+  csvDownloaded: true,
 } satisfies Prisma.JobSelect
 
 // Paginated, status-filtered version of getJobs() for the dispatch page's
