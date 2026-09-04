@@ -1,6 +1,6 @@
 "use client";
 import { FiMail, FiPhone } from "react-icons/fi";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -15,8 +15,8 @@ import { useContacts } from "@/hooks/useContacts";
 import { useIntakeStore } from "@/store/useIntakeStore";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { toBlobProxyUrl, toSignedImageUrl } from "@/lib/blob-upload";
-import { dateGroupLabel } from "@/lib/helpers";
-import type { IJob } from "@/types/interfaces";
+import { groupByDate } from "@/lib/helpers";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { FiPlus } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/JobCard";
@@ -154,38 +154,19 @@ export default function IntakeClient() {
   );
   const onFloorTotalCount = onFloorData?.pages[0]?.totalCount ?? onFloorJobs.length;
 
-  const groupJobsByDate = useMemo(() => {
-    const groups: Record<string, IJob[]> = {};
-
-    onFloorJobs.forEach((j) => {
-      const dateLabel = dateGroupLabel(j.createdAt);
-      if (!groups[dateLabel]) groups[dateLabel] = [];
-      groups[dateLabel].push(j);
-    });
-
-    return groups;
-  }, [onFloorJobs]);
+  const groupJobsByDate = useMemo(
+    () => groupByDate(onFloorJobs, (j) => j.createdAt),
+    [onFloorJobs],
+  );
 
   // Infinite scroll: fetch the next page of on-floor jobs once the sentinel
   // at the bottom of the list comes into view.
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const node = loadMoreRef.current;
-    if (!node || !hasNextPage || isSearchActive) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, isSearchActive, fetchNextPage]);
+  const setLoadMoreNode = useInfiniteScroll(
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isSearchActive,
+  );
 
   // Show loading state on initial load
   if (isLoading) {
@@ -270,7 +251,7 @@ export default function IntakeClient() {
             </div>
           ))}
           {hasNextPage && (
-            <div ref={loadMoreRef} className="py-4 text-center text-sm text-gray-400">
+            <div ref={setLoadMoreNode} className="py-4 text-center text-sm text-gray-400">
               {isFetchingNextPage ? "Loading more…" : ""}
             </div>
           )}

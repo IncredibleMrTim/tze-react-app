@@ -1,11 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
 import type { IJob, IDispatchedJobRow } from "@/types/interfaces"
-import { calcPrice, jigsOf, dateGroupLabel } from "@/lib/helpers"
-import { genFPN, genBatchCSV } from "@/lib/exports"
+import { groupByDate } from "@/lib/helpers"
 import { INV_PREFIX } from "@/constants/invoice.const"
 import { EmptyState } from "@/components/EmptyState"
 import { LoadingState } from "@/components/LoadingState"
@@ -29,7 +27,6 @@ import {
   useJobById,
   useUpdateJob,
   useDispatchJob,
-  fetchJobById,
 } from "@/hooks/useJobs"
 import {
   useJigAssignments,
@@ -37,15 +34,17 @@ import {
 } from "@/hooks/useJigAssignments"
 import { useSettings } from "@/hooks/useSettings"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll"
+import { useMeasuredHeight } from "@/hooks/useMeasuredHeight"
+import { useBatchDownload } from "@/hooks/useBatchDownload"
+import { usePricingBreakdown } from "@/hooks/usePricingBreakdown"
 import { PredictiveSearchInput } from "@/components/PredictiveSearchInput"
 import { JobCard } from "@/components/JobCard"
 import { LuRotateCcw, LuSquareCheck, LuTrash, LuTruck } from "react-icons/lu"
-import { calculateRates } from "@/constants/settings.const"
 
 export default function DispatchClient() {
   const { showToast } = useToast()
   const router = useRouter()
-  const queryClient = useQueryClient()
 
   // Search terms are debounced before hitting the server so the paginated
   // queries below don't refetch on every keystroke.
@@ -88,13 +87,7 @@ export default function DispatchClient() {
   const [activeTab, setActiveTab] = useState<"ready" | "downloads">("ready")
   const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null)
   const [jobToDelete, setJobToDelete] = useState<IDispatchedJobRow | null>(null)
-  const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false)
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null)
-  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
-    "FPN",
-  )
-  const [selectedDownloads, setSelectedDownloads] = useState<string[]>([])
-  const [isDownloading, setIsDownloading] = useState(false)
 
   // Full job detail (parts, pricing fields) for whichever job is open in
   // the dispatch modal — the ready-list rows only carry the trimmed
@@ -117,25 +110,10 @@ export default function DispatchClient() {
   // Date-grouped headers (TODAY/YESTERDAY/date), same as intake's on-floor
   // list — ready jobs group by arrival date, dispatched jobs by the date
   // they were sent out.
-  const readyJobsByDate = useMemo(() => {
-    const groups: Record<string, IJob[]> = {}
-    readyJobs.forEach((j) => {
-      const dateLabel = dateGroupLabel(j.createdAt)
-      if (!groups[dateLabel]) groups[dateLabel] = []
-      groups[dateLabel].push(j)
-    })
-    return groups
-  }, [readyJobs])
-
-  const dispatchedJobsByDate = useMemo(() => {
-    const groups: Record<string, IDispatchedJobRow[]> = {}
-    dispatchedJobs.forEach((j) => {
-      const dateLabel = dateGroupLabel(j.dispatchedAt)
-      if (!groups[dateLabel]) groups[dateLabel] = []
-      groups[dateLabel].push(j)
-    })
-    return groups
-  }, [dispatchedJobs])
+  const readyJobsByDate = useMemo(
+    () => groupByDate(readyJobs, (j) => j.createdAt),
+    [readyJobs],
+  )
 
   // The title/tabs/search block is `position: fixed` (not `sticky`) so job
   // cards can never render above it — sticky positioning inside a padded
@@ -144,90 +122,49 @@ export default function DispatchClient() {
   // independently of scroll, so there's no seam to leak through. Since fixed
   // elements don't occupy flow space, the scrollable content below is given
   // matching top padding measured from the fixed block's real height.
-  const fixedHeaderRef = useRef<HTMLDivElement>(null)
-  const [fixedHeaderHeight, setFixedHeaderHeight] = useState(0)
-
-  useEffect(() => {
-    const node = fixedHeaderRef.current
-    if (!node) return
-
-    const updateHeight = () => setFixedHeaderHeight(node.offsetHeight)
-    updateHeight()
-
-    const observer = new ResizeObserver(updateHeight)
-    observer.observe(node)
-    return () => observer.disconnect()
-    // isLoading is included because the ref only attaches once the loading
-    // branch below stops short-circuiting the render — without it, this
-    // effect's first (and only, since activeTab hasn't changed) run sees
-    // fixedHeaderRef.current as null and never retries once the real DOM
-    // node exists.
-  }, [activeTab, isLoading])
+  // isLoading is included in the deps because the ref only attaches once the
+  // loading branch below stops short-circuiting the render.
+  const [fixedHeaderRef, fixedHeaderHeight] = useMeasuredHeight<HTMLDivElement>(
+    [activeTab, isLoading],
+  )
 
   // Infinite scroll: fetch the next page once the sentinel at the bottom
-  // of each list comes into view. These use callback refs (stored in
-  // state) rather than plain refs — the "Ready"/"Downloads" tabs unmount
-  // their inactive content, and each list's data loads in the background
-  // regardless of which tab is active. That means hasNext*Page can already
-  // be true before a tab's sentinel div ever mounts, so an effect keyed
-  // only on hasNext*Page/isFetchingNext*Page would fire once while the
-  // node is still null and never re-run once the node actually appears —
-  // silently breaking pagination for whichever tab isn't active on first
-  // load. Keying the effect on the node itself (via state) makes it re-run
-  // exactly when the sentinel mounts.
-  const [loadMoreReadyNode, setLoadMoreReadyNode] =
-    useState<HTMLDivElement | null>(null)
-  const [loadMoreDispatchedNode, setLoadMoreDispatchedNode] =
-    useState<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (!loadMoreReadyNode || !hasNextReadyPage) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && !isFetchingNextReadyPage) {
-          fetchNextReadyPage()
-        }
-      },
-      { rootMargin: "200px" },
-    )
-
-    observer.observe(loadMoreReadyNode)
-    return () => observer.disconnect()
-  }, [
-    loadMoreReadyNode,
+  // of each list comes into view.
+  const setLoadMoreReadyNode = useInfiniteScroll(
     hasNextReadyPage,
     isFetchingNextReadyPage,
     fetchNextReadyPage,
-  ])
-
-  useEffect(() => {
-    if (!loadMoreDispatchedNode || !hasNextDispatchedPage) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && !isFetchingNextDispatchedPage) {
-          fetchNextDispatchedPage()
-        }
-      },
-      { rootMargin: "200px" },
-    )
-
-    observer.observe(loadMoreDispatchedNode)
-    return () => observer.disconnect()
-  }, [
-    loadMoreDispatchedNode,
+  )
+  const setLoadMoreDispatchedNode = useInfiniteScroll(
     hasNextDispatchedPage,
     isFetchingNextDispatchedPage,
     fetchNextDispatchedPage,
-  ])
+  )
+
+  const {
+    activeDownloadTab,
+    setActiveDownloadTab,
+    downloadableJobs,
+    selectedDownloads,
+    toggleSelectAll,
+    toggleSelectJob,
+    isDownloading,
+    handleBatchDownload,
+    showNoValidJobsAlert,
+    setShowNoValidJobsAlert,
+  } = useBatchDownload(dispatchedJobs, settings, jigAssignments)
+
+  const downloadableJobsByDate = useMemo(
+    () => groupByDate(downloadableJobs, (j) => j.dispatchedAt),
+    [downloadableJobs],
+  )
+
+  const pricing = usePricingBreakdown(fullJobToDispatch, settings, jigAssignments)
 
   // Show loading state
   if (isLoading || !settings) {
     return <LoadingState message="Loading dispatch..." />
   }
-
-  const rates = calculateRates(settings)
 
   const openDispatchModal = (job: IJob) => {
     setJobToDispatch(job)
@@ -267,14 +204,24 @@ export default function DispatchClient() {
     )
   }
 
-  const handleBackToDispatch = (job: { id: string }) => {
+  const updateJob = (
+    jobId: string,
+    patch: Partial<IJob>,
+    message?: string,
+    errorMessage?: string,
+    onSettled?: () => void,
+  ) => {
     updateJobMutation.mutate(
-      { jobId: job.id, job: { dispatchedAt: null, invoiceNumber: null } },
+      { jobId, job: patch },
       {
         onSuccess: () => {
-          showToast("Job removed from dispatch — now ready to dispatch")
+          showToast(message ?? "Job updated successfully")
+          onSettled?.()
         },
-        onError: () => showToast("Failed to remove from dispatch"),
+        onError: (e) => {
+          showToast(errorMessage ?? `Error updating job: ${e.message}`)
+          onSettled?.()
+        },
       },
     )
   }
@@ -294,101 +241,11 @@ export default function DispatchClient() {
     })
   }
 
-  const toggleSelectAll = () => {
-    if (selectedDownloads.length === dispatchedJobs.length) {
-      setSelectedDownloads([])
-    } else {
-      setSelectedDownloads(dispatchedJobs.map((j) => j.id))
-    }
-  }
-
-  const toggleSelectJob = (jobId: string) => {
-    setSelectedDownloads((prev) =>
-      prev.includes(jobId)
-        ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId],
-    )
-  }
-
-  const handleBatchDownload = async () => {
-    if (selectedDownloads.length === 0) {
-      showToast("No jobs selected")
-      return
-    }
-
-    setIsDownloading(true)
-    const results = await Promise.allSettled(
-      selectedDownloads.map((id) =>
-        queryClient.fetchQuery({
-          queryKey: ["job", id],
-          queryFn: () => fetchJobById(id),
-          staleTime: 60000,
-        }),
-      ),
-    )
-    setIsDownloading(false)
-
-    const fullJobs = results
-      .filter(
-        (r): r is PromiseFulfilledResult<IJob> => r.status === "fulfilled",
-      )
-      .map((r) => r.value)
-    const failedCount = results.length - fullJobs.length
-
-    if (fullJobs.length === 0) {
-      showToast("Failed to load selected jobs")
-      return
-    }
-
-    if (activeDownloadTab === "FPN") {
-      fullJobs.forEach((job) => genFPN(job))
-      showToast(
-        failedCount > 0
-          ? `Downloaded ${fullJobs.length} of ${selectedDownloads.length} — ${failedCount} failed to load`
-          : `Downloaded ${fullJobs.length} FPN${fullJobs.length > 1 ? "s" : ""}`,
-      )
-    } else {
-      const generated = genBatchCSV(
-        fullJobs,
-        selectedDownloads,
-        settings,
-        jigAssignments,
-      )
-      if (!generated) {
-        setShowNoValidJobsAlert(true)
-        return
-      }
-      showToast(
-        failedCount > 0
-          ? `Batch CSV downloaded — ${failedCount} job(s) failed to load and were excluded`
-          : "Batch CSV downloaded",
-      )
-    }
-  }
-
   const handleDeleteDispatchedJob = (jobId: string) => {
     const job = dispatchedJobs.find((j) => j.id === jobId)
     if (!job) return
 
     setJobToDelete(job)
-  }
-
-  const confirmDeleteDispatchedJob = () => {
-    if (!jobToDelete) return
-
-    updateJobMutation.mutate(
-      { jobId: jobToDelete.id, job: { fpnHidden: true } },
-      {
-        onSuccess: () => {
-          setJobToDelete(null)
-          showToast("Job removed from downloads")
-        },
-        onError: () => {
-          setJobToDelete(null)
-          showToast("Failed to remove job")
-        },
-      },
-    )
   }
 
   return (
@@ -542,7 +399,7 @@ export default function DispatchClient() {
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-t-lg border-x border-t">
                   <input
                     type="checkbox"
-                    checked={selectedDownloads.length === dispatchedJobs.length}
+                    checked={selectedDownloads.length === downloadableJobs.length}
                     onChange={toggleSelectAll}
                     className="w-5 h-5 rounded border-gray-300"
                   />
@@ -551,7 +408,7 @@ export default function DispatchClient() {
 
                 {/* Job List */}
                 <div className="border border-gray-200 rounded-b-lg divide-y">
-                  {Object.entries(dispatchedJobsByDate).map(
+                  {Object.entries(downloadableJobsByDate).map(
                     ([dateLabel, dateJobs]) => (
                       <div key={dateLabel}>
                         <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 bg-gray-50">
@@ -586,7 +443,14 @@ export default function DispatchClient() {
                                 <Button
                                   variant="outline"
                                   className="w-full"
-                                  onClick={() => handleBackToDispatch(job)}
+                                  onClick={() =>
+                                    updateJob(
+                                      job.id,
+                                      { dispatchedAt: null, invoiceNumber: null },
+                                      "Job removed from dispatch — now ready to dispatch",
+                                      "Failed to remove from dispatch",
+                                    )
+                                  }
                                 >
                                   <LuRotateCcw />
                                   Back to Dispatch
@@ -685,7 +549,16 @@ export default function DispatchClient() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDeleteDispatchedJob}
+              onClick={() =>
+                jobToDelete &&
+                updateJob(
+                  jobToDelete.id,
+                  { fpnHidden: true },
+                  "Job removed from downloads",
+                  "Failed to remove job",
+                  () => setJobToDelete(null),
+                )
+              }
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               Delete
@@ -739,7 +612,7 @@ export default function DispatchClient() {
                 </div>
               </div>
 
-              {fullJobToDispatch ? (
+              {fullJobToDispatch && pricing ? (
                 <>
                   {/* Parts List */}
                   <div className="mb-4">
@@ -782,40 +655,21 @@ export default function DispatchClient() {
                     <div className="border rounded-lg mb-4">
                       {/* Job Weight */}
                       <div className="border-b p-4 flex justify-between items-center">
-                        <div className="">{`Weight (${fullJobToDispatch.weightKg}kg x $${rates[fullJobToDispatch.plating].kg})`}</div>
+                        <div className="">{`Weight (${fullJobToDispatch.weightKg}kg x $${pricing.rate.kg})`}</div>
                         <div
                           className={`${fullJobToDispatch.priceOverride && fullJobToDispatch.weightKg > 0 ? "line-through" : ""}`}
                         >
-                          $
-                          {(
-                            (fullJobToDispatch.weightKg || 0) *
-                            rates[fullJobToDispatch.plating].kg
-                          ).toFixed(2)}
+                          ${pricing.weightCost.toFixed(2)}
                         </div>
                       </div>
 
                       {/* Job Jig Assignments */}
                       <div className="border-b p-4 flex justify-between items-center">
-                        <div>{`Space (${jigsOf(
-                          fullJobToDispatch.id,
-                          jigAssignments,
-                        )
-                          .map((j) => `${j.pct}%`)
-                          .join(
-                            " + ",
-                          )} of Jig x $${rates[fullJobToDispatch.plating].jig})`}</div>
+                        <div>{`Space (${pricing.jigLabel} of Jig x $${pricing.rate.jig})`}</div>
                         <div
                           className={`${fullJobToDispatch.priceOverride ? "line-through" : ""}`}
                         >
-                          $
-                          {(
-                            (jigsOf(
-                              fullJobToDispatch.id,
-                              jigAssignments,
-                            ).reduce((sum, j) => sum + j.pct, 0) /
-                              100) *
-                            rates[fullJobToDispatch.plating].jig
-                          ).toFixed(2)}
+                          ${pricing.jigCost.toFixed(2)}
                         </div>
                       </div>
 
@@ -825,11 +679,7 @@ export default function DispatchClient() {
                         <div
                           className={`${fullJobToDispatch.priceOverride && fullJobToDispatch.stringCount > 0 ? "line-through" : ""}`}
                         >
-                          $
-                          {(
-                            (fullJobToDispatch.stringCount || 0) *
-                            (settings.stringRate || 25)
-                          ).toFixed(2)}
+                          ${pricing.stringCost.toFixed(2)}
                         </div>
                       </div>
 
@@ -862,12 +712,7 @@ export default function DispatchClient() {
                         Invoice total (incl. freight)
                       </div>
                       <div className="font-bold text-xl">
-                        $
-                        {calcPrice(
-                          fullJobToDispatch,
-                          settings,
-                          jigAssignments,
-                        ).toFixed(2)}
+                        ${pricing.invoiceTotal.toFixed(2)}
                       </div>
                     </div>
                   </div>

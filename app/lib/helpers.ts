@@ -99,6 +99,19 @@ export const dateGroupLabel = (timestamp: number): string => {
     .toUpperCase()
 }
 
+export const groupByDate = <T>(
+  items: T[],
+  getDate: (item: T) => number,
+): Record<string, T[]> => {
+  const groups: Record<string, T[]> = {}
+  items.forEach((item) => {
+    const dateLabel = dateGroupLabel(getDate(item))
+    if (!groups[dateLabel]) groups[dateLabel] = []
+    groups[dateLabel].push(item)
+  })
+  return groups
+}
+
 export const csvQ = (s: unknown): string => {
   return '"' + String(s).replace(/"/g, '""') + '"'
 }

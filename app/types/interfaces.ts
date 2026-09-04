@@ -88,6 +88,8 @@ export interface IDispatchedJobRow {
   invoiceNumber: string | null
   dispatchedAt: number
   fpnHidden: boolean
+  fpnDownloaded: boolean
+  csvDownloaded: boolean
 }
 
 export interface IJig {
