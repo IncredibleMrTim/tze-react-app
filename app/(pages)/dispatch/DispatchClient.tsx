@@ -104,8 +104,6 @@ export default function DispatchClient() {
     () => dispatchedData?.pages.flatMap((p) => p.jobs) ?? [],
     [dispatchedData],
   )
-  const dispatchedTotalCount =
-    dispatchedData?.pages[0]?.totalCount ?? dispatchedJobs.length
 
   // Date-grouped headers (TODAY/YESTERDAY/date), same as intake's on-floor
   // list — ready jobs group by arrival date, dispatched jobs by the date
@@ -145,6 +143,9 @@ export default function DispatchClient() {
     activeDownloadTab,
     setActiveDownloadTab,
     downloadableJobs,
+    fpnDownloadableCount,
+    csvDownloadableCount,
+    pendingDownloadCount,
     selectedDownloads,
     toggleSelectAll,
     toggleSelectJob,
@@ -265,7 +266,7 @@ export default function DispatchClient() {
               Ready to Dispatch ({readyTotalCount})
             </TabsTrigger>
             <TabsTrigger value="downloads">
-              Dispatched ({dispatchedTotalCount})
+              Dispatched ({pendingDownloadCount})
             </TabsTrigger>
           </TabsList>
 
@@ -381,7 +382,7 @@ export default function DispatchClient() {
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    📄 FPN
+                    📄 FPN ({fpnDownloadableCount})
                   </button>
                   <button
                     onClick={() => setActiveDownloadTab("CSV")}
@@ -391,7 +392,7 @@ export default function DispatchClient() {
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    📊 Xero CSV
+                    📊 Xero CSV ({csvDownloadableCount})
                   </button>
                 </div>
 

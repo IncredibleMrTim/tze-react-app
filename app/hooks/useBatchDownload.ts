@@ -42,6 +42,23 @@ export function useBatchDownload(
     [dispatchedJobs, activeDownloadTab],
   )
 
+  // Counted independently of activeDownloadTab so both tab labels can show
+  // their own pending count at once.
+  const fpnDownloadableCount = useMemo(
+    () => dispatchedJobs.filter((j) => !j.fpnDownloaded).length,
+    [dispatchedJobs],
+  )
+  const csvDownloadableCount = useMemo(
+    () => dispatchedJobs.filter((j) => !j.csvDownloaded).length,
+    [dispatchedJobs],
+  )
+
+  // Union, not sum — a job pending in both FPN and CSV only counts once.
+  const pendingDownloadCount = useMemo(
+    () => dispatchedJobs.filter((j) => !j.fpnDownloaded || !j.csvDownloaded).length,
+    [dispatchedJobs],
+  )
+
   const toggleSelectAll = () => {
     if (selectedDownloads.length === downloadableJobs.length) {
       setSelectedDownloads([])
@@ -128,6 +145,9 @@ export function useBatchDownload(
     activeDownloadTab,
     setActiveDownloadTab,
     downloadableJobs,
+    fpnDownloadableCount,
+    csvDownloadableCount,
+    pendingDownloadCount,
     selectedDownloads,
     toggleSelectAll,
     toggleSelectJob,
