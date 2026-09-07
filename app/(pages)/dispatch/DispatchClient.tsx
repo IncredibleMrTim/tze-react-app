@@ -98,7 +98,9 @@ export default function DispatchClient() {
 
   const [activeTab, setActiveTab] = useState<"ready" | "downloads">("ready")
   const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null)
-  const [jobToArchive, setJobToArchive] = useState<IDispatchedJobRow | null>(null)
+  const [jobToArchive, setJobToArchive] = useState<IDispatchedJobRow | null>(
+    null,
+  )
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null)
 
   // Full job detail (parts, pricing fields) for whichever job is open in
@@ -174,7 +176,11 @@ export default function DispatchClient() {
     [downloadableJobs],
   )
 
-  const pricing = usePricingBreakdown(fullJobToDispatch, settings, jigAssignments)
+  const pricing = usePricingBreakdown(
+    fullJobToDispatch,
+    settings,
+    jigAssignments,
+  )
 
   // Show loading state
   if (isLoading || !settings) {
@@ -183,14 +189,22 @@ export default function DispatchClient() {
 
   const downloadsEmptyState = showArchived
     ? dispatchedSearchTerm
-      ? { icon: "🤷", title: "No results", message: "Nothing matched your search" }
+      ? {
+          icon: "🤷",
+          title: "No results",
+          message: "Nothing matched your search",
+        }
       : {
           icon: "🗄️",
           title: "No archived jobs",
           message: "Jobs you archive will appear here",
         }
     : dispatchedSearchTerm
-      ? { icon: "🤷", title: "No results", message: "Nothing matched your search" }
+      ? {
+          icon: "🤷",
+          title: "No results",
+          message: "Nothing matched your search",
+        }
       : {
           icon: "📭",
           title: "Nothing downloaded yet",
@@ -466,9 +480,7 @@ export default function DispatchClient() {
                                 {!showArchived && (
                                   <input
                                     type="checkbox"
-                                    checked={selectedDownloads.includes(
-                                      job.id,
-                                    )}
+                                    checked={selectedDownloads.includes(job.id)}
                                     onChange={() => toggleSelectJob(job.id)}
                                     className="w-5 h-5 rounded border-gray-300"
                                   />
@@ -530,11 +542,10 @@ export default function DispatchClient() {
                                         handleArchiveDispatchedJob(job.id)
                                       }
                                       disabled={isPending}
-                                      className="flex-1"
+                                      className="flex-0"
                                       variant="outline"
                                     >
                                       <LuArchive />
-                                      Archive
                                     </Button>
                                   </>
                                 )}
@@ -544,6 +555,7 @@ export default function DispatchClient() {
                                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
                                   <LuDownload />
+                                  {showArchived && "Download"}
                                 </Button>
                               </div>
                             </div>
