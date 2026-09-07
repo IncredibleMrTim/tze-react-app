@@ -364,9 +364,25 @@ export default function DispatchClient() {
                 showArchived ? () => {} : (job) => toggleSelectJob(job.id)
               }
               renderMeta={(job) => (
-                <span className="text-xs text-gray-500">
-                  {job.invoiceNumber}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-xs text-gray-500">
+                    {job.invoiceNumber}
+                  </span>
+                  {(job.fpnHidden || job.csvHidden) && (
+                    <div className="flex gap-1">
+                      {job.fpnHidden && (
+                        <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
+                          FPN archived
+                        </span>
+                      )}
+                      {job.csvHidden && (
+                        <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
+                          CSV archived
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             />
           )}
