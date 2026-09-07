@@ -269,10 +269,18 @@ export function useBatchDownload(
       (id) => dispatchedJobs.find((j) => j.id === id)?.customer_email,
     )
     setIsEmailingAll(true)
+    // Also mark each selected row as emailing so its own button spins,
+    // not just the "Send all" button.
+    setEmailingJobIds((prev) => new Set([...prev, ...emailableIds]))
     try {
       await emailFpnJobs(emailableIds)
     } finally {
       setIsEmailingAll(false)
+      setEmailingJobIds((prev) => {
+        const next = new Set(prev)
+        emailableIds.forEach((id) => next.delete(id))
+        return next
+      })
     }
   }
 
