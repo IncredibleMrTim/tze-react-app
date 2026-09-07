@@ -470,6 +470,12 @@ export default function DispatchClient() {
               />
             ) : (
               <>
+                {showArchived && (
+                  <div className="text-center text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md py-1.5 mb-3">
+                    Archive View
+                  </div>
+                )}
+
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 mb-4">
                   <button
