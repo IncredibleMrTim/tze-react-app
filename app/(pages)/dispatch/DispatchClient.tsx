@@ -185,6 +185,13 @@ export default function DispatchClient() {
     [archivedJobs],
   )
 
+  // Whichever list the current FPN/CSV + active/archived combination
+  // renders — used both for the list itself and to detect when that
+  // specific combination (not just the overall dispatched list) is empty.
+  const currentJobsByDate = showArchived
+    ? archivedJobsByDate
+    : downloadableJobsByDate
+
   const pricing = usePricingBreakdown(
     fullJobToDispatch,
     settings,
@@ -484,114 +491,129 @@ export default function DispatchClient() {
                 </div>
 
                 {/* Job List */}
-                <div className="border border-gray-200 rounded-b-lg divide-y">
-                  {Object.entries(
-                    showArchived ? archivedJobsByDate : downloadableJobsByDate,
-                  ).map(([dateLabel, dateJobs]) => (
-                    <div key={dateLabel}>
-                      <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 bg-gray-50">
-                        {dateLabel}
-                      </div>
-                      <div className="divide-y">
-                        {dateJobs.map((job) => (
-                          <div className="flex flex-col p-3" key={job.id}>
-                            <div className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50">
-                              {!showArchived && (
-                                <input
-                                  type="checkbox"
-                                  checked={selectedDownloads.includes(job.id)}
-                                  onChange={() => toggleSelectJob(job.id)}
-                                  className="w-5 h-5 rounded border-gray-300"
-                                />
-                              )}
-                              <div className="flex-1">
-                                <div className="font-bold text-base mb-1">
-                                  {job.po_number}
+                {Object.keys(currentJobsByDate).length === 0 ? (
+                  <EmptyState
+                    icon={downloadsEmptyState.icon}
+                    title={downloadsEmptyState.title}
+                    message={downloadsEmptyState.message}
+                  />
+                ) : (
+                  <div className="border border-gray-200 rounded-b-lg divide-y">
+                    {Object.entries(currentJobsByDate).map(
+                      ([dateLabel, dateJobs]) => (
+                        <div key={dateLabel}>
+                          <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 bg-gray-50">
+                            {dateLabel}
+                          </div>
+                          <div className="divide-y">
+                            {dateJobs.map((job) => (
+                              <div className="flex flex-col p-3" key={job.id}>
+                                <div className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50">
+                                  {!showArchived && (
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedDownloads.includes(
+                                        job.id,
+                                      )}
+                                      onChange={() => toggleSelectJob(job.id)}
+                                      className="w-5 h-5 rounded border-gray-300"
+                                    />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="font-bold text-base mb-1">
+                                      {job.po_number}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {job.invoiceNumber} ·{" "}
+                                      {new Date(
+                                        job.dispatchedAt,
+                                      ).toLocaleDateString("en-NZ", {
+                                        day: "numeric",
+                                        month: "short",
+                                      })}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  {job.invoiceNumber} ·{" "}
-                                  {new Date(
-                                    job.dispatchedAt,
-                                  ).toLocaleDateString("en-NZ", {
-                                    day: "numeric",
-                                    month: "short",
-                                  })}
+                                <div className="flex flex-row gap-2 justify-between">
+                                  {showArchived ? (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() =>
+                                          updateJob(
+                                            job.id,
+                                            { [hiddenField]: false },
+                                            "Job restored to downloads",
+                                            "Failed to restore job",
+                                          )
+                                        }
+                                      >
+                                        <LuArchiveRestore />
+                                        Unarchive
+                                      </Button>
+                                      <Button
+                                        onClick={() =>
+                                          handleDownloadOne(job.id)
+                                        }
+                                        disabled={isDownloading}
+                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      >
+                                        <LuDownload />
+                                        Download
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() =>
+                                          updateJob(
+                                            job.id,
+                                            {
+                                              dispatchedAt: null,
+                                              invoiceNumber: null,
+                                            },
+                                            "Job removed from dispatch — now ready to dispatch",
+                                            "Failed to remove from dispatch",
+                                          )
+                                        }
+                                      >
+                                        <LuRotateCcw />
+                                        Back
+                                      </Button>
+                                      <Button
+                                        onClick={() =>
+                                          handleDownloadOne(job.id)
+                                        }
+                                        disabled={isDownloading}
+                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      >
+                                        <LuDownload />
+                                        Download
+                                      </Button>
+                                      <Button
+                                        onClick={() =>
+                                          handleArchiveDispatchedJob(job.id)
+                                        }
+                                        disabled={isPending}
+                                        className="flex-0"
+                                        variant="outline"
+                                      >
+                                        <LuArchive />
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex flex-row gap-2 justify-between">
-                              {showArchived ? (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() =>
-                                      updateJob(
-                                        job.id,
-                                        { [hiddenField]: false },
-                                        "Job restored to downloads",
-                                        "Failed to restore job",
-                                      )
-                                    }
-                                  >
-                                    <LuArchiveRestore />
-                                    Unarchive
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleDownloadOne(job.id)}
-                                    disabled={isDownloading}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  >
-                                    <LuDownload />
-                                    Download
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() =>
-                                      updateJob(
-                                        job.id,
-                                        {
-                                          dispatchedAt: null,
-                                          invoiceNumber: null,
-                                        },
-                                        "Job removed from dispatch — now ready to dispatch",
-                                        "Failed to remove from dispatch",
-                                      )
-                                    }
-                                  >
-                                    <LuRotateCcw />
-                                    Back
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleDownloadOne(job.id)}
-                                    disabled={isDownloading}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  >
-                                    <LuDownload />
-                                  </Button>
-                                  <Button
-                                    onClick={() =>
-                                      handleArchiveDispatchedJob(job.id)
-                                    }
-                                    disabled={isPending}
-                                    className="flex-0"
-                                    variant="outline"
-                                  >
-                                    <LuArchive />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                )}
 
                 {hasNextDispatchedPage && (
                   <div
