@@ -52,6 +52,79 @@ import {
   LuUndo2,
 } from "react-icons/lu"
 
+type SearchPillTone = "blue" | "yellow" | "gray" | "grayDark"
+
+const SEARCH_PILL_TONE_CLASSES: Record<SearchPillTone, string> = {
+  blue: "bg-blue-100 text-blue-700",
+  yellow: "bg-yellow-100 text-yellow-700",
+  gray: "bg-gray-100 text-gray-700",
+  grayDark: "bg-gray-200 text-gray-700",
+}
+
+// Shared look for the small pills shown under each predictive search result
+// (job status, plating, archived flags) — keeps the tone→color mapping in
+// one place instead of repeating the base pill classes at every call site.
+function SearchPill({
+  tone,
+  children,
+}: {
+  tone: SearchPillTone
+  children: React.ReactNode
+}) {
+  return (
+    <span
+      className={`flex items-center px-2 rounded-full text-[10px] h-4 text-center ${SEARCH_PILL_TONE_CLASSES[tone]}`}
+    >
+      {children}
+    </span>
+  )
+}
+
+// Identical in both the active and archived rows of the downloads list —
+// pulled out so the per-item email flow only needs to change in one place.
+function EmailFpnButton({
+  job,
+  isEmailing,
+  onClick,
+}: {
+  job: IDispatchedJobRow
+  isEmailing: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={!job.customer_email || isEmailing}
+      title={job.customer_email ? "Email FPN to customer" : undefined}
+      className={`flex-0 ${job.customer_email ? "" : "invisible"}`}
+      variant="outline"
+    >
+      {isEmailing ? <LuLoaderCircle className="animate-spin" /> : <LuMail />}
+    </Button>
+  )
+}
+
+// Same download action regardless of whether the row is in the active or
+// archived downloads list.
+function DownloadOneButton({
+  isDownloading,
+  onClick,
+}: {
+  isDownloading: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={isDownloading}
+      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+    >
+      <LuDownload />
+      Download
+    </Button>
+  )
+}
+
 export default function DispatchClient() {
   const { showToast } = useToast()
   const router = useRouter()
@@ -235,6 +308,29 @@ export default function DispatchClient() {
           message: "Dispatched jobs appear here once they're sent out",
         }
 
+  const downloadTabs: {
+    format: "FPN" | "CSV"
+    icon: string
+    label: string
+    downloadableCount: number
+    archivedCount: number
+  }[] = [
+    {
+      format: "FPN",
+      icon: "📄",
+      label: "FPN",
+      downloadableCount: fpnDownloadableCount,
+      archivedCount: fpnArchivedCount,
+    },
+    {
+      format: "CSV",
+      icon: "📊",
+      label: "Xero CSV",
+      downloadableCount: csvDownloadableCount,
+      archivedCount: csvArchivedCount,
+    },
+  ]
+
   const openDispatchModal = (job: IJob) => {
     setJobToDispatch(job)
   }
@@ -369,18 +465,10 @@ export default function DispatchClient() {
               onSelect={openDispatchModal}
               renderPills={(job) => (
                 <>
-                  <span className="flex items-center px-2 rounded-full bg-blue-100 text-blue-700 text-[10px] h-4 text-center">
-                    Ready to dispatch
-                  </span>
-                  <span
-                    className={`flex items-center px-2 rounded-full text-[10px] h-4 text-center ${
-                      job.plating === "gold"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
+                  <SearchPill tone="blue">Ready to dispatch</SearchPill>
+                  <SearchPill tone={job.plating === "gold" ? "yellow" : "gray"}>
                     {job.plating === "gold" ? "Gold" : "Silver"}
-                  </span>
+                  </SearchPill>
                 </>
               )}
             />
@@ -398,18 +486,12 @@ export default function DispatchClient() {
               )}
               renderPills={(job) => (
                 <>
-                  <span className="flex items-center px-2 rounded-full bg-gray-100 text-gray-700 text-[10px] h-4 text-center">
-                    Dispatched
-                  </span>
+                  <SearchPill tone="gray">Dispatched</SearchPill>
                   {job.fpnHidden && (
-                    <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
-                      FPN archived
-                    </span>
+                    <SearchPill tone="grayDark">FPN archived</SearchPill>
                   )}
                   {job.csvHidden && (
-                    <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
-                      CSV archived
-                    </span>
+                    <SearchPill tone="grayDark">CSV archived</SearchPill>
                   )}
                 </>
               )}
@@ -497,28 +579,21 @@ export default function DispatchClient() {
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 mb-4">
-                  <button
-                    onClick={() => setActiveDownloadTab("FPN")}
-                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                      activeDownloadTab === "FPN"
-                        ? "text-emerald-600 border-b-2 border-emerald-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    📄 FPN (
-                    {showArchived ? fpnArchivedCount : fpnDownloadableCount})
-                  </button>
-                  <button
-                    onClick={() => setActiveDownloadTab("CSV")}
-                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                      activeDownloadTab === "CSV"
-                        ? "text-emerald-600 border-b-2 border-emerald-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    📊 Xero CSV (
-                    {showArchived ? csvArchivedCount : csvDownloadableCount})
-                  </button>
+                  {downloadTabs.map((tab) => (
+                    <button
+                      key={tab.format}
+                      onClick={() => setActiveDownloadTab(tab.format)}
+                      className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                        activeDownloadTab === tab.format
+                          ? "text-emerald-600 border-b-2 border-emerald-600"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      {tab.icon} {tab.label} (
+                      {showArchived ? tab.archivedCount : tab.downloadableCount}
+                      )
+                    </button>
+                  ))}
                 </div>
 
                 {/* Select All + archive toggle */}
@@ -634,37 +709,20 @@ export default function DispatchClient() {
                                         <LuArchiveRestore />
                                         Unarchive
                                       </Button>
-                                      <Button
+                                      <DownloadOneButton
+                                        isDownloading={isDownloading}
                                         onClick={() =>
                                           handleDownloadOne(job.id)
                                         }
-                                        disabled={isDownloading}
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                      >
-                                        <LuDownload />
-                                        Download
-                                      </Button>
+                                      />
                                       {activeDownloadTab === "FPN" && (
-                                        <Button
-                                          onClick={() => setJobToEmail(job)}
-                                          disabled={
-                                            !job.customer_email ||
-                                            emailingJobIds.has(job.id)
-                                          }
-                                          title={
-                                            job.customer_email
-                                              ? "Email FPN to customer"
-                                              : undefined
-                                          }
-                                          className={`flex-0 ${job.customer_email ? "" : "invisible"}`}
-                                          variant="outline"
-                                        >
-                                          {emailingJobIds.has(job.id) ? (
-                                            <LuLoaderCircle className="animate-spin" />
-                                          ) : (
-                                            <LuMail />
+                                        <EmailFpnButton
+                                          job={job}
+                                          isEmailing={emailingJobIds.has(
+                                            job.id,
                                           )}
-                                        </Button>
+                                          onClick={() => setJobToEmail(job)}
+                                        />
                                       )}
                                     </>
                                   ) : (
@@ -687,37 +745,20 @@ export default function DispatchClient() {
                                         <LuRotateCcw />
                                         Back
                                       </Button>
-                                      <Button
+                                      <DownloadOneButton
+                                        isDownloading={isDownloading}
                                         onClick={() =>
                                           handleDownloadOne(job.id)
                                         }
-                                        disabled={isDownloading}
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                      >
-                                        <LuDownload />
-                                        Download
-                                      </Button>
+                                      />
                                       {activeDownloadTab === "FPN" && (
-                                        <Button
-                                          onClick={() => setJobToEmail(job)}
-                                          disabled={
-                                            !job.customer_email ||
-                                            emailingJobIds.has(job.id)
-                                          }
-                                          title={
-                                            job.customer_email
-                                              ? "Email FPN to customer"
-                                              : undefined
-                                          }
-                                          className={`flex-0 ${job.customer_email ? "" : "invisible"}`}
-                                          variant="outline"
-                                        >
-                                          {emailingJobIds.has(job.id) ? (
-                                            <LuLoaderCircle className="animate-spin" />
-                                          ) : (
-                                            <LuMail />
+                                        <EmailFpnButton
+                                          job={job}
+                                          isEmailing={emailingJobIds.has(
+                                            job.id,
                                           )}
-                                        </Button>
+                                          onClick={() => setJobToEmail(job)}
+                                        />
                                       )}
                                       <Button
                                         onClick={() =>

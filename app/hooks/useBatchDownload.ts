@@ -30,10 +30,18 @@ export function useBatchDownload(
   const queryClient = useQueryClient()
   const updateJobMutation = useUpdateJob()
 
-  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
-    "FPN",
-  )
-  const [selectedDownloads, setSelectedDownloads] = useState<string[]>([])
+  const [activeDownloadTab, setActiveDownloadTabState] = useState<
+    "FPN" | "CSV"
+  >("FPN")
+  const [rawSelectedDownloads, setSelectedDownloads] = useState<string[]>([])
+
+  // A job selected on one tab isn't necessarily meant for the other (it may
+  // just coincidentally also be downloadable there) — start fresh on switch
+  // rather than letting selection leak across formats.
+  const setActiveDownloadTab = (tab: "FPN" | "CSV") => {
+    setActiveDownloadTabState(tab)
+    setSelectedDownloads([])
+  }
   const [isDownloading, setIsDownloading] = useState(false)
   // Tracks which individual job's email button is mid-send, so only that
   // button swaps to a spinner instead of blocking the whole page.
@@ -90,6 +98,20 @@ export function useBatchDownload(
           (!j.csvHidden && !j.csvDownloaded),
       ).length,
     [dispatchedJobs],
+  )
+
+  // A selected job can drop out of downloadableJobs without the user doing
+  // anything here — it got archived/downloaded from another tab (relayed
+  // over the websocket) or by this tab's own mutation settling. Deriving
+  // the selection from the current downloadableJobs, rather than trusting
+  // the raw click history, keeps a stale id from riding along into the next
+  // batch download/email.
+  const selectedDownloads = useMemo(
+    () =>
+      rawSelectedDownloads.filter((id) =>
+        downloadableJobs.some((job) => job.id === id),
+      ),
+    [rawSelectedDownloads, downloadableJobs],
   )
 
   const toggleSelectAll = () => {
