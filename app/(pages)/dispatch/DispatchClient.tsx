@@ -342,16 +342,21 @@ export default function DispatchClient() {
               placeholder="🔍 Search PO, customer..."
               predictions={readyJobs.slice(0, 10)}
               onSelect={openDispatchModal}
-              renderMeta={(job) => (
-                <span
-                  className={`text-xs px-2 py-1 rounded ${
-                    job.plating === "gold"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {job.plating === "gold" ? "Gold" : "Silver"}
-                </span>
+              renderPills={(job) => (
+                <>
+                  <span className="flex items-center px-2 rounded-full bg-blue-100 text-blue-700 text-[10px] h-4 text-center">
+                    Ready to dispatch
+                  </span>
+                  <span
+                    className={`flex items-center px-2 rounded-full text-[10px] h-4 text-center ${
+                      job.plating === "gold"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {job.plating === "gold" ? "Gold" : "Silver"}
+                  </span>
+                </>
               )}
             />
           ) : (
@@ -364,25 +369,26 @@ export default function DispatchClient() {
                 showArchived ? () => {} : (job) => toggleSelectJob(job.id)
               }
               renderMeta={(job) => (
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-xs text-gray-500">
-                    {job.invoiceNumber}
+                <span className="text-xs text-gray-500">
+                  {job.invoiceNumber}
+                </span>
+              )}
+              renderPills={(job) => (
+                <>
+                  <span className="flex items-center px-2 rounded-full bg-gray-100 text-gray-700 text-[10px] h-4 text-center">
+                    Dispatched
                   </span>
-                  {(job.fpnHidden || job.csvHidden) && (
-                    <div className="flex gap-1">
-                      {job.fpnHidden && (
-                        <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
-                          FPN archived
-                        </span>
-                      )}
-                      {job.csvHidden && (
-                        <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
-                          CSV archived
-                        </span>
-                      )}
-                    </div>
+                  {job.fpnHidden && (
+                    <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
+                      FPN archived
+                    </span>
                   )}
-                </div>
+                  {job.csvHidden && (
+                    <span className="flex items-center px-2 rounded-full bg-gray-200 text-gray-700 text-[10px] h-4 text-center">
+                      CSV archived
+                    </span>
+                  )}
+                </>
               )}
             />
           )}
