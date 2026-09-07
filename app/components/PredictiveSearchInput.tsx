@@ -16,6 +16,8 @@ interface PredictiveSearchInputProps<T extends PredictableJob> {
   predictions: T[];
   onSelect: (job: T) => void;
   renderMeta?: (job: T) => React.ReactNode;
+  /** Renders a full-width, wrapping row of pills below the main row. */
+  renderPills?: (job: T) => React.ReactNode;
 }
 
 /**
@@ -31,6 +33,7 @@ export function PredictiveSearchInput<T extends PredictableJob>({
   predictions,
   onSelect,
   renderMeta,
+  renderPills,
 }: PredictiveSearchInputProps<T>) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -130,6 +133,11 @@ export function PredictiveSearchInput<T extends PredictableJob>({
                 </div>
                 {renderMeta && <div className="ml-3">{renderMeta(job)}</div>}
               </div>
+              {renderPills && (
+                <div className="flex flex-wrap items-center gap-1 mt-2">
+                  {renderPills(job)}
+                </div>
+              )}
             </div>
           ))}
         </div>

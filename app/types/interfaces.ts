@@ -76,6 +76,7 @@ export interface IJob {
   fpnDownloaded: boolean
   fpnHidden: boolean
   csvDownloaded: boolean
+  csvHidden: boolean
 }
 
 // Trimmed row shape for the dispatch page's paginated "Downloads" list —
@@ -90,6 +91,7 @@ export interface IDispatchedJobRow {
   fpnHidden: boolean
   fpnDownloaded: boolean
   csvDownloaded: boolean
+  csvHidden: boolean
 }
 
 export interface IJig {

@@ -111,7 +111,9 @@ export async function fetchReadyJobs(
 
 /**
  * Fetch one page of dispatched jobs (the dispatch page's downloads list),
- * optionally filtered by search
+ * optionally filtered by search. Returns every dispatched job regardless
+ * of fpnHidden/csvHidden — the active/archived split per format (FPN/CSV)
+ * happens client-side.
  */
 export async function fetchDispatchedJobs(
   cursor: string | undefined,
@@ -255,7 +257,8 @@ export function useReadyJobs(search: string) {
  * Hook to fetch dispatched jobs in pages of 10, for the dispatch page's
  * downloads list. `search` filters server-side (po_number/customer
  * name/invoice number); changing it starts a fresh paginated query since
- * it's part of the query key.
+ * it's part of the query key. Archiving is per-format (FPN/CSV) and
+ * filtered client-side, so this always returns every dispatched job.
  */
 export function useDispatchedJobs(search: string) {
   return useInfiniteQuery({

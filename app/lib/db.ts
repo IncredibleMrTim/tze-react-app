@@ -86,6 +86,7 @@ export async function createJob(job: IJob) {
       fpnDownloaded: job.fpnDownloaded,
       fpnHidden: job.fpnHidden,
       csvDownloaded: job.csvDownloaded,
+      csvHidden: job.csvHidden,
     },
   })
 
@@ -158,6 +159,7 @@ const jobSelect = {
   fpnDownloaded: true,
   fpnHidden: true,
   csvDownloaded: true,
+  csvHidden: true,
   updatedAt: true,
   jigAssignments: true,
 } satisfies Prisma.JobSelect
@@ -322,10 +324,13 @@ const dispatchedRowSelect = {
   fpnHidden: true,
   fpnDownloaded: true,
   csvDownloaded: true,
+  csvHidden: true,
 } satisfies Prisma.JobSelect
 
-// Paginated, status-filtered version of getJobs() for the dispatch page's
-// "Downloads" list — dispatched jobs not hidden from that list.
+// Paginated version of getJobs() for the dispatch page's "Downloads" list.
+// Returns every dispatched job regardless of fpnHidden/csvHidden — archiving
+// is per-format (FPN vs CSV), so the active/archived split for each format
+// happens client-side (see useBatchDownload), not in this query.
 export async function getDispatchedJobs(
   params: { cursor?: string; take?: number; search?: string } = {},
 ) {
@@ -333,7 +338,6 @@ export async function getDispatchedJobs(
 
   const dispatchedWhere: Prisma.JobWhereInput = {
     dispatchedAt: { not: null },
-    fpnHidden: false,
   }
 
   const where: Prisma.JobWhereInput = search?.trim()
