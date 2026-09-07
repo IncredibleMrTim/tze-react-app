@@ -73,6 +73,7 @@ model Job {
   poComplete        Boolean  @default(false)
   fpnDownloaded     Boolean  @default(false)
   fpnHidden         Boolean  @default(false)
+  fpnEmailedAt      BigInt?
   csvDownloaded     Boolean  @default(false)
   csvHidden         Boolean  @default(false)
   updatedAt         DateTime @updatedAt

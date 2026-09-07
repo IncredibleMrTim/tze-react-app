@@ -147,6 +147,7 @@ export function useSaveJob() {
         poComplete: false,
         fpnDownloaded: false,
         fpnHidden: false,
+        fpnEmailedAt: null,
         csvDownloaded: false,
         csvHidden: false,
       }

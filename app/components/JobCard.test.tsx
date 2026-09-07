@@ -35,6 +35,7 @@ const baseJob: IJob = {
   poComplete: false,
   fpnDownloaded: false,
   fpnHidden: false,
+  fpnEmailedAt: null,
   csvDownloaded: false,
   csvHidden: false,
 };

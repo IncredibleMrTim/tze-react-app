@@ -12,18 +12,31 @@ const SMTP_CONFIG = {
   },
 }
 
+interface IEmailAttachment {
+  filename: string
+  content: Buffer
+  contentType?: string
+}
+
 interface ISendEmailParams {
   to: string
   subject: string
   html: string
+  attachments?: IEmailAttachment[]
 }
 
-export async function sendEmail({ to, subject, html }: ISendEmailParams) {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  attachments,
+}: ISendEmailParams) {
   const transporter = nodemailer.createTransport(SMTP_CONFIG)
   return await transporter.sendMail({
     from: `"TGA Electroplaters" <${SMTP_CONFIG.auth.user}>`,
     to,
     subject,
     html,
+    attachments,
   })
 }

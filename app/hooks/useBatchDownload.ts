@@ -6,7 +6,7 @@ import type {
   IJigAssignment,
   ISettings,
 } from "@/types/interfaces"
-import { genFPN, genBatchCSV } from "@/lib/exports"
+import { dl, genBatchCSV } from "@/lib/exports"
 import { fetchJobById, useUpdateJob } from "@/hooks/useJobs"
 import { useToast } from "@/hooks/useToast"
 
@@ -30,11 +30,23 @@ export function useBatchDownload(
   const queryClient = useQueryClient()
   const updateJobMutation = useUpdateJob()
 
-  const [activeDownloadTab, setActiveDownloadTab] = useState<"FPN" | "CSV">(
-    "FPN",
-  )
-  const [selectedDownloads, setSelectedDownloads] = useState<string[]>([])
+  const [activeDownloadTab, setActiveDownloadTabState] = useState<
+    "FPN" | "CSV"
+  >("FPN")
+  const [rawSelectedDownloads, setSelectedDownloads] = useState<string[]>([])
+
+  // A job selected on one tab isn't necessarily meant for the other (it may
+  // just coincidentally also be downloadable there) — start fresh on switch
+  // rather than letting selection leak across formats.
+  const setActiveDownloadTab = (tab: "FPN" | "CSV") => {
+    setActiveDownloadTabState(tab)
+    setSelectedDownloads([])
+  }
   const [isDownloading, setIsDownloading] = useState(false)
+  // Tracks which individual job's email button is mid-send, so only that
+  // button swaps to a spinner instead of blocking the whole page.
+  const [emailingJobIds, setEmailingJobIds] = useState<Set<string>>(new Set())
+  const [isEmailingAll, setIsEmailingAll] = useState(false)
   const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false)
 
   // Which flags the active tab reads/writes for archive status and download
@@ -88,6 +100,20 @@ export function useBatchDownload(
     [dispatchedJobs],
   )
 
+  // A selected job can drop out of downloadableJobs without the user doing
+  // anything here — it got archived/downloaded from another tab (relayed
+  // over the websocket) or by this tab's own mutation settling. Deriving
+  // the selection from the current downloadableJobs, rather than trusting
+  // the raw click history, keeps a stale id from riding along into the next
+  // batch download/email.
+  const selectedDownloads = useMemo(
+    () =>
+      rawSelectedDownloads.filter((id) =>
+        downloadableJobs.some((job) => job.id === id),
+      ),
+    [rawSelectedDownloads, downloadableJobs],
+  )
+
   const toggleSelectAll = () => {
     if (selectedDownloads.length === downloadableJobs.length) {
       setSelectedDownloads([])
@@ -110,56 +136,143 @@ export function useBatchDownload(
     if (!settings) return
 
     setIsDownloading(true)
-    const results = await Promise.allSettled(
-      ids.map((id) =>
-        queryClient.fetchQuery({
-          queryKey: ["job", id],
-          queryFn: () => fetchJobById(id),
-          staleTime: 60000,
-        }),
-      ),
-    )
-    setIsDownloading(false)
-
-    const fullJobs = results
-      .filter(
-        (r): r is PromiseFulfilledResult<IJob> => r.status === "fulfilled",
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          queryClient.fetchQuery({
+            queryKey: ["job", id],
+            queryFn: () => fetchJobById(id),
+            staleTime: 60000,
+          }),
+        ),
       )
-      .map((r) => r.value)
-    const failedCount = results.length - fullJobs.length
 
-    if (fullJobs.length === 0) {
-      showToast("Failed to load selected jobs")
+      const fullJobs = results
+        .filter(
+          (r): r is PromiseFulfilledResult<IJob> => r.status === "fulfilled",
+        )
+        .map((r) => r.value)
+      const failedCount = results.length - fullJobs.length
+
+      if (fullJobs.length === 0) {
+        showToast("Failed to load selected jobs")
+        return
+      }
+
+      if (activeDownloadTab === "FPN") {
+        const res = await fetch("/api/fpn/pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobIds: fullJobs.map((j) => j.id) }),
+        })
+        if (!res.ok) {
+          showToast("Failed to generate FPN PDF")
+          return
+        }
+        const blob = await res.blob()
+        const dispositionMatch = res.headers
+          .get("Content-Disposition")
+          ?.match(/filename="([^"]+)"/)
+        const filename =
+          dispositionMatch?.[1] ??
+          (fullJobs.length > 1
+            ? `FPN-batch-${new Date().toISOString().slice(0, 10)}.zip`
+            : `FPN_${fullJobs[0].po_number}.pdf`)
+        dl(blob, filename)
+
+        fullJobs.forEach((job) => {
+          updateJobMutation.mutate({
+            jobId: job.id,
+            job: { fpnDownloaded: true },
+          })
+        })
+        showToast(
+          failedCount > 0
+            ? `Downloaded ${fullJobs.length} of ${ids.length} — ${failedCount} failed to load`
+            : `Downloaded ${fullJobs.length} FPN${fullJobs.length > 1 ? "s" : ""}`,
+        )
+      } else {
+        const includedIds = genBatchCSV(fullJobs, ids, settings, jigAssignments)
+        if (!includedIds) {
+          setShowNoValidJobsAlert(true)
+          return
+        }
+        includedIds.forEach((jobId) =>
+          updateJobMutation.mutate({ jobId, job: { csvDownloaded: true } }),
+        )
+        showToast(
+          failedCount > 0
+            ? `Batch CSV downloaded — ${failedCount} job(s) failed to load and were excluded`
+            : "Batch CSV downloaded",
+        )
+      }
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  interface IFpnEmailResult {
+    jobId: string
+    po_number: string
+    status: "sent" | "skipped" | "failed"
+    reason?: string
+  }
+
+  const emailFpnJobs = async (ids: string[]) => {
+    if (ids.length === 0) {
+      showToast("No jobs with a customer email selected")
       return
     }
 
-    if (activeDownloadTab === "FPN") {
-      fullJobs.forEach((job) => {
-        genFPN(job)
-        updateJobMutation.mutate({
-          jobId: job.id,
-          job: { fpnDownloaded: true },
-        })
+    try {
+      const res = await fetch("/api/email/fpn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobIds: ids }),
       })
-      showToast(
-        failedCount > 0
-          ? `Downloaded ${fullJobs.length} of ${ids.length} — ${failedCount} failed to load`
-          : `Downloaded ${fullJobs.length} FPN${fullJobs.length > 1 ? "s" : ""}`,
-      )
-    } else {
-      const includedIds = genBatchCSV(fullJobs, ids, settings, jigAssignments)
-      if (!includedIds) {
-        setShowNoValidJobsAlert(true)
+      if (!res.ok) {
+        showToast("Failed to send FPN email")
         return
       }
-      includedIds.forEach((jobId) =>
-        updateJobMutation.mutate({ jobId, job: { csvDownloaded: true } }),
-      )
-      showToast(
-        failedCount > 0
-          ? `Batch CSV downloaded — ${failedCount} job(s) failed to load and were excluded`
-          : "Batch CSV downloaded",
-      )
+      const { results }: { results: IFpnEmailResult[] } = await res.json()
+      const sent = results.filter((r) => r.status === "sent").length
+      const skipped = results.filter((r) => r.status === "skipped").length
+      const failed = results.filter((r) => r.status === "failed").length
+
+      const summary = [`Emailed ${sent} FPN${sent === 1 ? "" : "s"}`]
+      if (skipped > 0) summary.push(`${skipped} skipped (no email on file)`)
+      if (failed > 0) summary.push(`${failed} failed`)
+      showToast(summary.join(" — "))
+
+      queryClient.invalidateQueries({ queryKey: ["jobs", "dispatched"] })
+    } catch (error) {
+      console.error("Failed to send FPN email:", error)
+      showToast("Failed to send FPN email")
+    }
+  }
+
+  const handleEmailOne = async (jobId: string) => {
+    setEmailingJobIds((prev) => new Set(prev).add(jobId))
+    try {
+      await emailFpnJobs([jobId])
+    } finally {
+      setEmailingJobIds((prev) => {
+        const next = new Set(prev)
+        next.delete(jobId)
+        return next
+      })
+    }
+  }
+
+  const handleEmailAll = async () => {
+    const emailableIds = selectedDownloads.filter(
+      (id) => dispatchedJobs.find((j) => j.id === id)?.customer_email,
+    )
+    setIsEmailingAll(true)
+    try {
+      await emailFpnJobs(emailableIds)
+    } finally {
+      setIsEmailingAll(false)
     }
   }
 
@@ -191,6 +304,10 @@ export function useBatchDownload(
     isDownloading,
     handleBatchDownload,
     handleDownloadOne,
+    emailingJobIds,
+    isEmailingAll,
+    handleEmailOne,
+    handleEmailAll,
     showNoValidJobsAlert,
     setShowNoValidJobsAlert,
   }
