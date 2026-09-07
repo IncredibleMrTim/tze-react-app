@@ -148,6 +148,7 @@ export function useSaveJob() {
         fpnDownloaded: false,
         fpnHidden: false,
         csvDownloaded: false,
+        csvHidden: false,
       }
 
       // Use React Query mutation with optimistic updates

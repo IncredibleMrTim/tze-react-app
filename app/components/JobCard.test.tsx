@@ -36,6 +36,7 @@ const baseJob: IJob = {
   fpnDownloaded: false,
   fpnHidden: false,
   csvDownloaded: false,
+  csvHidden: false,
 };
 
 describe("JobCard plating badge", () => {

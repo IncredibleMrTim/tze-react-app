@@ -79,7 +79,7 @@ export default function DispatchClient() {
     fetchNextPage: fetchNextDispatchedPage,
     hasNextPage: hasNextDispatchedPage,
     isFetchingNextPage: isFetchingNextDispatchedPage,
-  } = useDispatchedJobs(debouncedDispatchedSearch, showArchived)
+  } = useDispatchedJobs(debouncedDispatchedSearch)
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments()
   const { data: settings, isLoading: settingsLoading } = useSettings()
@@ -156,7 +156,9 @@ export default function DispatchClient() {
   const {
     activeDownloadTab,
     setActiveDownloadTab,
+    hiddenField,
     downloadableJobs,
+    archivedJobs,
     fpnDownloadableCount,
     csvDownloadableCount,
     pendingDownloadCount,
@@ -174,6 +176,11 @@ export default function DispatchClient() {
   const downloadableJobsByDate = useMemo(
     () => groupByDate(downloadableJobs, (j) => j.dispatchedAt),
     [downloadableJobs],
+  )
+
+  const archivedJobsByDate = useMemo(
+    () => groupByDate(archivedJobs, (j) => j.dispatchedAt),
+    [archivedJobs],
   )
 
   const pricing = usePricingBreakdown(
@@ -196,8 +203,8 @@ export default function DispatchClient() {
         }
       : {
           icon: "🗄️",
-          title: "No archived jobs",
-          message: "Jobs you archive will appear here",
+          title: `No archived ${activeDownloadTab} jobs`,
+          message: `Jobs you archive from ${activeDownloadTab} will appear here`,
         }
     : dispatchedSearchTerm
       ? {
@@ -232,7 +239,9 @@ export default function DispatchClient() {
       dispatchedAt: Date.now(),
       invoiceNumber,
       fpnDownloaded: false,
+      fpnHidden: false,
       csvDownloaded: false,
+      csvHidden: false,
     }
 
     dispatchJobMutation.mutate(
@@ -461,13 +470,17 @@ export default function DispatchClient() {
                     className="ml-auto text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-1"
                   >
                     {showArchived ? <LuUndo2 /> : <LuArchive />}
-                    {showArchived ? "Back to active" : "Show archived"}
+                    {showArchived
+                      ? "Back to active"
+                      : `Show archived ${activeDownloadTab}`}
                   </button>
                 </div>
 
                 {/* Job List */}
                 <div className="border border-gray-200 rounded-b-lg divide-y">
-                  {Object.entries(downloadableJobsByDate).map(
+                  {Object.entries(
+                    showArchived ? archivedJobsByDate : downloadableJobsByDate,
+                  ).map(
                     ([dateLabel, dateJobs]) => (
                       <div key={dateLabel}>
                         <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 bg-gray-50">
@@ -508,7 +521,7 @@ export default function DispatchClient() {
                                     onClick={() =>
                                       updateJob(
                                         job.id,
-                                        { fpnHidden: false },
+                                        { [hiddenField]: false },
                                         "Job restored to downloads",
                                         "Failed to restore job",
                                       )
@@ -635,10 +648,12 @@ export default function DispatchClient() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Archive {jobToArchive?.po_number}?
+              Archive {jobToArchive?.po_number} from {activeDownloadTab}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You can restore it from the archived list at any time.
+              It'll stay on the {activeDownloadTab === "FPN" ? "CSV" : "FPN"}{" "}
+              list — you can restore it from the archived {activeDownloadTab}{" "}
+              list at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -648,7 +663,7 @@ export default function DispatchClient() {
                 jobToArchive &&
                 updateJob(
                   jobToArchive.id,
-                  { fpnHidden: true },
+                  { [hiddenField]: true },
                   "Job archived",
                   "Failed to archive job",
                   () => setJobToArchive(null),

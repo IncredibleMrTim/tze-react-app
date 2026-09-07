@@ -15,8 +15,11 @@ import { useToast } from "@/hooks/useToast"
  * FPN/CSV export flow — fetches the full record for each selected job
  * (list rows only carry a trimmed field set) before generating files.
  *
- * A job drops off whichever tab (FPN/CSV) it's already been downloaded for,
- * so the two tabs can show different subsets of `dispatchedJobs`.
+ * Archiving is per-format: `fpnHidden`/`csvHidden` are independent flags,
+ * so archiving a job from the FPN tab doesn't affect its CSV visibility
+ * and vice versa. A job also drops off whichever tab (FPN/CSV) it's
+ * already been downloaded for, so the two tabs can show different
+ * subsets of `dispatchedJobs`.
  */
 export function useBatchDownload(
   dispatchedJobs: IDispatchedJobRow[],
@@ -34,28 +37,42 @@ export function useBatchDownload(
   const [isDownloading, setIsDownloading] = useState(false)
   const [showNoValidJobsAlert, setShowNoValidJobsAlert] = useState(false)
 
+  // Which flags the active tab reads/writes for archive status and download
+  // status — used both for filtering below and exposed so the archive/
+  // unarchive actions in the UI know which field to patch.
+  const hiddenField = activeDownloadTab === "FPN" ? "fpnHidden" : "csvHidden"
+  const downloadedField =
+    activeDownloadTab === "FPN" ? "fpnDownloaded" : "csvDownloaded"
+
   const downloadableJobs = useMemo(
-    () =>
-      dispatchedJobs.filter((j) =>
-        activeDownloadTab === "FPN" ? !j.fpnDownloaded : !j.csvDownloaded,
-      ),
-    [dispatchedJobs, activeDownloadTab],
+    () => dispatchedJobs.filter((j) => !j[hiddenField] && !j[downloadedField]),
+    [dispatchedJobs, hiddenField, downloadedField],
+  )
+
+  const archivedJobs = useMemo(
+    () => dispatchedJobs.filter((j) => j[hiddenField]),
+    [dispatchedJobs, hiddenField],
   )
 
   // Counted independently of activeDownloadTab so both tab labels can show
   // their own pending count at once.
   const fpnDownloadableCount = useMemo(
-    () => dispatchedJobs.filter((j) => !j.fpnDownloaded).length,
+    () => dispatchedJobs.filter((j) => !j.fpnHidden && !j.fpnDownloaded).length,
     [dispatchedJobs],
   )
   const csvDownloadableCount = useMemo(
-    () => dispatchedJobs.filter((j) => !j.csvDownloaded).length,
+    () => dispatchedJobs.filter((j) => !j.csvHidden && !j.csvDownloaded).length,
     [dispatchedJobs],
   )
 
   // Union, not sum — a job pending in both FPN and CSV only counts once.
   const pendingDownloadCount = useMemo(
-    () => dispatchedJobs.filter((j) => !j.fpnDownloaded || !j.csvDownloaded).length,
+    () =>
+      dispatchedJobs.filter(
+        (j) =>
+          (!j.fpnHidden && !j.fpnDownloaded) ||
+          (!j.csvHidden && !j.csvDownloaded),
+      ).length,
     [dispatchedJobs],
   )
 
@@ -147,7 +164,9 @@ export function useBatchDownload(
   return {
     activeDownloadTab,
     setActiveDownloadTab,
+    hiddenField,
     downloadableJobs,
+    archivedJobs,
     fpnDownloadableCount,
     csvDownloadableCount,
     pendingDownloadCount,

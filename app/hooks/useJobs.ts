@@ -111,19 +111,18 @@ export async function fetchReadyJobs(
 
 /**
  * Fetch one page of dispatched jobs (the dispatch page's downloads list),
- * optionally filtered by search. `archived` switches between the active
- * (not archived) and archived views.
+ * optionally filtered by search. Returns every dispatched job regardless
+ * of fpnHidden/csvHidden — the active/archived split per format (FPN/CSV)
+ * happens client-side.
  */
 export async function fetchDispatchedJobs(
   cursor: string | undefined,
   search: string,
-  archived: boolean,
   signal?: AbortSignal,
 ): Promise<DispatchedJobsPage> {
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", cursor);
   if (search) params.set("search", search);
-  if (archived) params.set("archived", "true");
 
   const res = await fetch(`/api/jobs/dispatched?${params.toString()}`, {
     headers: { Accept: "application/json" },
@@ -257,16 +256,15 @@ export function useReadyJobs(search: string) {
 /**
  * Hook to fetch dispatched jobs in pages of 10, for the dispatch page's
  * downloads list. `search` filters server-side (po_number/customer
- * name/invoice number); `archived` switches between the active and
- * archived views. Both are part of the query key, so TanStack Query
- * caches each combination independently — toggling `archived` back and
- * forth is instant after the first fetch of each.
+ * name/invoice number); changing it starts a fresh paginated query since
+ * it's part of the query key. Archiving is per-format (FPN/CSV) and
+ * filtered client-side, so this always returns every dispatched job.
  */
-export function useDispatchedJobs(search: string, archived = false) {
+export function useDispatchedJobs(search: string) {
   return useInfiniteQuery({
-    queryKey: ["jobs", "dispatched", search, archived],
+    queryKey: ["jobs", "dispatched", search],
     queryFn: ({ pageParam, signal }) =>
-      fetchDispatchedJobs(pageParam, search, archived, signal),
+      fetchDispatchedJobs(pageParam, search, signal),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     // Keep showing the previous search's results while a new search term's

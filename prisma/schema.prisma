@@ -74,6 +74,7 @@ model Job {
   fpnDownloaded     Boolean  @default(false)
   fpnHidden         Boolean  @default(false)
   csvDownloaded     Boolean  @default(false)
+  csvHidden         Boolean  @default(false)
   updatedAt         DateTime @updatedAt
   createdByUserId   String?  // Clerk user id of the staff member who created the job
 
