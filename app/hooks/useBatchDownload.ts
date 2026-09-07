@@ -211,16 +211,6 @@ export function useBatchDownload(
     }
   }
 
-  const handleBatchDownload = () => {
-    if (selectedDownloads.length === 0) {
-      showToast("No jobs selected")
-      return
-    }
-    downloadJobs(selectedDownloads)
-  }
-
-  const handleDownloadOne = (jobId: string) => downloadJobs([jobId])
-
   interface IFpnEmailResult {
     jobId: string
     po_number: string
@@ -285,6 +275,16 @@ export function useBatchDownload(
       setIsEmailingAll(false)
     }
   }
+
+  const handleBatchDownload = () => {
+    if (selectedDownloads.length === 0) {
+      showToast("No jobs selected")
+      return
+    }
+    downloadJobs(selectedDownloads)
+  }
+
+  const handleDownloadOne = (jobId: string) => downloadJobs([jobId])
 
   return {
     activeDownloadTab,
