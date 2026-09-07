@@ -471,7 +471,7 @@ export default function DispatchClient() {
             ) : (
               <>
                 {showArchived && (
-                  <div className="text-center text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md py-1.5 mb-3">
+                  <div className="text-center text-[11px] font-bold text-red-600 uppercase tracking-wider mb-2">
                     Archive View
                   </div>
                 )}
