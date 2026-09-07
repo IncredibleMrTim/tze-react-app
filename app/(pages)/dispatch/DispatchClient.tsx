@@ -311,6 +311,23 @@ export default function DispatchClient() {
     setJobToArchive(job)
   }
 
+  // A search result may live in the active or archived list for the
+  // currently selected format tab — switch to whichever one actually
+  // contains it, then scroll it into view once that list has rendered.
+  const handleSelectDispatchedSearchResult = (job: IDispatchedJobRow) => {
+    const isArchivedForCurrentTab = job[hiddenField]
+    setShowArchived(isArchivedForCurrentTab)
+    if (!isArchivedForCurrentTab) {
+      toggleSelectJob(job.id)
+    }
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`dispatched-job-${job.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" })
+    })
+  }
+
   return (
     <div>
       <Tabs
@@ -365,9 +382,7 @@ export default function DispatchClient() {
               onChange={setDispatchedSearchTerm}
               placeholder="🔍 Search PO, customer, invoice..."
               predictions={dispatchedJobs.slice(0, 10)}
-              onSelect={
-                showArchived ? () => {} : (job) => toggleSelectJob(job.id)
-              }
+              onSelect={handleSelectDispatchedSearchResult}
               renderMeta={(job) => (
                 <span className="text-xs text-gray-500">
                   {job.invoiceNumber}
@@ -529,7 +544,11 @@ export default function DispatchClient() {
                           </div>
                           <div className="divide-y">
                             {dateJobs.map((job) => (
-                              <div className="flex flex-col p-3" key={job.id}>
+                              <div
+                                className="flex flex-col p-3"
+                                key={job.id}
+                                id={`dispatched-job-${job.id}`}
+                              >
                                 <div className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50">
                                   {!showArchived && (
                                     <input

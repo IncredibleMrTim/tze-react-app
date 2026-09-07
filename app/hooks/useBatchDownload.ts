@@ -40,8 +40,9 @@ export function useBatchDownload(
   // Which flags the active tab reads/writes for archive status and download
   // status — used both for filtering below and exposed so the archive/
   // unarchive actions in the UI know which field to patch.
-  const hiddenField = activeDownloadTab === "FPN" ? "fpnHidden" : "csvHidden"
-  const downloadedField =
+  const hiddenField: "fpnHidden" | "csvHidden" =
+    activeDownloadTab === "FPN" ? "fpnHidden" : "csvHidden"
+  const downloadedField: "fpnDownloaded" | "csvDownloaded" =
     activeDownloadTab === "FPN" ? "fpnDownloaded" : "csvDownloaded"
 
   const downloadableJobs = useMemo(
