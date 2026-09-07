@@ -65,6 +65,17 @@ export function useBatchDownload(
     [dispatchedJobs],
   )
 
+  // Same idea, but counting each format's archived jobs instead — shown on
+  // the tab labels while the archived view is active.
+  const fpnArchivedCount = useMemo(
+    () => dispatchedJobs.filter((j) => j.fpnHidden).length,
+    [dispatchedJobs],
+  )
+  const csvArchivedCount = useMemo(
+    () => dispatchedJobs.filter((j) => j.csvHidden).length,
+    [dispatchedJobs],
+  )
+
   // Union, not sum — a job pending in both FPN and CSV only counts once.
   const pendingDownloadCount = useMemo(
     () =>
@@ -169,6 +180,8 @@ export function useBatchDownload(
     archivedJobs,
     fpnDownloadableCount,
     csvDownloadableCount,
+    fpnArchivedCount,
+    csvArchivedCount,
     pendingDownloadCount,
     selectedDownloads,
     toggleSelectAll,

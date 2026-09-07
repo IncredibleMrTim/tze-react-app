@@ -161,6 +161,8 @@ export default function DispatchClient() {
     archivedJobs,
     fpnDownloadableCount,
     csvDownloadableCount,
+    fpnArchivedCount,
+    csvArchivedCount,
     pendingDownloadCount,
     selectedDownloads,
     toggleSelectAll,
@@ -431,7 +433,7 @@ export default function DispatchClient() {
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    📄 FPN ({fpnDownloadableCount})
+                    📄 FPN ({showArchived ? fpnArchivedCount : fpnDownloadableCount})
                   </button>
                   <button
                     onClick={() => setActiveDownloadTab("CSV")}
@@ -441,7 +443,7 @@ export default function DispatchClient() {
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    📊 Xero CSV ({csvDownloadableCount})
+                    📊 Xero CSV ({showArchived ? csvArchivedCount : csvDownloadableCount})
                   </button>
                 </div>
 
