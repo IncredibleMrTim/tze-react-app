@@ -75,6 +75,7 @@ export interface IJob {
   poComplete: boolean
   fpnDownloaded: boolean
   fpnHidden: boolean
+  fpnEmailedAt: number | null
   csvDownloaded: boolean
   csvHidden: boolean
 }
@@ -86,10 +87,12 @@ export interface IDispatchedJobRow {
   id: string
   po_number: string
   customer_name: string
+  customer_email: string
   invoiceNumber: string | null
   dispatchedAt: number
   fpnHidden: boolean
   fpnDownloaded: boolean
+  fpnEmailedAt: number | null
   csvDownloaded: boolean
   csvHidden: boolean
 }

@@ -31,6 +31,7 @@ function serializeJob(job: JobWithRelations): IJob {
     ...job,
     createdAt: Number(job.createdAt),
     dispatchedAt: job.dispatchedAt ? Number(job.dispatchedAt) : null,
+    fpnEmailedAt: job.fpnEmailedAt ? Number(job.fpnEmailedAt) : null,
     jigAssignments:
       job.jigAssignments?.map(serializeJigAssignment) || undefined,
   } as unknown as IJob
@@ -85,6 +86,7 @@ export async function createJob(job: IJob) {
       poComplete: job.poComplete,
       fpnDownloaded: job.fpnDownloaded,
       fpnHidden: job.fpnHidden,
+      fpnEmailedAt: job.fpnEmailedAt ? BigInt(job.fpnEmailedAt) : null,
       csvDownloaded: job.csvDownloaded,
       csvHidden: job.csvHidden,
     },
@@ -104,6 +106,11 @@ export async function updateJob(jobId: string, job: Partial<IJob>) {
   if (job.createdAt !== undefined) updateData.createdAt = BigInt(job.createdAt)
   if (job.dispatchedAt !== undefined) {
     updateData.dispatchedAt = job.dispatchedAt ? BigInt(job.dispatchedAt) : null
+  }
+  if (job.fpnEmailedAt !== undefined) {
+    updateData.fpnEmailedAt = job.fpnEmailedAt
+      ? BigInt(job.fpnEmailedAt)
+      : null
   }
 
   const updated = await prisma.job.update({
@@ -158,6 +165,7 @@ const jobSelect = {
   poComplete: true,
   fpnDownloaded: true,
   fpnHidden: true,
+  fpnEmailedAt: true,
   csvDownloaded: true,
   csvHidden: true,
   updatedAt: true,
@@ -319,10 +327,12 @@ const dispatchedRowSelect = {
   id: true,
   po_number: true,
   customer_name: true,
+  customer_email: true,
   invoiceNumber: true,
   dispatchedAt: true,
   fpnHidden: true,
   fpnDownloaded: true,
+  fpnEmailedAt: true,
   csvDownloaded: true,
   csvHidden: true,
 } satisfies Prisma.JobSelect
@@ -374,6 +384,7 @@ export async function getDispatchedJobs(
     jobs: page.map((job) => ({
       ...job,
       dispatchedAt: Number(job.dispatchedAt),
+      fpnEmailedAt: job.fpnEmailedAt ? Number(job.fpnEmailedAt) : null,
     })),
     nextCursor,
     totalCount,

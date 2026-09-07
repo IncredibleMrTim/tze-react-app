@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "viii-palestinian-knife-display.trycloudflare.com",
     "photograph-photo-anywhere-respect.trycloudflare.com",
   ],
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",

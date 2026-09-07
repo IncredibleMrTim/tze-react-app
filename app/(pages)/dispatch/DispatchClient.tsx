@@ -44,6 +44,8 @@ import {
   LuArchive,
   LuArchiveRestore,
   LuDownload,
+  LuLoaderCircle,
+  LuMail,
   LuRotateCcw,
   LuSquareCheck,
   LuTruck,
@@ -102,6 +104,8 @@ export default function DispatchClient() {
     null,
   )
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null)
+  const [jobToEmail, setJobToEmail] = useState<IDispatchedJobRow | null>(null)
+  const [confirmEmailAll, setConfirmEmailAll] = useState(false)
 
   // Full job detail (parts, pricing fields) for whichever job is open in
   // the dispatch modal — the ready-list rows only carry the trimmed
@@ -171,6 +175,10 @@ export default function DispatchClient() {
     isDownloading,
     handleBatchDownload,
     handleDownloadOne,
+    emailingJobIds,
+    isEmailingAll,
+    handleEmailOne,
+    handleEmailAll,
     showNoValidJobsAlert,
     setShowNoValidJobsAlert,
   } = useBatchDownload(dispatchedJobs, settings, jigAssignments)
@@ -589,6 +597,22 @@ export default function DispatchClient() {
                                         day: "numeric",
                                         month: "short",
                                       })}
+                                      {activeDownloadTab === "FPN" &&
+                                        job.fpnEmailedAt && (
+                                          <>
+                                            {" "}
+                                            ·{" "}
+                                            <span className="text-emerald-600">
+                                              Emailed{" "}
+                                              {new Date(
+                                                job.fpnEmailedAt,
+                                              ).toLocaleDateString("en-NZ", {
+                                                day: "numeric",
+                                                month: "short",
+                                              })}
+                                            </span>
+                                          </>
+                                        )}
                                     </div>
                                   </div>
                                 </div>
@@ -620,6 +644,28 @@ export default function DispatchClient() {
                                         <LuDownload />
                                         Download
                                       </Button>
+                                      {activeDownloadTab === "FPN" && (
+                                        <Button
+                                          onClick={() => setJobToEmail(job)}
+                                          disabled={
+                                            !job.customer_email ||
+                                            emailingJobIds.has(job.id)
+                                          }
+                                          title={
+                                            job.customer_email
+                                              ? "Email FPN to customer"
+                                              : undefined
+                                          }
+                                          className={`flex-0 ${job.customer_email ? "" : "invisible"}`}
+                                          variant="outline"
+                                        >
+                                          {emailingJobIds.has(job.id) ? (
+                                            <LuLoaderCircle className="animate-spin" />
+                                          ) : (
+                                            <LuMail />
+                                          )}
+                                        </Button>
+                                      )}
                                     </>
                                   ) : (
                                     <>
@@ -651,6 +697,28 @@ export default function DispatchClient() {
                                         <LuDownload />
                                         Download
                                       </Button>
+                                      {activeDownloadTab === "FPN" && (
+                                        <Button
+                                          onClick={() => setJobToEmail(job)}
+                                          disabled={
+                                            !job.customer_email ||
+                                            emailingJobIds.has(job.id)
+                                          }
+                                          title={
+                                            job.customer_email
+                                              ? "Email FPN to customer"
+                                              : undefined
+                                          }
+                                          className={`flex-0 ${job.customer_email ? "" : "invisible"}`}
+                                          variant="outline"
+                                        >
+                                          {emailingJobIds.has(job.id) ? (
+                                            <LuLoaderCircle className="animate-spin" />
+                                          ) : (
+                                            <LuMail />
+                                          )}
+                                        </Button>
+                                      )}
                                       <Button
                                         onClick={() =>
                                           handleArchiveDispatchedJob(job.id)
@@ -684,17 +752,39 @@ export default function DispatchClient() {
 
                 {!showArchived && (
                   <>
-                    {/* Download Button */}
-                    <Button
-                      onClick={handleBatchDownload}
-                      disabled={selectedDownloads.length === 0 || isDownloading}
-                      className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mt-4"
-                    >
-                      ⬇{" "}
-                      {isDownloading
-                        ? "Preparing…"
-                        : `Download ${activeDownloadTab}(s)`}
-                    </Button>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        onClick={handleBatchDownload}
+                        disabled={
+                          selectedDownloads.length === 0 || isDownloading
+                        }
+                        className={`h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 ${
+                          activeDownloadTab === "FPN" ? "flex-1" : "w-full"
+                        }`}
+                      >
+                        ⬇{" "}
+                        {isDownloading
+                          ? "Preparing…"
+                          : `Download ${activeDownloadTab}(s)`}
+                      </Button>
+                      {activeDownloadTab === "FPN" && (
+                        <Button
+                          onClick={() => setConfirmEmailAll(true)}
+                          disabled={
+                            selectedDownloads.length === 0 || isEmailingAll
+                          }
+                          variant="outline"
+                          className="flex-1 h-14 text-base font-semibold"
+                        >
+                          {isEmailingAll ? (
+                            <LuLoaderCircle className="animate-spin" />
+                          ) : (
+                            <LuMail />
+                          )}{" "}
+                          Send Selected
+                        </Button>
+                      )}
+                    </div>
 
                     <p className="text-center text-sm text-gray-500 mt-3">
                       Dispatched jobs are in Search history
@@ -765,6 +855,58 @@ export default function DispatchClient() {
               }
             >
               Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!jobToEmail}
+        onOpenChange={(open) => !open && setJobToEmail(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Email FPN for {jobToEmail?.po_number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send the Finished Product Notification to{" "}
+              {jobToEmail?.customer_email}. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!jobToEmail) return
+                handleEmailOne(jobToEmail.id)
+                setJobToEmail(null)
+              }}
+            >
+              Send email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmEmailAll} onOpenChange={setConfirmEmailAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Email all selected FPNs?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send the Finished Product Notification email to each
+              selected job&apos;s customer. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleEmailAll()
+                setConfirmEmailAll(false)
+              }}
+            >
+              Send emails
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
