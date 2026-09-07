@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getJobById, updateJob } from "@/lib/db"
 import { buildFpnHtml } from "@/lib/exports"
-import { htmlToPdf } from "@/lib/pdf"
+import { withPdfBrowser } from "@/lib/pdf"
 import { sendEmail } from "@/lib/email"
 
 export const dynamic = "force-dynamic"
@@ -20,7 +20,10 @@ const emailBody = (customerName: string, poNumber: string): string =>
   `<p style="color:#888;font-size:12px;margin-top:24px">Tauranga Electroplaters &middot; 9/61 Maleme Street, Greerton, Tauranga &middot; 07 578 3176</p>` +
   `</div>`
 
-async function sendFpnEmail(jobId: string): Promise<ISendResult> {
+async function sendFpnEmail(
+  jobId: string,
+  renderPdf: (html: string) => Promise<Buffer>,
+): Promise<ISendResult> {
   const job = await getJobById(jobId)
   if (!job) {
     return { jobId, po_number: "", status: "failed", reason: "Job not found" }
@@ -35,7 +38,7 @@ async function sendFpnEmail(jobId: string): Promise<ISendResult> {
   }
 
   try {
-    const pdf = await htmlToPdf(buildFpnHtml(job))
+    const pdf = await renderPdf(buildFpnHtml(job))
     await sendEmail({
       to: job.customer_email,
       subject: `Parts Ready for Collection - PO ${job.po_number}`,
@@ -72,10 +75,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "jobIds is required" }, { status: 400 })
     }
 
-    const results: ISendResult[] = []
-    for (const jobId of jobIds) {
-      results.push(await sendFpnEmail(jobId))
-    }
+    // One browser instance shared across the whole batch — sending N FPN
+    // emails previously launched N separate headless Chromium instances
+    // sequentially, which is slow and memory-heavy enough locally to bring
+    // the dev server down mid-request.
+    const results = await withPdfBrowser(async (renderPdf) => {
+      const jobResults: ISendResult[] = []
+      for (const jobId of jobIds) {
+        jobResults.push(await sendFpnEmail(jobId, renderPdf))
+      }
+      return jobResults
+    })
 
     return NextResponse.json({ results })
   } catch (error: unknown) {
