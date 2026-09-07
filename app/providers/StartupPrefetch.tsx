@@ -70,9 +70,9 @@ export function StartupPrefetch() {
           lastPage.nextCursor ?? undefined,
       });
       queryClient.prefetchInfiniteQuery({
-        queryKey: ["jobs", "dispatched", ""],
+        queryKey: ["jobs", "dispatched", "", false],
         queryFn: ({ pageParam, signal }) =>
-          fetchDispatchedJobs(pageParam, "", signal),
+          fetchDispatchedJobs(pageParam, "", false, signal),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: DispatchedJobsPage) =>
           lastPage.nextCursor ?? undefined,

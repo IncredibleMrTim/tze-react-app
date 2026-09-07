@@ -325,15 +325,21 @@ const dispatchedRowSelect = {
 } satisfies Prisma.JobSelect
 
 // Paginated, status-filtered version of getJobs() for the dispatch page's
-// "Downloads" list — dispatched jobs not hidden from that list.
+// "Downloads" list — serves both the active list (dispatched jobs not
+// archived) and the archived list, depending on `archived`.
 export async function getDispatchedJobs(
-  params: { cursor?: string; take?: number; search?: string } = {},
+  params: {
+    cursor?: string
+    take?: number
+    search?: string
+    archived?: boolean
+  } = {},
 ) {
-  const { cursor, take = 10, search } = params
+  const { cursor, take = 10, search, archived = false } = params
 
   const dispatchedWhere: Prisma.JobWhereInput = {
     dispatchedAt: { not: null },
-    fpnHidden: false,
+    fpnHidden: archived,
   }
 
   const where: Prisma.JobWhereInput = search?.trim()

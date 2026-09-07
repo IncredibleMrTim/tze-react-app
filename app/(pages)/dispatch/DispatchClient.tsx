@@ -40,7 +40,15 @@ import { useBatchDownload } from "@/hooks/useBatchDownload"
 import { usePricingBreakdown } from "@/hooks/usePricingBreakdown"
 import { PredictiveSearchInput } from "@/components/PredictiveSearchInput"
 import { JobCard } from "@/components/JobCard"
-import { LuRotateCcw, LuSquareCheck, LuTrash, LuTruck } from "react-icons/lu"
+import {
+  LuArchive,
+  LuArchiveRestore,
+  LuDownload,
+  LuRotateCcw,
+  LuSquareCheck,
+  LuTruck,
+  LuUndo2,
+} from "react-icons/lu"
 
 export default function DispatchClient() {
   const { showToast } = useToast()
@@ -52,6 +60,10 @@ export default function DispatchClient() {
   const [dispatchedSearchTerm, setDispatchedSearchTerm] = useState("")
   const debouncedReadySearch = useDebouncedValue(readySearchTerm)
   const debouncedDispatchedSearch = useDebouncedValue(dispatchedSearchTerm)
+
+  // Toggles the Downloads list between active (not archived) and archived
+  // jobs — a single shared toggle, re-split by the FPN/CSV sub-tabs below.
+  const [showArchived, setShowArchived] = useState(false)
 
   // Live updates arrive via WebSocket; hooks poll only as a backstop
   const {
@@ -67,7 +79,7 @@ export default function DispatchClient() {
     fetchNextPage: fetchNextDispatchedPage,
     hasNextPage: hasNextDispatchedPage,
     isFetchingNextPage: isFetchingNextDispatchedPage,
-  } = useDispatchedJobs(debouncedDispatchedSearch)
+  } = useDispatchedJobs(debouncedDispatchedSearch, showArchived)
   const { data: jigAssignments = [], isLoading: jigsLoading } =
     useJigAssignments()
   const { data: settings, isLoading: settingsLoading } = useSettings()
@@ -86,7 +98,7 @@ export default function DispatchClient() {
 
   const [activeTab, setActiveTab] = useState<"ready" | "downloads">("ready")
   const [jobToSendBack, setJobToSendBack] = useState<IJob | null>(null)
-  const [jobToDelete, setJobToDelete] = useState<IDispatchedJobRow | null>(null)
+  const [jobToArchive, setJobToArchive] = useState<IDispatchedJobRow | null>(null)
   const [jobToDispatch, setJobToDispatch] = useState<IJob | null>(null)
 
   // Full job detail (parts, pricing fields) for whichever job is open in
@@ -149,8 +161,10 @@ export default function DispatchClient() {
     selectedDownloads,
     toggleSelectAll,
     toggleSelectJob,
+    clearSelection,
     isDownloading,
     handleBatchDownload,
+    handleDownloadOne,
     showNoValidJobsAlert,
     setShowNoValidJobsAlert,
   } = useBatchDownload(dispatchedJobs, settings, jigAssignments)
@@ -166,6 +180,22 @@ export default function DispatchClient() {
   if (isLoading || !settings) {
     return <LoadingState message="Loading dispatch..." />
   }
+
+  const downloadsEmptyState = showArchived
+    ? dispatchedSearchTerm
+      ? { icon: "🤷", title: "No results", message: "Nothing matched your search" }
+      : {
+          icon: "🗄️",
+          title: "No archived jobs",
+          message: "Jobs you archive will appear here",
+        }
+    : dispatchedSearchTerm
+      ? { icon: "🤷", title: "No results", message: "Nothing matched your search" }
+      : {
+          icon: "📭",
+          title: "Nothing downloaded yet",
+          message: "Dispatched jobs appear here once they're sent out",
+        }
 
   const openDispatchModal = (job: IJob) => {
     setJobToDispatch(job)
@@ -242,11 +272,11 @@ export default function DispatchClient() {
     })
   }
 
-  const handleDeleteDispatchedJob = (jobId: string) => {
+  const handleArchiveDispatchedJob = (jobId: string) => {
     const job = dispatchedJobs.find((j) => j.id === jobId)
     if (!job) return
 
-    setJobToDelete(job)
+    setJobToArchive(job)
   }
 
   return (
@@ -295,7 +325,9 @@ export default function DispatchClient() {
               onChange={setDispatchedSearchTerm}
               placeholder="🔍 Search PO, customer, invoice..."
               predictions={dispatchedJobs.slice(0, 10)}
-              onSelect={(job) => toggleSelectJob(job.id)}
+              onSelect={
+                showArchived ? () => {} : (job) => toggleSelectJob(job.id)
+              }
               renderMeta={(job) => (
                 <span className="text-xs text-gray-500">
                   {job.invoiceNumber}
@@ -360,15 +392,9 @@ export default function DispatchClient() {
           <TabsContent value="downloads" className="mt-0">
             {dispatchedJobs.length === 0 ? (
               <EmptyState
-                icon="📭"
-                title={
-                  dispatchedSearchTerm ? "No results" : "Nothing downloaded yet"
-                }
-                message={
-                  dispatchedSearchTerm
-                    ? "Nothing matched your search"
-                    : "Dispatched jobs appear here once they're sent out"
-                }
+                icon={downloadsEmptyState.icon}
+                title={downloadsEmptyState.title}
+                message={downloadsEmptyState.message}
               />
             ) : (
               <>
@@ -396,15 +422,33 @@ export default function DispatchClient() {
                   </button>
                 </div>
 
-                {/* Select All */}
+                {/* Select All + archive toggle */}
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-t-lg border-x border-t">
-                  <input
-                    type="checkbox"
-                    checked={selectedDownloads.length === downloadableJobs.length}
-                    onChange={toggleSelectAll}
-                    className="w-5 h-5 rounded border-gray-300"
-                  />
-                  <span className="font-medium text-gray-700">Select all</span>
+                  {!showArchived && (
+                    <>
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedDownloads.length === downloadableJobs.length
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-5 h-5 rounded border-gray-300"
+                      />
+                      <span className="font-medium text-gray-700">
+                        Select all
+                      </span>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowArchived((v) => !v)
+                      clearSelection()
+                    }}
+                    className="ml-auto text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  >
+                    {showArchived ? <LuUndo2 /> : <LuArchive />}
+                    {showArchived ? "Back to active" : "Show archived"}
+                  </button>
                 </div>
 
                 {/* Job List */}
@@ -419,12 +463,16 @@ export default function DispatchClient() {
                           {dateJobs.map((job) => (
                             <div className="flex flex-col p-3" key={job.id}>
                               <div className="flex items-center gap-3 pb-3 bg-white hover:bg-gray-50">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedDownloads.includes(job.id)}
-                                  onChange={() => toggleSelectJob(job.id)}
-                                  className="w-5 h-5 rounded border-gray-300"
-                                />
+                                {!showArchived && (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedDownloads.includes(
+                                      job.id,
+                                    )}
+                                    onChange={() => toggleSelectJob(job.id)}
+                                    className="w-5 h-5 rounded border-gray-300"
+                                  />
+                                )}
                                 <div className="flex-1">
                                   <div className="font-bold text-base mb-1">
                                     {job.po_number}
@@ -440,32 +488,62 @@ export default function DispatchClient() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex flex-row gap-3 justify-between">
+                              <div className="flex flex-row gap-2 justify-between">
+                                {showArchived ? (
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() =>
+                                      updateJob(
+                                        job.id,
+                                        { fpnHidden: false },
+                                        "Job restored to downloads",
+                                        "Failed to restore job",
+                                      )
+                                    }
+                                  >
+                                    <LuArchiveRestore />
+                                    Unarchive
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1"
+                                      onClick={() =>
+                                        updateJob(
+                                          job.id,
+                                          {
+                                            dispatchedAt: null,
+                                            invoiceNumber: null,
+                                          },
+                                          "Job removed from dispatch — now ready to dispatch",
+                                          "Failed to remove from dispatch",
+                                        )
+                                      }
+                                    >
+                                      <LuRotateCcw />
+                                      Back
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        handleArchiveDispatchedJob(job.id)
+                                      }
+                                      disabled={isPending}
+                                      className="flex-1"
+                                      variant="outline"
+                                    >
+                                      <LuArchive />
+                                      Archive
+                                    </Button>
+                                  </>
+                                )}
                                 <Button
-                                  variant="outline"
-                                  className="w-full"
-                                  onClick={() =>
-                                    updateJob(
-                                      job.id,
-                                      { dispatchedAt: null, invoiceNumber: null },
-                                      "Job removed from dispatch — now ready to dispatch",
-                                      "Failed to remove from dispatch",
-                                    )
-                                  }
+                                  onClick={() => handleDownloadOne(job.id)}
+                                  disabled={isDownloading}
+                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
-                                  <LuRotateCcw />
-                                  Back to Dispatch
-                                </Button>
-                                <Button
-                                  onClick={() =>
-                                    handleDeleteDispatchedJob(job.id)
-                                  }
-                                  disabled={isPending}
-                                  className="border-red-300 text-red-600 w-full hover:bg-red-500"
-                                  variant="outline"
-                                >
-                                  <LuTrash />
-                                  Delete
+                                  <LuDownload />
                                 </Button>
                               </div>
                             </div>
@@ -485,21 +563,25 @@ export default function DispatchClient() {
                   </div>
                 )}
 
-                {/* Download Button */}
-                <Button
-                  onClick={handleBatchDownload}
-                  disabled={selectedDownloads.length === 0 || isDownloading}
-                  className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mt-4"
-                >
-                  ⬇{" "}
-                  {isDownloading
-                    ? "Preparing…"
-                    : `Download ${activeDownloadTab}(s)`}
-                </Button>
+                {!showArchived && (
+                  <>
+                    {/* Download Button */}
+                    <Button
+                      onClick={handleBatchDownload}
+                      disabled={selectedDownloads.length === 0 || isDownloading}
+                      className="w-full h-14 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 mt-4"
+                    >
+                      ⬇{" "}
+                      {isDownloading
+                        ? "Preparing…"
+                        : `Download ${activeDownloadTab}(s)`}
+                    </Button>
 
-                <p className="text-center text-sm text-gray-500 mt-3">
-                  Dispatched jobs are in Search history
-                </p>
+                    <p className="text-center text-sm text-gray-500 mt-3">
+                      Dispatched jobs are in Search history
+                    </p>
+                  </>
+                )}
               </>
             )}
           </TabsContent>
@@ -535,34 +617,33 @@ export default function DispatchClient() {
       </AlertDialog>
 
       <AlertDialog
-        open={!!jobToDelete}
-        onOpenChange={(open) => !open && setJobToDelete(null)}
+        open={!!jobToArchive}
+        onOpenChange={(open) => !open && setJobToArchive(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {jobToDelete?.po_number} from downloads?
+              Archive {jobToArchive?.po_number}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone.
+              You can restore it from the archived list at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
-                jobToDelete &&
+                jobToArchive &&
                 updateJob(
-                  jobToDelete.id,
+                  jobToArchive.id,
                   { fpnHidden: true },
-                  "Job removed from downloads",
-                  "Failed to remove job",
-                  () => setJobToDelete(null),
+                  "Job archived",
+                  "Failed to archive job",
+                  () => setJobToArchive(null),
                 )
               }
-              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Delete
+              Archive
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

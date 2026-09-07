@@ -75,16 +75,14 @@ export function useBatchDownload(
     )
   }
 
-  const handleBatchDownload = async () => {
-    if (selectedDownloads.length === 0) {
-      showToast("No jobs selected")
-      return
-    }
+  const clearSelection = () => setSelectedDownloads([])
+
+  const downloadJobs = async (ids: string[]) => {
     if (!settings) return
 
     setIsDownloading(true)
     const results = await Promise.allSettled(
-      selectedDownloads.map((id) =>
+      ids.map((id) =>
         queryClient.fetchQuery({
           queryKey: ["job", id],
           queryFn: () => fetchJobById(id),
@@ -116,16 +114,11 @@ export function useBatchDownload(
       })
       showToast(
         failedCount > 0
-          ? `Downloaded ${fullJobs.length} of ${selectedDownloads.length} — ${failedCount} failed to load`
+          ? `Downloaded ${fullJobs.length} of ${ids.length} — ${failedCount} failed to load`
           : `Downloaded ${fullJobs.length} FPN${fullJobs.length > 1 ? "s" : ""}`,
       )
     } else {
-      const includedIds = genBatchCSV(
-        fullJobs,
-        selectedDownloads,
-        settings,
-        jigAssignments,
-      )
+      const includedIds = genBatchCSV(fullJobs, ids, settings, jigAssignments)
       if (!includedIds) {
         setShowNoValidJobsAlert(true)
         return
@@ -141,6 +134,16 @@ export function useBatchDownload(
     }
   }
 
+  const handleBatchDownload = () => {
+    if (selectedDownloads.length === 0) {
+      showToast("No jobs selected")
+      return
+    }
+    downloadJobs(selectedDownloads)
+  }
+
+  const handleDownloadOne = (jobId: string) => downloadJobs([jobId])
+
   return {
     activeDownloadTab,
     setActiveDownloadTab,
@@ -151,8 +154,10 @@ export function useBatchDownload(
     selectedDownloads,
     toggleSelectAll,
     toggleSelectJob,
+    clearSelection,
     isDownloading,
     handleBatchDownload,
+    handleDownloadOne,
     showNoValidJobsAlert,
     setShowNoValidJobsAlert,
   }

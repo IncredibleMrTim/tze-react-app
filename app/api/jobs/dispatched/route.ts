@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
     const takeParam = searchParams.get('take')
     const take = takeParam ? Number(takeParam) : undefined
     const search = searchParams.get('search') ?? undefined
+    const archived = searchParams.get('archived') === 'true'
 
-    const result = await getDispatchedJobs({ cursor, take, search })
+    const result = await getDispatchedJobs({ cursor, take, search, archived })
     return NextResponse.json(result, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching dispatched jobs:', error)
