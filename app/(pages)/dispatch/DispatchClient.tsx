@@ -308,7 +308,10 @@ export default function DispatchClient() {
     <div>
       <Tabs
         value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "ready" | "downloads")}
+        onValueChange={(value) => {
+          setActiveTab(value as "ready" | "downloads")
+          setShowArchived(false)
+        }}
         className="w-full"
       >
         <div
